@@ -1,20 +1,16 @@
 #ifndef REGISTERS_H
 #define REGISTERS_H
 
-#include <stdint.h>
+#include "types.h"
 #include <stdbool.h>
-#define REG_NUM 32
+#define REG_NUM 31
 
-// registers as 64 bit ints and 32 bit ints
-typedef uint64_t reg64_t;
-typedef uint32_t reg32_t;
-
-// general purpose registers 0-31, 64 bits
+// general purpose registers 0-30
 typedef struct {
     reg64_t r[REG_NUM];
-} gen_reg;
+} gen_regs;
 
-// processor state register
+// processor state register (4 fields)
 typedef struct {
     bool n_flag;
     bool z_flag;
@@ -22,13 +18,38 @@ typedef struct {
     bool v_flag;
 } pstate;
 
-// special registers: zero, program counter, and stack pointers
+// special registers: zero, program counter, and stack pointer, processor state
 typedef struct {
-    reg64_t zr;
     reg64_t pc;
-    reg64_t sp;
-    reg32_t wsp;
     pstate psr;
 } spec_reg;
+
+// REQUIRED register functions to be implemented in registers.c
+
+// initialisation to 0 for both general and special registers
+void init_gen_registers(gen_regs *registers);
+void init_spec_registers(spec_reg *registers);
+
+// General purpose register functions
+
+// read/write on 64 bit registers (referred to as X in the spec)
+reg64_t read_x_register(const gen_regs *registers, unsigned index);
+void write_x_register(gen_regs *registers, unsigned index, dword_t value);
+
+// read/write on 32 bit registers (referred to as W in the spec)
+reg32_t read_w_register(const gen_regs *registers, unsigned index);
+void write_w_register(gen_regs *registers, unsigned index, word_t value);
+
+// Special purpose register functions
+
+// read/write on 64 bit PC register
+reg64_t read_pc(const spec_reg *registers);
+void write_pc(spec_reg *registers, dword_t value);
+
+// both return 0 in 64/32 bit respec.
+reg64_t read_xzr(void);
+reg32_t read_wzr(void); 
+
+// reading/writing PSTATE register discussed later on, according to spec (ignore for now)
 
 #endif

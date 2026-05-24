@@ -1,7 +1,7 @@
 CC      ?= gcc
 CFLAGS  ?= -std=c17 -g\
 	-D_POSIX_SOURCE -D_DEFAULT_SOURCE\
-	-Wall -Werror -pedantic
+	-Wall -Werror -pedantic\
 	-Iinclude_emulate
 
 .SUFFIXES: .c .o
