@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#define REG_NUM 31
+#define REG_NUM 32
 
 // registers as 64 bit ints and 32 bit ints
 typedef uint64_t reg64_t;
@@ -14,15 +14,6 @@ typedef struct {
     reg64_t r[REG_NUM];
 } gen_reg;
 
-// special registers: zero, program counter, and stack pointers
-typedef struct {
-    reg64_t zr = 0;
-    reg64_t pc;
-    reg64_t sp;
-    reg32_t wsp;
-    pstate psr;
-} spec_reg;
-
 // processor state register
 typedef struct {
     bool n_flag;
@@ -30,5 +21,14 @@ typedef struct {
     bool c_flag;
     bool v_flag;
 } pstate;
+
+// special registers: zero, program counter, and stack pointers
+typedef struct {
+    reg64_t zr;
+    reg64_t pc;
+    reg64_t sp;
+    reg32_t wsp;
+    pstate psr;
+} spec_reg;
 
 #endif
