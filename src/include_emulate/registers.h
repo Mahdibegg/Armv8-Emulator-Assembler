@@ -46,7 +46,7 @@ void write_w_register(gen_regs *registers, unsigned index, word_t value);
 reg64_t read_pc(const spec_reg *registers);
 void write_pc(spec_reg *registers, dword_t value);
 
-// both return 0 in 64/32 bit respec.
+// both return 0 in 64/32 bit respectively
 reg64_t read_xzr(void);
 reg32_t read_wzr(void); 
 
