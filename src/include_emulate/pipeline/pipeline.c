@@ -11,4 +11,4 @@ word_t fetch_instr(const machine_state_t *state) {
 //decoded_instr_t decode_instr(const word_t instr) {}
 
 // TO BE COMPLETED
-// void execute_instr(machine_state_t *state, const decoded_instr_t instruction) {}
+// exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t instruction) {}
