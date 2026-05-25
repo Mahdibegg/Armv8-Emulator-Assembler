@@ -1,7 +1,7 @@
 #include <stdlib.h>
-#include "registers.h"
+#include "registers/registers.h"
+#include "memory/memory.h"
 #include "types.h"
-#include "memory.h"
 
 int main(int argc, char **argv) {
   return EXIT_SUCCESS;

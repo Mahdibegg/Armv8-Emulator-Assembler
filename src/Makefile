@@ -2,7 +2,7 @@ CC      ?= gcc
 CFLAGS  ?= -std=c17 -g\
 	-D_POSIX_SOURCE -D_DEFAULT_SOURCE\
 	-Wall -Werror -pedantic\
-	-Iinclude_emulate
+	-I include_emulate
 
 .SUFFIXES: .c .o
 
@@ -11,8 +11,11 @@ CFLAGS  ?= -std=c17 -g\
 all: assemble emulate
 
 assemble: assemble.o
-emulate: emulate.o
+	$(CC) $(CFLAGS) -o assemble assemble.o
+
+emulate: emulate.o include_emulate/memory/memory.o include_emulate/registers/registers.o
+	$(CC) $(CFLAGS) -o emulate emulate.o include_emulate/memory/memory.o include_emulate/registers/registers.o
 
 clean:
-	$(RM) *.o assemble emulate
+	$(RM) *.o include_emulate/memory/*.o include_emulate/registers/*.o assemble emulate
 	

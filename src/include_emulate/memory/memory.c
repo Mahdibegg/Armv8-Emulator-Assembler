@@ -31,20 +31,20 @@ void init_memory(memory_t *memory) {
 word_t read_word(const memory_t *memory, addr_t address) {
     
     // validate address size and return value
-    if (address + 3 < MEMORY_SIZE) {
+    if (address <= MEMORY_SIZE - 4) {
         
         // mem variable shorthand as const (no change)
         const byte_t *mem = memory->memory;
 
         // combine 4 bytes to form a word_t
-        word_t value = (word_t) mem[address] | 
+        return (word_t) mem[address] | 
             (word_t) mem[address + 1] << 8 | 
             (word_t) mem[address+2] << 16 |
             (word_t) mem[address+3] << 24;
     } else {
         
         // print error message and exit program
-        fprintf(stderr, "Memory read out of bounds - address " PRIu32 " doesn't exist\n", address);
+        fprintf(stderr, "Memory read out of bounds - address %" PRIu32 " doesn't exist\n", address);
         exit(EXIT_FAILURE);
     }
 }
@@ -65,7 +65,7 @@ void write_word(memory_t *memory, addr_t address, word_t value) {
     } else {
         
         // print error message and exit program
-        fprintf(stderr, "Memory write out of bounds - address " PRIu32 " doesn't exist\n", address);
+        fprintf(stderr, "Memory write out of bounds - address %" PRIu32 " doesn't exist\n", address);
         exit(EXIT_FAILURE);
     }
 }
