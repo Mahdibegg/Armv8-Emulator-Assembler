@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "memory.h"
 
 // type for separating bytes of a word
@@ -43,7 +44,7 @@ word_t read_word(const memory_t *memory, addr_t address) {
     } else {
         
         // print error message and exit program
-        fprintf(stderr, "Memory read out of bounds\n");
+        fprintf(stderr, "Memory read out of bounds - address " PRIu32 " doesn't exist\n", address);
         exit(EXIT_FAILURE);
     }
 }
@@ -64,7 +65,7 @@ void write_word(memory_t *memory, addr_t address, word_t value) {
     } else {
         
         // print error message and exit program
-        fprintf(stderr, "Memory write out of bounds (address does not exist)\n");
+        fprintf(stderr, "Memory write out of bounds - address " PRIu32 " doesn't exist\n", address);
         exit(EXIT_FAILURE);
     }
 }

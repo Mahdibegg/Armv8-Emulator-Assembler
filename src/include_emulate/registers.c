@@ -26,7 +26,7 @@ reg64_t read_x_register(const gen_regs *registers, unsigned index) {
     } else {
 
         // print error message and exit program
-        fprintf(stderr, "Register read out of bounds (index %u does not exist)\n", index);
+        fprintf(stderr, "Register read out of bounds (index X%u does not exist)\n", index);
         exit(EXIT_FAILURE);
     }
 }
@@ -39,7 +39,7 @@ void write_x_register(gen_regs *registers, unsigned index, dword_t value) {
     } else {
 
         // print error message and exit program
-        fprintf(stderr, "Register write out of bounds (index %u does not exist)\n", index);
+        fprintf(stderr, "Register write out of bounds (index X%u does not exist)\n", index);
         exit(EXIT_FAILURE);
     }
 }
@@ -54,7 +54,7 @@ reg32_t read_w_register(const gen_regs *registers, unsigned index) {
     } else {
 
         // print error message and exit program
-        fprintf(stderr, "Register read out of bounds (index %u does not exist)\n", index);
+        fprintf(stderr, "Register read out of bounds (index W%u does not exist)\n", index);
         exit(EXIT_FAILURE);
     }
 }
@@ -69,7 +69,7 @@ void write_w_register(gen_regs *registers, unsigned index, word_t value) {
     } else {
 
         // print error message and exit program
-        fprintf(stderr, "Register write out of bounds (index %u does not exist)\n", index);
+        fprintf(stderr, "Register write out of bounds (index W%u does not exist)\n", index);
         exit(EXIT_FAILURE);
     }
 }
