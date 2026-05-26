@@ -16,6 +16,12 @@ assemble: assemble.o
 emulate: emulate.o include_emulate/memory/memory.o include_emulate/registers/registers.o include_emulate/pipeline/pipeline.o include_emulate/instruction_types/branch/branch.o include_emulate/instruction_types/data_processing/data_processing.o include_emulate/instruction_types/load_store/load_store.o
 	$(CC) $(CFLAGS) -o emulate emulate.o include_emulate/memory/memory.o include_emulate/registers/registers.o include_emulate/pipeline/pipeline.o include_emulate/instruction_types/branch/branch.o include_emulate/instruction_types/data_processing/data_processing.o include_emulate/instruction_types/load_store/load_store.o
 	
+TEST_REGISTER_OBJS = include_emulate/memory_registers_tests/test_registers.o \
+	include_emulate/registers/registers.o
+
+test_registers: $(TEST_REGISTER_OBJS)
+	$(CC) $(CFLAGS) -o test_registers $(TEST_REGISTER_OBJS)
+
 clean:
-	$(RM) *.o include_emulate/memory/*.o include_emulate/registers/*.o include_emulate/pipeline/*.o include_emulate/instruction_types/branch/*.o include_emulate/instruction_types/data_processing/*.o include_emulate/instruction_types/load_store/*.o assemble emulate
+	$(RM) *.o include_emulate/memory/*.o include_emulate/registers/*.o include_emulate/pipeline/*.o include_emulate/instruction_types/branch/*.o include_emulate/instruction_types/data_processing/*.o include_emulate/instruction_types/load_store/*.o include_emulate/memory_registers_tests/*.o assemble emulate
 	

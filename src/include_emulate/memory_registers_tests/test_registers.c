@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "../registers/registers.h"
+#include "registers/registers.h"
 
 // initialising general purpose register tests 
 void init_gen_registers_test(void) {
