@@ -57,10 +57,10 @@ void memory_locations_are_independent_test(void) {
 
     //consecutive writes to memory shouldnt affect other addresses
     write_word(&memory, 0, 0x12345678);
-    write_word(&memory, 1, 0xABCDEF12);
+    write_word(&memory, 4, 0xABCDEF12);
 
-    assert(read_word(&memory, 0) == 0X12345678);
-    assert(read_word(&memory, 1) == 0xABCDEF12);
+    assert(read_word(&memory, 0) == 0x12345678);
+    assert(read_word(&memory, 4) == 0xABCDEF12);
 
     printf("Memory locations are independent: PASSED\n");
 }
