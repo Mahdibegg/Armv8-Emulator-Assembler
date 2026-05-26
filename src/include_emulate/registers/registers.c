@@ -22,6 +22,7 @@ reg64_t read_x_register(const gen_regs *registers, unsigned index) {
 
     // validate register index and return value
     if (index < REG_NUM) {
+
         return registers->r[index];
     } else {
 
@@ -35,6 +36,7 @@ void write_x_register(gen_regs *registers, unsigned index, dword_t value) {
 
     // validate register index and write value
     if (index < REG_NUM) {
+
         registers->r[index] = (reg64_t) value;
     } else {
 
@@ -75,17 +77,21 @@ void write_w_register(gen_regs *registers, unsigned index, word_t value) {
 }
 
 reg64_t read_pc(const spec_reg *registers) {
+
     return registers->pc;
 }
 
 void write_pc(spec_reg *registers, dword_t value) {
+
     registers->pc = (reg64_t) value;
 }
 
 reg64_t read_xzr(void) {
+
     return 0;
 }
 
 reg32_t read_wzr(void) {
+    
     return 0;
 }
