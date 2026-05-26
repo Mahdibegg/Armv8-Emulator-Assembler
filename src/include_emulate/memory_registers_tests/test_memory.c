@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
-#include <stdint.h>>
+#include <stdint.h>
 
 #include "../memory/memory.h"
 
