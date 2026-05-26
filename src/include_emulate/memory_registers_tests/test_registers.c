@@ -104,13 +104,13 @@ void read_write_32_registers_test(void) {
     write_w_register(&g_regs, 10, 0x12345678);
     assert(read_w_register(&g_regs, 10) == 0x12345678);
 
-    printf("read/write 32 registesr : PASSED\n");
+    printf("read/write 32 register : PASSED\n");
 }
 
 // read write PC register tests
 void read_write_PC_register_test(void) {
 
-    printf("Testign read and write to PC...\n");
+    printf("Testing read and write to PC...\n");
 
     spec_reg special;
 
@@ -133,8 +133,8 @@ void read_zero_registers_test(void) {
 
     printf("Testing read xzr and wzr...\n");
 
-    assert(read_xzr == 0);
-    assert(read_wzr == 0);
+    assert(read_xzr() == 0);
+    assert(read_wzr() == 0);
 
     printf("zero registers hold correct value : PASSED\n");
 }
