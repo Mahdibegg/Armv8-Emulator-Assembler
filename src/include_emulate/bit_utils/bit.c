@@ -1,4 +1,4 @@
-#include "instruction_types/bit_utils/bit.h"
+#include "bit.h"
 
 word_t extract_bits(instr_t instruction, unsigned low, unsigned high) {
 

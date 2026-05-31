@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "instruction_types/data_processing/data_processing.h"
+#include "data_processing.h"
 
 imm_instr_fields decode_imm_instr(decoded_instr_t instr) {
     void;
