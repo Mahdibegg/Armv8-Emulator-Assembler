@@ -59,7 +59,39 @@ exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t decode
     }
 }
 
-// fde while loop
-void run_pipeline(machine_state_t *state){
-    // TODO
+// FDE pipeline while loop wrapper
+void run_pipeline(machine_state_t *state) {
+
+    while (!state->halted) {
+
+        // FETCH
+        word_t instr = fetch_instr(state);
+
+        // DECODE
+        decoded_instr_t decoded = decode_instr_type(instr);
+
+        // EXECUTE
+        exec_result_t result = execute_instr(state, decoded);
+
+        // Handle result
+        switch (result) {
+
+            // Halt loop
+            case EXEC_HALT:
+                state->halted = true;
+                break;
+
+            case EXEC_NEXT:
+                // move to next instruction (4 bytes ahead)
+                // could move this to data_processing and load_store but would be repeated logic
+                write_pc(&state->special_registers,
+                         read_pc(&state->special_registers) + 4);
+                break;
+
+            case EXEC_BRANCH:
+                // modify PC in execute_branch()
+                // unique logic so better to handle in branch
+                break;
+        }
+    }
 }
