@@ -12,10 +12,10 @@ typedef struct {
 
 // processor state register (4 fields)
 typedef struct {
-    bool n_flag;
-    bool z_flag;
-    bool c_flag;
-    bool v_flag;
+    bit_t n_flag;
+    bit_t z_flag;
+    bit_t c_flag;
+    bit_t v_flag;
 } pstate;
 
 // special registers: zero, program counter, and stack pointer, processor state
