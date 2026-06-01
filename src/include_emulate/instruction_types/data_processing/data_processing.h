@@ -13,7 +13,8 @@
 // Immediate instruction sub types (arithmetic/wide move)
 typedef enum {
     IMM_ARITHMETIC,
-    IMM_WIDE_MOVE
+    IMM_WIDE_MOVE,
+    IMM_NULL
 } immediate_type_t;
 
 // Immediate DP instruction fields as struct 
@@ -42,7 +43,8 @@ typedef struct {
 typedef enum {
     REG_ARITHMETIC,
     REG_LOGIC,
-    REG_MULTIPLY
+    REG_MULTIPLY,
+    REG_NULL
 } register_type_t;
 
 // Register DP instruction fields as struct

@@ -9,6 +9,7 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 
     // struct to return
     imm_instr_fields_t fields = {
+        .type = IMM_NULL,
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
         .opi = extract_bits(instr.instr, 23, 25),
@@ -18,11 +19,17 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
     // differentiate between arithmetic/wide move operand
     if (fields.opi == ARITHMETIC_OPI) {
 
+        // update type to now arithmetic
+        fields.type = IMM_ARITHMETIC;
+
         // for arithmetic instruction case, fill in sh, imm12, rn fields
         fields.sh = extract_bits(instr.instr, 22, 22);
         fields.imm12 = extract_bits(instr.instr, 10, 21);
         fields.rn = extract_bits(instr.instr, 5, 9);
     } else if (fields.opi == WIDE_MOVE_OPI) {
+
+        // update type to now wide move
+        fields.type = IMM_WIDE_MOVE;
 
         // for wide move case, fill in hw, imm16 fields
         fields.hw = extract_bits(instr.instr, 22, 22);
@@ -46,6 +53,7 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     
     // struct to return
     reg_instr_fields_t fields = {
+        .type = REG_NULL,
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
         .M = extract_bits(instr.instr, 28, 28),
@@ -59,14 +67,23 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     // differentiate between arithmetic/logic and multiply
     if (fields.M == 0 && fields.opr_MSB == 0) {
 
+        // fields.type updated to arithmetic
+        fields.type = REG_ARITHMETIC;
+
         // arithmetic/logic overlap fields - opr_MSB already set
         fields.shift = extract_bits(instr.instr, 22, 23);
         if (fields.opr_MSB == 0) {
+
+            // field.type updated to logic (from arithmetic)
+            fields.type = REG_LOGIC;
 
             // setting N fields (for negation)
             fields.N = extract_bits(instr.instr, 24, 24);
         }
     } else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
+
+        // field.type updated to multiply
+        fields.type = REG_MULTIPLY;
 
         // multiplication
         fields.x = extract_bits(instr.instr, 16, 16);
