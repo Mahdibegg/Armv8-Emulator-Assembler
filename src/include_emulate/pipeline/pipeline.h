@@ -14,4 +14,7 @@ decoded_instr_t decode_instr(const word_t instr);
 // state will be updated, hence it's a pointer
 exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t instruction);
 
+// wrapper for FDE loop
+void run_pipeline(machine_state_t *state);
+
 #endif

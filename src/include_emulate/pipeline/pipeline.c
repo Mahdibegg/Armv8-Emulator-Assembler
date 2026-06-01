@@ -58,3 +58,8 @@ exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t decode
             exit(EXIT_FAILURE);
     }
 }
+
+// fde while loop
+void run_pipeline(machine_state_t *state){
+    // TODO
+}
