@@ -89,9 +89,13 @@ exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t in
 
     // distinguish between immediate and register instruction
     if (instr.type == INSTR_DP_IMM) {
-        decode_imm_instr(instr);
+
+        // execute decoded immediate instruction fields (update state)
+        execute_imm_instr(state, decode_imm_instr(instr));
     } else if (instr.type == INSTR_DP_REG) {
-        decode_reg_instr(instr);
+
+        // execute decoded register instruction fields (update state)
+        execute_reg_instr(state, decode_reg_instr(instr));
     } else {
 
         // code should ideally be unreachable, just for safety
