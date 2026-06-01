@@ -6,8 +6,9 @@
 #include "types.h"
 
 // opi instruction field to differentiate operations
-#define ARITHMETIC_OPI 0b010
-#define WIDE_MOVE_OPI 0b101
+#define ARITHMETIC_OPI 0x2
+#define WIDE_MOVE_OPI 0x5
+#define MULTIPLY_OPR 0x8
 
 // Immediate DP instruction fields as struct 
 typedef struct {
@@ -41,7 +42,7 @@ typedef struct {
     byte_t rd;
 
     // Arithmetic or logic shift (true/false)
-    bit_t is_arithmetic;
+    bit_t opr_MSB;
     byte_t shift;
     
     // Logical shift

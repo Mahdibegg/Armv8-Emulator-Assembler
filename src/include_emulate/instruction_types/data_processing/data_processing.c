@@ -48,19 +48,41 @@ reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
         .opc = extract_bits(instr.instr, 29, 30),
         .M = extract_bits(instr.instr, 28, 28),
         .opr = extract_bits(instr.instr, 21, 24),
+        .opr_MSB = extract_bits(instr.instr, 24, 24),
         .rm = extract_bits(instr.instr, 16, 20),
         .rn = extract_bits(instr.instr, 5, 9),
         .rd = extract_bits(instr.instr, 0, 4)
     };
 
     // differentiate between arithmetic/logic and multiply
-    /* if () {
+    if (fields.M == 0 && fields.opr_MSB == 0) {
 
-    } else if () {
+        // arithmetic/logic overlap fields - opr_MSB already set
+        fields.shift = extract_bits(instr.instr, 22, 23);
+        if (fields.opr_MSB == 0) {
 
+            // setting N fields (for negation)
+            fields.N = extract_bits(instr.instr, 24, 24);
+        }
+    } else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
+
+        // multiplication
+        fields.x = extract_bits(instr.instr, 16, 16);
+        fields.ra = extract_bits(instr.instr, 10,15);
     } else {
+      
+        // hand error when 
+        fprintf(stderr, "Invalid data processing register instruction: unsupported M=%u (0x%x), opr=%u (0x%x) in instruction 0x%08x\n",
+            fields.M,
+            fields.M,
+            fields.opr,
+            fields.opr,
+            instr.instr
+        );
+        exit(EXIT_FAILURE);  
+    }
 
-    } */
+    return fields;
 }
 
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
