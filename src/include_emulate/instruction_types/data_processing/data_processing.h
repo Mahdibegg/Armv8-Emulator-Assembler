@@ -5,6 +5,10 @@
 #include "pipeline/decode_struct.h"
 #include "types.h"
 
+// opi instruction field to differentiate operations
+#define ARITHMETIC_OPI 0b010
+#define WIDE_MOVE_OPI 0b101
+
 // Immediate DP instruction fields as struct 
 typedef struct {
 
