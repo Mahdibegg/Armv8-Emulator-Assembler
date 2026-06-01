@@ -13,21 +13,42 @@ all: assemble emulate
 assemble: assemble.o
 	$(CC) $(CFLAGS) -o assemble assemble.o
 
-emulate: emulate.o include_emulate/memory/memory.o include_emulate/registers/registers.o include_emulate/pipeline/pipeline.o include_emulate/instruction_types/branch/branch.o include_emulate/instruction_types/data_processing/data_processing.o include_emulate/instruction_types/load_store/load_store.o
-	$(CC) $(CFLAGS) -o emulate emulate.o include_emulate/memory/memory.o include_emulate/registers/registers.o include_emulate/pipeline/pipeline.o include_emulate/instruction_types/branch/branch.o include_emulate/instruction_types/data_processing/data_processing.o include_emulate/instruction_types/load_store/load_store.o
-	
+EMULATE_OBJS = emulate.o \
+	include_emulate/memory/memory.o \
+	include_emulate/registers/registers.o \
+	include_emulate/pipeline/pipeline.o \
+	include_emulate/instruction_types/branch/branch.o \
+	include_emulate/instruction_types/data_processing/data_processing.o \
+	include_emulate/instruction_types/load_store/load_store.o \
+	include_emulate/bit_utils/bit.o
+emulate: $(EMULATE_OBJS)
+	$(CC) $(CFLAGS) -o emulate $(EMULATE_OBJS)
+
+CLEAN_OBJS = *.o \
+	assemble \
+	emulate \
+	include_emulate/memory/*.o \
+	include_emulate/registers/*.o \
+	include_emulate/pipeline/*.o \
+	include_emulate/instruction_types/branch/*.o \
+	include_emulate/instruction_types/data_processing/*.o \
+	include_emulate/instruction_types/load_store/*.o \
+	include_emulate/memory_registers_tests/*.o \
+	include_emulate/bit_utils/*.o \
+	test_suite/*.o \
+	test_registers \
+	test_memory 
+clean:
+	$(RM) $(CLEAN_OBJS)
 
 
-TEST_REGISTER_OBJS = include_emulate/memory_registers_tests/test_registers.o \
+
+TEST_REGISTER_OBJS = test_suite/test_registers.o \
 	include_emulate/registers/registers.o
 test_registers: $(TEST_REGISTER_OBJS)
 	$(CC) $(CFLAGS) -o test_registers $(TEST_REGISTER_OBJS)
 
-TEST_MEMORY_OBJS = include_emulate/memory_registers_tests/test_memory.o \
+TEST_MEMORY_OBJS = test_suite/test_memory.o \
 	include_emulate/memory/memory.o
 test_memory: $(TEST_MEMORY_OBJS)
 	$(CC) $(CFLAGS) -o test_memory $(TEST_MEMORY_OBJS)
-
-clean:
-	$(RM) *.o include_emulate/memory/*.o include_emulate/registers/*.o include_emulate/pipeline/*.o include_emulate/instruction_types/branch/*.o include_emulate/instruction_types/data_processing/*.o include_emulate/instruction_types/load_store/*.o include_emulate/memory_registers_tests/*.o test_registers test_memory assemble emulate
-	

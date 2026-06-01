@@ -2,10 +2,9 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "../memory/memory.h"
+#include "memory/memory.h"
 
 // initialising all memory bytes to 0 test
-
 void init_memory_test(void) {
 
     memory_t memory;

@@ -12,7 +12,7 @@ typedef struct {
     memory_t memory;
     gen_regs general_registers;
     spec_reg special_registers;
-    bool halted;
+    bit_t halted;
 } machine_state_t;
 
 #endif
