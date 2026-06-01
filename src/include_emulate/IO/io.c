@@ -69,9 +69,29 @@ FILE *setup_output(char *outputfile) {
     return out;
 }
 
+// Load the binary input file into state
+void binary_loader(machine_state_t *state, char *inputfile) {
 
-void binary_loader() {
-    // TODO
+    // Try to open the input file
+    FILE *file = fopen(inputfile, "rb");
+
+    // Fail if unsuccesful
+    if (file == NULL) {
+        perror("Error opening input file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read bytes into the memory array, capped at memory size
+    size_t bytes_read = fread(state->memory.memory, sizeof(byte_t), MEMORY_SIZE, file);
+    
+    // Closed file after reading
+    fclose(file);
+
+    // Fail if nothing was read to state
+    if (bytes_read == 0) {
+        fprintf(stderr, "Error: failed to read input file\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void output_write() {
