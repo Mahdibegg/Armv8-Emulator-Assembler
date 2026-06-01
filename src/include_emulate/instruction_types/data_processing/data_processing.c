@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,6 +11,9 @@ imm_instr_fields decode_imm_instr(decoded_instr_t instr) {
 reg_instr_fields decode_reg_instr(decoded_instr_t instr) {
     void;
 }
+=======
+#include "data_processing.h"
+>>>>>>> part1_emulate_setup
 
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
 
