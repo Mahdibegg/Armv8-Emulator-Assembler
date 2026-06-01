@@ -34,6 +34,7 @@ typedef struct {
     // General register instruction format
     bit_t sf;
     byte_t opc;
+    bit_t M;
     byte_t opr;
     byte_t rm;
     byte_t rn;

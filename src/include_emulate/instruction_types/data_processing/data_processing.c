@@ -46,13 +46,21 @@ reg_instr_fields decode_reg_instr(decoded_instr_t instr) {
     reg_instr_fields fields = {
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
+        .M = extract_bits(instr.instr, 28, 28),
         .opr = extract_bits(instr.instr, 21, 24),
         .rm = extract_bits(instr.instr, 16, 20),
         .rn = extract_bits(instr.instr, 5, 9),
         .rd = extract_bits(instr.instr, 0, 4)
     };
 
-    // differentiate between  
+    // differentiate between arithmetic/logic and multiply
+    /* if () {
+
+    } else if () {
+
+    } else {
+
+    } */
 }
 
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
