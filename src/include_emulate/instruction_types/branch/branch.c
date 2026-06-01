@@ -37,3 +37,53 @@ static bool is_reg_branch(decoded_instr_t instr) {
     // check the raw instruction shifted 10 bits to the right
     return (raw >> 10) == 0x3587C0;
 }
+
+// 3 functions to extract the fields from each instruction (decoding)
+// Decode Unconditional Branch Helper Function
+static uncond_branch_t decode_uncond_branch( decoded_instr_t instr) {
+
+    uncond_branch_t branch;
+
+    instr_t raw = instr.instr;
+
+    // extract the unsigned representation of the offset
+    dword_t simm26 = extract_bits(raw, 0, 25);
+
+    // offset - sign extend simm26 to 64 bit and multiply by 4 (or shift by 2 to the right)
+    branch.offset = sign_extend(simm26, 26) << 2;
+
+    return branch;
+}
+
+// Decode Conditional Branch Helper Function
+static cond_branch_t decode_cond_branch( decoded_instr_t instr) {
+
+    cond_branch_t branch;
+
+    instr_t raw = instr.instr;
+
+    // extract the first 4 bits (represents the condition)
+    branch.cond = extract_bits(raw, 0, 3);
+
+    // extract the unsigned representation of the offset
+    dword_t simm19 = extract_bits(raw, 5, 23);
+
+
+    // offset - sign extend simm19 to 64 bit and multiply by 4 (or shift by 2 to the right
+    branch.offset = sign_extend(simm19, 19) << 2;
+
+    return branch;
+}
+
+// Decode Register Branch Helper Function
+static reg_branch_t decode_reg_branch( decoded_instr_t instr) {
+
+    reg_branch_t branch;
+
+    instr_t raw = instr.instr;
+
+    // extract the bits that represent the register number 0-31
+    branch.xn = extract_bits(raw, 5, 9);
+
+    return branch;
+}
