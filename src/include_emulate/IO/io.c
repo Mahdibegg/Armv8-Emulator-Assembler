@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-//helper function for checking file ending
+// Helper function for checking file ending
 static int ends_with(const char *str, const char *suffix) {
     if (!str || !suffix) return 0;
 
@@ -12,11 +12,11 @@ static int ends_with(const char *str, const char *suffix) {
 
     if (lensuffix > lenstr) return 0;
     
-    //move along string until reach suffix, and compare
+    // Move along string until reach where suffix should be, and compare
     return strcmp(str + (lenstr - lensuffix), suffix) == 0;
 }
 
-//validate arguments passed in
+// Validate arguments passed in
 void validate_args(int argc, char **argv, char **input, char **output) {
 
     // Check number of arguments
@@ -48,9 +48,27 @@ void validate_args(int argc, char **argv, char **input, char **output) {
     }
 }
 
-FILE *setup_output() {
-    return NULL; // TODO
+// Select whether to output to stdout or to an output file
+FILE *setup_output(char *outputfile) {
+
+    // If no output file is provided -> use stdout
+    if (outputfile == NULL) {
+        return stdout;
+    }
+
+    // Try to open the output file
+    FILE *out = fopen(outputfile, "w");
+
+    // Fail if unsuccessful
+    if (out == NULL) {
+        perror("Error opening output file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Use if successful
+    return out;
 }
+
 
 void binary_loader() {
     // TODO
