@@ -53,18 +53,6 @@ typedef struct {
     byte_t ra;
 } reg_instr_fields_t;
 
-// extracts bits to create immediate instruction fields as struct
-imm_instr_fields_t decode_imm_instr(decoded_instr_t instr);
-
-// extract bits to create register instruction fields as struct
-reg_instr_fields_t decode_reg_instr(decoded_instr_t instr);
-
-// executing fully decoded immediate instruction (state updated)
-void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields);
-
-//  executing fully decoded register instruction (state updated)
-void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields);
-
 // takes bits and executes correct data processing type instruction
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr);
 

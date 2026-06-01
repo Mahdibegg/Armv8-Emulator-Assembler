@@ -4,7 +4,8 @@
 #include "data_processing.h"
 #include "bit_utils/bit.h"
 
-imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
+// extracts bits to create immediate instruction fields as struct
+static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 
     // struct to return
     imm_instr_fields_t fields = {
@@ -40,7 +41,8 @@ imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
     return fields;
 }
 
-reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
+// extract bits to create register instruction fields as struct
+static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     
     // struct to return
     reg_instr_fields_t fields = {
@@ -84,6 +86,12 @@ reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
 
     return fields;
 }
+
+// executing fully decoded immediate instruction (state updated)
+static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields);
+
+//  executing fully decoded register instruction (state updated)
+static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields);
 
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
 
