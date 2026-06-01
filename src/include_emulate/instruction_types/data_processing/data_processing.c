@@ -4,10 +4,10 @@
 #include "data_processing.h"
 #include "bit_utils/bit.h"
 
-imm_instr_fields decode_imm_instr(decoded_instr_t instr) {
+imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 
     // struct to return
-    imm_instr_fields fields = {
+    imm_instr_fields_t fields = {
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
         .opi = extract_bits(instr.instr, 23, 25),
@@ -40,10 +40,10 @@ imm_instr_fields decode_imm_instr(decoded_instr_t instr) {
     return fields;
 }
 
-reg_instr_fields decode_reg_instr(decoded_instr_t instr) {
+reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     
     // struct to return
-    reg_instr_fields fields = {
+    reg_instr_fields_t fields = {
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
         .M = extract_bits(instr.instr, 28, 28),

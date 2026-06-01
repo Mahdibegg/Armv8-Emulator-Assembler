@@ -26,7 +26,7 @@ typedef struct {
     // Wide Move operand format
     byte_t hw;
     word_t imm16;
-} imm_instr_fields;
+} imm_instr_fields_t;
 
 // Register DP instruction fields as struct
 typedef struct {
@@ -50,13 +50,13 @@ typedef struct {
     // Multiply
     bit_t x;
     byte_t ra;
-} reg_instr_fields;
+} reg_instr_fields_t;
 
 // extracts bits to create immediate instruction fields as struct
-imm_instr_fields decode_imm_instr(decoded_instr_t instr);
+imm_instr_fields_t decode_imm_instr(decoded_instr_t instr);
 
 // extract bits to create register instruction fields as struct
-reg_instr_fields decode_reg_instr(decoded_instr_t instr);
+reg_instr_fields_t decode_reg_instr(decoded_instr_t instr);
 
 // takes bits and executes correct data processing type instruction
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr);
