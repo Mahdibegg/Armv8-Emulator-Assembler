@@ -5,9 +5,13 @@
 #include "pipeline/decode_struct.h"
 #include "types.h"
 
-// opi instruction field to differentiate operations
+// instruction field constants to differentiate operations during decode/execute
+
+// immediate instruction field cases (OPI)
 #define ARITHMETIC_OPI 0x2
 #define WIDE_MOVE_OPI 0x5
+
+// register instruction field cases (OPR)
 #define MULTIPLY_OPR 0x8
 
 // Immediate instruction sub types (arithmetic/wide move)
@@ -18,6 +22,7 @@ typedef enum {
 } immediate_type_t;
 
 // Immediate DP instruction fields as struct 
+// Should be returned by an immediate_instruction decoder
 typedef struct {
 
     // Immediate instruction type (arithmetic/wide move)
@@ -48,6 +53,7 @@ typedef enum {
 } register_type_t;
 
 // Register DP instruction fields as struct
+// Should be returned by a register_instruction decoder
 typedef struct {
 
     // Register instruction type (arithmetic/logic/multiply)

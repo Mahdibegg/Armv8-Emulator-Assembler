@@ -5,6 +5,7 @@
 #include "bit_utils/bit.h"
 
 // extracts bits to create immediate instruction fields as struct
+// using the opi field against hardcoded constants (in data_processing.h) to set type and operand fields
 static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 
     // struct to return
@@ -22,7 +23,7 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
         // update type to now arithmetic
         fields.type = IMM_ARITHMETIC;
 
-        // for arithmetic instruction case, fill in sh, imm12, rn fields
+        // for arithmetic instruction case, fill in sh, imm12, rn fields, ignore hw, imm16
         fields.sh = extract_bits(instr.instr, 22, 22);
         fields.imm12 = extract_bits(instr.instr, 10, 21);
         fields.rn = extract_bits(instr.instr, 5, 9);
@@ -31,12 +32,13 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
         // update type to now wide move
         fields.type = IMM_WIDE_MOVE;
 
-        // for wide move case, fill in hw, imm16 fields
+        // for wide move case, fill in hw, imm16 fields, ignore sh, imm12, rn fields
         fields.hw = extract_bits(instr.instr, 22, 22);
         fields.imm16 = extract_bits(instr.instr, 5, 20);
     } else {
 
         // handle error when opi does not fit arithmetic or wide move
+        // emulator does not support any other case and unknown opi
         fprintf(stderr, "Invalid data processing immediate instruction: unsupported opi=%u (0x%x) in instruction 0x%08x\n",
             fields.opi,
             fields.opi,
@@ -49,6 +51,7 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 }
 
 // extract bits to create register instruction fields as struct
+// checking M, OPR's MSB and LSB and OPR to determine type field
 static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     
     // struct to return
@@ -85,12 +88,12 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
         // field.type updated to multiply
         fields.type = REG_MULTIPLY;
 
-        // multiplication
+        // multiplication extracts x and ra bits (ignoring the the shift and N fields)
         fields.x = extract_bits(instr.instr, 16, 16);
         fields.ra = extract_bits(instr.instr, 10,15);
     } else {
       
-        // hand error when 
+        // handling error case for any M/OPR that the emulator does not support
         fprintf(stderr, "Invalid data processing register instruction: unsupported M=%u (0x%x), opr=%u (0x%x) in instruction 0x%08x\n",
             fields.M,
             fields.M,
@@ -104,30 +107,34 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     return fields;
 }
 
-// executing fully decoded immediate instruction (state updated)
+// executing fully decoded immediate instruction (state will be updated, hence its void)
 static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields);
 
-//  executing fully decoded register instruction (state updated)
+//  executing fully decoded register instruction (state will be updated, hence its void)
 static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields);
 
+// final execute_data_processing function puts all helpers (the static functions)
+// then this will be used in the execution of pipeline 
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
 
-    // distinguish between immediate and register instruction
+    // distinguish between immediate and register instruction so it can further decode
+    // the correct type
     if (instr.type == INSTR_DP_IMM) {
 
-        // execute decoded immediate instruction fields (update state)
+        // pass further decoded result into execution straight away along with state pointer
         execute_imm_instr(state, decode_imm_instr(instr));
     } else if (instr.type == INSTR_DP_REG) {
 
-        // execute decoded register instruction fields (update state)
+        // similar as above but with reg version
         execute_reg_instr(state, decode_reg_instr(instr));
     } else {
 
-        // error message for unsupported operation
+        // error message for unsupported other forms of data_processing (or branching/load_store)
         fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%x", instr);
         exit(EXIT_FAILURE);
     }
 
     // no branching, continue to next instruction in pipeline
+    // PC should be updated outside loop
     return EXEC_NEXT;
 }
