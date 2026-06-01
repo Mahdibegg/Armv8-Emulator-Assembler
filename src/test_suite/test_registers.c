@@ -21,7 +21,6 @@ void init_gen_registers_test(void) {
     printf("all general registers were initialised to 0 : PASSED\n");
 }
 
-
 // initialising special register test
 void init_spec_registers_test(void) {
 
@@ -41,7 +40,6 @@ void init_spec_registers_test(void) {
     printf("The special registers were initialised correctly : PASSED\n");
 }
 
-
 // read write x registers test
 void read_write_x_registers_test(void) {
 
@@ -50,7 +48,6 @@ void read_write_x_registers_test(void) {
     gen_regs g_regs;
     // initialise the general purpose registers 
     init_gen_registers(&g_regs);
-
 
     // write to and read from each register 
     for(unsigned i = 0; i < REG_NUM; i++) {
@@ -125,7 +122,6 @@ void read_write_PC_register_test(void) {
     assert(read_pc(&special) ==  0xABCDEF1234567890);
 
     printf("read/write to PC register : PASSED\n");
-
 }
 
 // reading zero register tests
@@ -138,7 +134,6 @@ void read_zero_registers_test(void) {
 
     printf("zero registers hold correct value : PASSED\n");
 }
-
 
 // running all tests together
 int main(void) {
