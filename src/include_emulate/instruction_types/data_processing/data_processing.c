@@ -106,9 +106,8 @@ exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t in
         execute_reg_instr(state, decode_reg_instr(instr));
     } else {
 
-        // code should ideally be unreachable, just for safety
-
-        fprintf(stderr, "Invalid operation: non-immediate/register data process not supported");
+        // error message for unsupported operation
+        fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%x", instr);
         exit(EXIT_FAILURE);
     }
 
