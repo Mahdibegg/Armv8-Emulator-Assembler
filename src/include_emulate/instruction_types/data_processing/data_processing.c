@@ -26,6 +26,15 @@ imm_instr_fields decode_imm_instr(decoded_instr_t instr) {
         // for wide move case, fill in hw, imm16 fields
         fields.hw = extract_bits(instr.instr, 22, 22);
         fields.imm16 = extract_bits(instr.instr, 5, 20);
+    } else {
+
+        // hand error when opi does not fit arithmetic or wide move
+        fprintf(stderr, "Invalid data processing immediate instruction: unsupported opi=%u (0x%x) in instruction 0x%08x\n",
+            fields.opi,
+            fields.opi,
+            instr.instr
+        );
+        exit(EXIT_FAILURE);
     }
 
     return fields;
