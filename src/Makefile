@@ -14,6 +14,7 @@ assemble: assemble.o
 	$(CC) $(CFLAGS) -o assemble assemble.o
 
 EMULATE_OBJS = emulate.o \
+	include_emulate/IO/io.o \
 	include_emulate/memory/memory.o \
 	include_emulate/registers/registers.o \
 	include_emulate/pipeline/pipeline.o \
@@ -27,6 +28,7 @@ emulate: $(EMULATE_OBJS)
 CLEAN_OBJS = *.o \
 	assemble \
 	emulate \
+	include_emulate/IO/*.o \
 	include_emulate/memory/*.o \
 	include_emulate/registers/*.o \
 	include_emulate/pipeline/*.o \
