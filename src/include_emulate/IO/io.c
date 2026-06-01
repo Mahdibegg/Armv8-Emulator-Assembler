@@ -94,6 +94,46 @@ void binary_loader(machine_state_t *state, char *inputfile) {
     }
 }
 
-void output_write() {
-    // TODO
+// Write to given output stream
+void output_write(machine_state_t *state, FILE *out) {
+
+    // Registers
+    fprintf(out, "Registers :\n");
+
+    // Format register as X[2 digit number], contents as 16 digit hex value padded with 0's
+    for (int i = 0; i < 31; i++) {
+        fprintf(out, 
+            "X%02d = %016lx\n", i, state->general_registers.r[i]
+        );
+    }
+
+    // PC, formatted as 16 digit hex value padded with 0's
+    fprintf(out, 
+        "PC = %016lx\n",
+        state->special_registers.pc
+    );
+
+    // PSTATE, formatted as combination of 4 characters
+    fprintf(out, 
+        "PSTATE : %c%c%c%c\n",
+
+        state->special_registers.psr.n_flag ? 'N' : '-',  // Negative flag
+        state->special_registers.psr.z_flag ? 'Z' : '-',  // Zero flag
+        state->special_registers.psr.c_flag ? 'C' : '-',  // Carry flag
+        state->special_registers.psr.v_flag ? 'V' : '-'   // Overflow flag
+    );
+
+    // Memory, address and value formatted as 8 digit hex values
+    fprintf(out, "Non-zero memory:\n");
+
+    for (addr_t addr = 0; addr < MEMORY_SIZE; addr += 4) {
+
+        word_t value = read_word(&state->memory, addr);
+
+        if (value != 0) {
+            fprintf(out, 
+                "0x%08x: 0x%08x\n", addr, value
+            );
+        }
+    }
 }
