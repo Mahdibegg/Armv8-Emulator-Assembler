@@ -16,7 +16,7 @@ word_t fetch_instr(const machine_state_t *state) {
 
 // TODO - WHEN FUNCTION IS COMPLETED DELETE THIS ------------
 // decodes instruction
-decoded_instr_t decode_instruction(word_t instruction) {
+decoded_instr_t decode_instr_type(word_t instruction) {
 
     // fill in struct to return, passed to exec_result
     decoded_instr_t decoded_instruction = {
@@ -36,25 +36,25 @@ decoded_instr_t decode_instruction(word_t instruction) {
 
 // returns the next state in the pipeline
 // pattern matches instruction type and passes down the instruction for exact instruction execution
-exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t decoded_instruction) {
+exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t decoded_instr_type) {
 
-    switch (decoded_instruction.type) {
+    switch (decoded_instr_type.type) {
 
         case INSTR_HALT:
             return EXEC_HALT;
 
         case INSTR_DP_IMM:
         case INSTR_DP_REG:
-            return execute_data_processing(state, decoded_instruction);
+            return execute_data_processing(state, decoded_instr_type);
 
         case INSTR_LOAD_STORE:
-            return execute_load_store(state, decoded_instruction);
+            return execute_load_store(state, decoded_instr_type);
 
         case INSTR_BRANCH:
-            return execute_branch(state, decoded_instruction);
+            return execute_branch(state, decoded_instr_type);
 
         default:
-            fprintf(stderr, "Unknown instruction: %" PRIu32 "\n", decoded_instruction.instr);
+            fprintf(stderr, "Unknown instruction: %" PRIu32 "\n", decoded_instr_type.instr);
             exit(EXIT_FAILURE);
     }
 }
