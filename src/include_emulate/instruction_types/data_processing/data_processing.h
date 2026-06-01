@@ -10,8 +10,17 @@
 #define WIDE_MOVE_OPI 0x5
 #define MULTIPLY_OPR 0x8
 
+// Immediate instruction sub types (arithmetic/wide move)
+typedef enum {
+    IMM_ARITHMETIC,
+    IMM_WIDE_MOVE
+} immediate_type_t;
+
 // Immediate DP instruction fields as struct 
 typedef struct {
+
+    // Immediate instruction type (arithmetic/wide move)
+    immediate_type_t type;
 
     // General immediate instruction format
     bit_t sf;
@@ -29,8 +38,18 @@ typedef struct {
     word_t imm16;
 } imm_instr_fields_t;
 
+// Register instruction sub types (arithmetic/logic/multiply)
+typedef enum {
+    REG_ARITHMETIC,
+    REG_LOGIC,
+    REG_MULTIPLY
+} register_type_t;
+
 // Register DP instruction fields as struct
 typedef struct {
+
+    // Register instruction type (arithmetic/logic/multiply)
+    register_type_t type;
 
     // General register instruction format
     bit_t sf;
