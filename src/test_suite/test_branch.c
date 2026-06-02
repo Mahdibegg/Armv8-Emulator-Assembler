@@ -13,19 +13,20 @@
  assert_general_registers_are_zero - tests if genearl registers are 0 only used with non register branch instructions
  assert_special_registers_initialised_except_pc - tests if special registers remain unchanged except for pc
  assert_only_x_register_changed - tests if the xth register is the only register that is changed, the rest should be 0
- 
+
 */
 static void assert_general_registers_are_zero(const machine_state_t *state) {
-
+    // Loop to test if general registers are set to 0
     for (unsigned i = 0; i < REG_NUM; i++) {
      assert(read_x_register(&state->general_registers, i) == 0);  
     }
 }
 
 static void assert_special_registers_initialised_except_pc(const machine_state_t *state, dword_t expected_pc) {
-
+    // Separately check if pc is set to expected value
     assert(read_pc(&state->special_registers) == expected_pc);
 
+    // Test remaining special registers are initialised
     assert(state->special_registers.psr.c_flag == false);
     assert(state->special_registers.psr.n_flag == false);
     assert(state->special_registers.psr.v_flag == false);
@@ -33,6 +34,7 @@ static void assert_special_registers_initialised_except_pc(const machine_state_t
 }
 
 static void assert_only_x_register_changed(const machine_state_t *state, unsigned changed_index, dword_t expected_value) {
+    // Loop through all general registers testing that only the xth register is not 0 
     for (unsigned i = 0; i < REG_NUM; i++) {
         if (i == changed_index) {
             assert(read_x_register(&state->general_registers, i) == expected_value);
@@ -56,9 +58,7 @@ static void unconditional_branch_forward_test(void) {
        Unconditional branch encoding:
        bits 31-26 = 000101 = 0x5
        simm26 = 1
-
        Actual offset = simm26 << 2 = 1 * 4 = 4
-
        So PC should become 100 + 4 = 104.
     */
     decoded_instr_t instr;
@@ -87,12 +87,9 @@ static void unconditional_branch_backward_test(void) {
 
     /*
        simm26 = -1
-
        In 26-bit two's complement, -1 is all 26 bits set to 1:
        0x03FFFFFF
-
        Actual offset = -1 << 2 = -4
-
        PC should become 100 - 4 = 96.
     */
     decoded_instr_t instr;
@@ -123,7 +120,6 @@ static void register_branch_test(void) {
     /*
        Register branch pattern:
        1101011000011111000000 Xn 00000
-
        Fixed bits 31-10 = 0x3587C0
        Xn = 3
     */
@@ -153,13 +149,10 @@ static void conditional_branch_taken_eq_test(void) {
     /*
        Conditional branch format:
        01010100 simm19 0 cond
-
        0x54 = 01010100
        simm19 = 1
        cond = 0x0 for EQ
-
        Actual offset = 1 << 2 = 4
-
        Since Z flag is true, PC should become 104.
     */
     decoded_instr_t instr;
@@ -188,7 +181,6 @@ static void conditional_branch_not_taken_ne_test(void) {
 
     /*
        cond = 0x1 for NE
-
        NE requires Z == 0.
        But z_flag is true, so PC should stay 100.
     */
