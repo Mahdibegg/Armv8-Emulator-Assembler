@@ -10,7 +10,6 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 
     // struct to return
     imm_instr_fields_t fields = {
-        .type = IMM_NULL,
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
         .opi = extract_bits(instr.instr, 23, 25),
@@ -56,7 +55,6 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     
     // struct to return
     reg_instr_fields_t fields = {
-        .type = REG_NULL,
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
         .M = extract_bits(instr.instr, 28, 28),
@@ -121,8 +119,7 @@ static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields)
         // specifically execute the immediate with hw, imm16 for (movn, movz, movk)
         case IMM_WIDE_MOVE:
             void;
-
-        case IMM_NULL:
+            
         default:
 
             // provide address of invalid operation if IMM_NULL or
