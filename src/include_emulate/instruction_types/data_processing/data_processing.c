@@ -269,7 +269,7 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
             case ANDS:
             case BICS:
             default:
-                void;
+                invalid_field_error("Opcode", shift_opcode, instr);
         }
 
         // set rd = rn & operand (named op)
@@ -301,7 +301,7 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
             case ANDS:
             case BICS:
             default:
-                void;
+                invalid_field_error("Opcode", shift_opcode, instr);
         }
     
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
