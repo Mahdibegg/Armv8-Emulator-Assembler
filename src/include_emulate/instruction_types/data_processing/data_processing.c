@@ -39,8 +39,8 @@
 #define BICS 0x7
 
 // register multiplication instruction (x field)
-#define madd 0x0
-#define msub 0x1
+#define MADD 0x0
+#define MSUB 0x1
 
 /*
 
@@ -256,10 +256,10 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
     // case for multiplication
     // 0 - madd, 1 - msub
     switch (fields.x) {
-        case AND:
-        case BIC:
+        case MADD:
+        case MSUB:
         default:
-        
+
             unsupported_opcode_error(fields.x, read_pc(&state->special_registers));
     }
 }
