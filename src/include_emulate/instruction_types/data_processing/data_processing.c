@@ -38,6 +38,10 @@
 #define ANDS 0x6
 #define BICS 0x7
 
+// register multiplication instruction (x field)
+#define madd 0x0
+#define msub 0x1
+
 /*
 
 2 functions decode_imm_instr, decode_reg_instr build the immediate/register instr_fields for execution
@@ -226,7 +230,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
 
 static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
 
-    // combine shift opcode and N bits to create 3 bit binary digit
+    // combine shift opcode and N bits to create 3 bit binary digit for case checks
     byte_t shift_opcode = (fields.opc << 1) + fields.N;
 
     // case for logical shift
@@ -247,7 +251,18 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
 
 }
 
-static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
+static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
+
+    // case for multiplication
+    // 0 - madd, 1 - msub
+    switch (fields.x) {
+        case AND:
+        case BIC:
+        default:
+        
+            unsupported_opcode_error(fields.x, read_pc(&state->special_registers));
+    }
+}
 
 /*
 
