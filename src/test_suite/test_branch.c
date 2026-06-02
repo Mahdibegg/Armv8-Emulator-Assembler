@@ -126,3 +126,29 @@ static void conditional_branch_taken_eq_test(void) {
 
     printf("Conditional branch taken EQ: PASSED\n");
 }
+
+static void conditional_branch_not_taken_ne_test(void) {
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_pc(&state.special_registers, 100);
+
+    /*
+       cond = 0x1 for NE
+
+       NE requires Z == 0.
+       But z_flag is true, so PC should stay 100.
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_BRANCH;
+    instr.instr = (0x54 << 24) | (1 << 5) | 0x1;
+
+    exec_result_t result = execute_branch(&state, instr);
+
+    assert(result == EXEC_BRANCH);
+    assert(read_pc(&state.special_registers) == 100);
+
+    printf("Conditional branch not taken NE: PASSED\n");
+}
