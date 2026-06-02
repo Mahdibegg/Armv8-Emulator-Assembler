@@ -1,8 +1,11 @@
 #include "branch.h"
-#include <stdbool.h>
-#include "include_emulate/bit_utils/bit.h"
-#include "include_emulate/registers/registers.h"
+#include "bit_utils/bit.h"
+#include "registers/registers.h"
 
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 // 3 helper functions to determine the type of the branch instruction
 
