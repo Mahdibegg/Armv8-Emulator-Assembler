@@ -1,6 +1,9 @@
 #include "load_store.h"
 #include "bit_utils/bit.h"
 
+// register field value 11111 (31) encodes the zero register
+#define ZERO_REGISTER 0x1F
+
 /*
  
 decode_load_store builds the ls_instr_fields struct for execution
@@ -54,6 +57,25 @@ static ls_instr_fields_t decode_load_store(decoded_instr_t instr) {
     }
  
     return fields;
+}
+
+/*
+
+read_reg reads a general register, returning 0 for the zero register
+(index 31, which is ZR here, not SP — SP is unsupported)
+
+*/
+
+static dword_t read_reg(const machine_state_t *state, byte_t index, bit_t sf) {
+
+    // index 31 reads as the zero register
+    if (index == ZERO_REGISTER) {
+        return sf ? read_xzr() : read_wzr();
+    }
+
+    // otherwise read as a 64-bit X or 32-bit W register
+    return sf ? read_x_register(&state->general_registers, index)
+              : read_w_register(&state->general_registers, index);
 }
 
 exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) {
