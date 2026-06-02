@@ -7,7 +7,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-// 3 helper functions to determine the type of the branch instruction
+/*
+
+3 functions is_conditional, is_unconditional, is_reg_branch check the encoded
+instruction pattern to identify the specific branch instruction type.
+
+conditional version - checks the fixed 01010100 pattern in bits 31-24
+unconditional version - checks the fixed 000101 pattern in bits 31-26
+register version - checks the fixed register branch pattern in bits 31-10 and
+the required 00000 pattern in bits 4-0
+
+*/
 
 static bool is_unconditional(decoded_instr_t instr) {
     // Bits 26-31 of encoded instruction are 000101
@@ -46,8 +56,18 @@ static bool is_reg_branch(decoded_instr_t instr) {
     return opcode_matches && bottom_bits_zero;
 }
 
-// 3 functions to extract the fields from each instruction (decoding)
-// Decode Unconditional Branch Helper Function
+/*
+
+3 functions decode_cond_branch, decode_uncond_branch, decode_reg_branch build
+the conditional/unconditional/register branch fields for execution.
+
+conditional version - extracts simm19 and cond, sign-extends simm19 and shifts
+left by 2 to calculate the byte offset
+unconditional version - extracts simm26, sign-extends it and shifts left by 2
+to calculate the byte offset
+register version - extracts the Xn field used as the target register for br
+
+*/
 static uncond_branch_t decode_uncond_branch( decoded_instr_t instr) {
 
     uncond_branch_t branch;
@@ -57,13 +77,12 @@ static uncond_branch_t decode_uncond_branch( decoded_instr_t instr) {
     // extract the unsigned representation of the offset
     dword_t simm26 = extract_bits(raw, 0, 25);
 
-    // offset - sign extend simm26 to 64 bit and multiply by 4 (or shift by 2 to the right)
+    // offset - sign extend simm26 to 64 bit and multiply by 4 (or shift by 2 to the left)
     branch.offset = sign_extend(simm26, 26) << 2;
 
     return branch;
 }
 
-// Decode Conditional Branch Helper Function
 static cond_branch_t decode_cond_branch( decoded_instr_t instr) {
 
     cond_branch_t branch;
@@ -77,7 +96,7 @@ static cond_branch_t decode_cond_branch( decoded_instr_t instr) {
     dword_t simm19 = extract_bits(raw, 5, 23);
 
 
-    // offset - sign extend simm19 to 64 bit and multiply by 4 (or shift by 2 to the right
+    // offset - sign extend simm19 to 64 bit and multiply by 4 (or shift by 2 to the left)
     branch.offset = sign_extend(simm19, 19) << 2;
 
     return branch;
@@ -96,8 +115,17 @@ static reg_branch_t decode_reg_branch( decoded_instr_t instr) {
     return branch;
 }
 
-// Functions for executing the appropriate branch instruction
-// Execute Unconditional Branch
+/*
+
+4 functions condition_holds, execute_conditional_branch,
+execute_unconditional_branch, execute_reg_branch handle branch execution.
+
+condition_holds - evaluates the condition code using the PSR flags
+conditional version - updates PC by offset if the condition holds
+unconditional version - always updates PC by offset
+register version - updates PC to the address stored in register Xn
+
+*/
 static void execute_unconditional_branch(machine_state_t *state, uncond_branch_t branch) {
 
     // get the offset from the decoded branch
@@ -111,7 +139,6 @@ static void execute_unconditional_branch(machine_state_t *state, uncond_branch_t
     write_pc(&state->special_registers.pc, new_pc);
 }
 
-// Execute Register Branch
 static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
 
     // get the register number 
@@ -124,8 +151,6 @@ static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
     write_pc(&state->special_registers.pc, target);
 }
 
-// Checks if the condition holds relative to machine state
-// Used in execute_conditional_branch
 static bool condition_holds(unsigned cond,  const spec_reg *spec_regs) {
     switch(cond) {
 
@@ -158,7 +183,6 @@ static bool condition_holds(unsigned cond,  const spec_reg *spec_regs) {
     }
 }
 
-// Execute Conditional Branch
 static void execute_conditional_branch(machine_state_t *state, cond_branch_t branch) {
 
     // get the offset from the decoded branch 
@@ -177,11 +201,16 @@ static void execute_conditional_branch(machine_state_t *state, cond_branch_t bra
     }
 }
 
-// Execute Branch Instruction: This runs in the pipeline and updates the PC appropriately
-// Returns EXEC_BRANCH but is ignored in the pipeline
+/*
+
+final execute_branch function uses all helpers (the static functions) 
+
+should be used in the execution of pipeline 
+
+*/
 exec_result_t execute_branch(machine_state_t *state, decoded_instr_t instr) {
 
-    // check type of the instructoin if the isntruction is not of tpe branch then error
+    // check type of the instruction if the isntruction is not of type branch then error
     if (instr.type != INSTR_BRANCH) {
 
         fprintf(stderr, "Invalid branch instruction: unsupported instruction type %u in instruction 0x%08x\n",
