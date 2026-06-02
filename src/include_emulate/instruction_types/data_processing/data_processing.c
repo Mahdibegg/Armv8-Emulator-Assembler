@@ -108,10 +108,63 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
 }
 
 // executing fully decoded immediate instruction (state will be updated, hence its void)
-static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields);
+static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields) {
+    
+    // checking type of immediate to execute it more specifically 
+    // due to it having its own respective fields
+    switch (fields.type) {
+
+        // specifically execute the arithmetic instruction with sh, imm12, rn for (add, sub, adds, subs)
+        case IMM_ARITHMETIC:
+            void;
+
+        // specifically execute the immediate with hw, imm16 for (movn, movz, movk)
+        case IMM_WIDE_MOVE:
+            void;
+
+        case IMM_NULL:
+        default:
+
+            // provide address of invalid operation if IMM_NULL or
+            // non immedate instruction is attempted to be executed
+            fprintf(stderr, "Invalid operation: unsupported immediate execution at address 0x%x\n",
+                read_pc(&state->special_registers)
+            );
+            exit(EXIT_FAILURE);
+    }
+}
 
 //  executing fully decoded register instruction (state will be updated, hence its void)
-static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields);
+static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields) {
+
+    // checking type of register to execute it more specifically 
+    // due to it having its own respective fields
+    switch (fields.type) {
+
+        // execute arithmetic shift using the shift field for (lsl, lsr, asr, ror)
+        case REG_ARITHMETIC:
+            void;
+
+        // using logical shift and N field for executing
+        // (and, bic, orr, orn, eor, eon, ands, bics)
+        case REG_LOGIC:
+            void;
+
+        // using the x field for executing (madd, msub)
+        // then using the ra field as a third input register for multiply instructions
+        case REG_MULTIPLY:
+            void;
+
+        default:
+
+            // provide address of invalid operation if IMM_NULL or
+            // non immedate instruction is attempted to be executed
+            fprintf(stderr, "Invalid operation: unsupported immediate execution at address 0x%x\n",
+                read_pc(&state->special_registers)
+            );
+            exit(EXIT_FAILURE);
+    }
+}
 
 // final execute_data_processing function puts all helpers (the static functions)
 // then this will be used in the execution of pipeline 
