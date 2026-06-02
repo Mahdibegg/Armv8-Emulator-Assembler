@@ -100,6 +100,33 @@ static void write_reg(machine_state_t *state, byte_t index, bit_t sf, dword_t va
     }
 }
 
+/*
+
+read_double_word reads a 64-bit value as two little-endian words:
+the low word at address, the high word at address + 4
+
+*/
+
+static dword_t read_double_word(const memory_t *memory, addr_t address) {
+
+    dword_t lo = read_word(memory, address);
+    dword_t hi = read_word(memory, address + 4);
+    return lo | (hi << 32);
+}
+
+/*
+
+write_double_word writes a 64-bit value as two little-endian words:
+the low word at address, the high word at address + 4
+
+*/
+
+static void write_double_word(memory_t *memory, addr_t address, dword_t value) {
+
+    write_word(memory, address, (word_t) value);
+    write_word(memory, address + 4, (word_t) (value >> 32));
+}
+
 exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) {
     return EXEC_NEXT;
 }
