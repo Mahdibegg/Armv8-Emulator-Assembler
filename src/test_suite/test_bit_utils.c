@@ -4,6 +4,11 @@
 
 #include "bit_utils/bit.h"
 
+/*
+    2 functions that test extract_bits 
+    extract_bits_single_bit_test - tests if each bit is extracted correctly
+    extract_bits_range_test - tests if the range of bits extracted correctly
+*/
 static void extract_bits_single_bit_test(void) {
 
     // 0xA = 0000 0000 0000 0000 0000 0000 0000 1010
