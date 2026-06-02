@@ -7,6 +7,17 @@
 #include "registers/registers.h"
 #include "types.h"
 
+/*
+ x - Helper functions to test state of general and special purpose reigsters
+*/
+static void assert_general_registers_are_zero(const machine_state_t *state) {
+
+    for (unsigned i = 0; i < REG_NUM; i++) {
+     assert(read_x_register(&state->general_registers, i) == 0);  
+    }
+}
+
+
 static void unconditional_branch_forward_test(void) {
 
     machine_state_t state;
@@ -33,6 +44,8 @@ static void unconditional_branch_forward_test(void) {
 
     assert(result == EXEC_BRANCH);
     assert(read_pc(&state.special_registers) == 104);
+
+    // Testing that general and special registers remain unchanged after their initialisations
 
     printf("Unconditional branch forward: PASSED\n");
 }
