@@ -38,7 +38,8 @@ CLEAN_OBJS = *.o \
 	test_suite/*.o \
 	test_registers \
 	test_memory \
-	test_branch
+	test_branch \
+	test_bit_utils
 clean:
 	$(RM) $(CLEAN_OBJS)
 
