@@ -17,7 +17,10 @@
 #define SUB 0x2
 #define SUB_S 0x3
 
-
+// immediate wide move instructions
+#define MOVN 0x0
+#define MOVZ 0x2
+#define MOVK 0x3
 
 /*
 
@@ -125,6 +128,26 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     return fields;
 }
 
+
+/*
+
+Error messages for execution phase
+
+unsupported_opcode_error -> opcode not defined for emulator to execute, show both invalid opcode and address
+
+*/
+
+static void unsupported_opcode_error(byte_t opcode, word_t address) {
+
+        // provide invalid opcode number and the instruction that failed to execute
+        // so you are able to see which opcode is not available, and the address it failed at
+        fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%016lx\n",
+            opcode,
+            address
+        );
+        exit(EXIT_FAILURE);
+}
+
 /*
 
 5 execute functions below for the different type, each one ideally has a switch case and 
@@ -143,17 +166,22 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
         case SUB_S:
         default:
 
-            // provide invalid opcode number and the instruction that failed to execute
-            // so you are able to see which opcode is not available
-            fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%016lx\n",
-                fields.opc,
-                read_pc(&state->special_registers)
-            );
-            exit(EXIT_FAILURE);
+            unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
     }
 }
 
-static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
+
+    // cases for opc, 00 - movn (move with not), 10 - movz (move with zero), 11 - movk (move with keep)
+    switch (fields.opc) {
+        case MOVN:
+        case MOVZ:
+        case MOVK:
+        default:
+            
+            unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
+    }
+}
 
 static void execute_reg_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
 
