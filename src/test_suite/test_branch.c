@@ -196,6 +196,9 @@ static void conditional_branch_not_taken_ne_test(void) {
     assert(result == EXEC_BRANCH);
     assert(read_pc(&state.special_registers) == 100);
 
+    // Testing general registers, special registers 
+    assert_general_registers_are_zero(&state);
+    assert_special_registers_initialised_except_pc(&state, 100);
     printf("Conditional branch not taken NE: PASSED\n");
 }
 
