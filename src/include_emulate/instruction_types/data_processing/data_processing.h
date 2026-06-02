@@ -5,15 +5,6 @@
 #include "pipeline/decode_struct.h"
 #include "types.h"
 
-// instruction field constants to differentiate operations during decode/execute
-
-// immediate instruction field cases (OPI)
-#define ARITHMETIC_OPI 0x2
-#define WIDE_MOVE_OPI 0x5
-
-// register instruction field cases (OPR)
-#define MULTIPLY_OPR 0x8
-
 // Immediate instruction sub types (arithmetic/wide move)
 typedef enum {
     IMM_ARITHMETIC,

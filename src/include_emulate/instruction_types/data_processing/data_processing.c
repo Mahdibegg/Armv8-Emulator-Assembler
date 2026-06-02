@@ -4,6 +4,21 @@
 #include "data_processing.h"
 #include "bit_utils/bit.h"
 
+// immediate instruction field cases (OPI)
+#define ARITHMETIC_OPI 0x2
+#define WIDE_MOVE_OPI 0x5
+
+// register instruction field cases (OPR)
+#define MULTIPLY_OPR 0x8
+
+// immediate arithmetic instructions
+#define ADD 0x0
+#define ADD_S 0x1
+#define SUB 0x2
+#define SUB_S 0x3
+
+
+
 /*
 
 2 functions decode_imm_instr, decode_reg_instr build the immediate/register instr_fields for execution
@@ -118,7 +133,25 @@ uses the desired field to do real operations that would update the state
 
 */
 
-static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
+
+    // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
+    switch (fields.opc) {
+        case ADD:
+        case ADD_S:
+        case SUB:
+        case SUB_S:
+        default:
+
+            // provide invalid opcode number and the instruction that failed to execute
+            // so you are able to see which opcode is not available
+            fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%016lx\n",
+                fields.opc,
+                read_pc(&state->special_registers)
+            );
+            exit(EXIT_FAILURE);
+    }
+}
 
 static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
 
@@ -153,7 +186,7 @@ static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields,
         default:
 
             // provide address of invalid operation if IMM_NULL and actual instruction failed to execute
-            fprintf(stderr, "Invalid operation: unsupported immediate instruction (0x%x) executed at address 0x%x\n", 
+            fprintf(stderr, "Invalid operation: unsupported immediate instruction (0x%08x) executed at address 0x%016lx\n", 
                 instr,
                 read_pc(&state->special_registers)
             );
@@ -185,7 +218,8 @@ static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields,
 
             // provide address of invalid operation if IMM_NULL or
             // non immedate instruction is attempted to be executed
-            fprintf(stderr, "Invalid operation: unsupported immediate execution at address 0x%x\n",
+            fprintf(stderr, "Invalid operation: unsupported register instruction (0x%08x) at address 0x%016lx\n",
+                instr,
                 read_pc(&state->special_registers)
             );
             exit(EXIT_FAILURE);
@@ -215,7 +249,9 @@ exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t in
     } else {
 
         // error message for unsupported other forms of data_processing (or branching/load_store)
-        fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%x", instr);
+        fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%08x", 
+            instr
+        );
         exit(EXIT_FAILURE);
     }
 
