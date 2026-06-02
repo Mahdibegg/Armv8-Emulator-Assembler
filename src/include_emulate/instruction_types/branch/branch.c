@@ -165,7 +165,7 @@ static void execute_conditional_branch(machine_state_t *state, cond_branch_t bra
         // PC = PC + offset
         dword_t current_pc = read_pc(&state->special_registers.pc);
 
-        dword_t new_pc = (dword_t)((int64_t)current_pc + branch.offset);
+        dword_t new_pc = (dword_t)((int64_t)current_pc + offset);
         write_pc(&state->special_registers.pc, new_pc);
     }
 }
