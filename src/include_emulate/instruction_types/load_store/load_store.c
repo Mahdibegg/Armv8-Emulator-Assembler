@@ -62,7 +62,7 @@ static ls_instr_fields_t decode_load_store(decoded_instr_t instr) {
 /*
 
 read_reg reads a general register, returning 0 for the zero register
-(index 31, which is ZR here, not SP — SP is unsupported)
+(index 31, which is ZR here, not SP as not in spec)
 
 */
 
@@ -76,6 +76,28 @@ static dword_t read_reg(const machine_state_t *state, byte_t index, bit_t sf) {
     // otherwise read as a 64-bit X or 32-bit W register
     return sf ? read_x_register(&state->general_registers, index)
               : read_w_register(&state->general_registers, index);
+}
+
+/*
+
+write_reg writes a general register, discarding writes to the zero
+register (index 31); a W write zero-extends the upper 32 bits
+
+*/
+
+static void write_reg(machine_state_t *state, byte_t index, bit_t sf, dword_t value) {
+
+    // writes to the zero register are ignored
+    if (index == ZERO_REGISTER) {
+        return;
+    }
+
+    // 64-bit X write, or 32-bit W write (write_w_register zero-extends)
+    if (sf) {
+        write_x_register(&state->general_registers, index, value);
+    } else {
+        write_w_register(&state->general_registers, index, (word_t) value);
+    }
 }
 
 exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) {
