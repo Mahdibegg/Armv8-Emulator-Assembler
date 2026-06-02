@@ -9,7 +9,7 @@
 #include "state.h"
 
 
-// TEST 1: validate_args (valid input, no output)
+// TEST 1.1: validate_args (valid input, no output)
 void test_validate_args_valid() {
     char *input;
     char *output;
@@ -22,17 +22,40 @@ void test_validate_args_valid() {
     assert(strcmp(input, "test.bin") == 0);
     assert(output == NULL);
 
-    printf("validate_args (valid input, no output) passed\n");
+    printf("validate_args (valid input, no output) PASSED\n");
 }
 
-// TEST 2: setup_output, no output
+// TEST 1.2: validate_args (valid input, valid output)
+void test_validate_args_with_output() {
+    char *input;
+    char *output;
+
+    char *argv[] = {"./emulate", "test.bin", "out.out"};
+    validate_args(3, argv, &input, &output);
+
+    assert(strcmp(input, "test.bin") == 0);
+    assert(strcmp(output, "out.out") == 0);
+
+    printf("validate_args (valid input, valid output) PASSED\n");
+}
+
+// TEST 1.3: validate_args (invalid input) SHOULD FAIL AND CAUSE EXIT
+
+// TEST 1.4: validate_args (invalid output) SHOULD FAIL AND CAUSE EXIT
+
+// TEST 1.5: validate_args (too many arguments) SHOULD FAIL AND CAUSE EXIT
+
+// TEST 1.6: validate_args (too little arguments) SHOULD FAIL AND CAUSE EXIT
+
+// TEST 2.1: setup_output, no output
 void test_setup_output() {
     FILE *out = setup_output(NULL);
 
     assert(out == stdout);
 
-    printf("setup_output (stdout) passed\n");
+    printf("setup_output (stdout) PASSED\n");
 }
+
 
 // TEST 3: binary_loader
 void test_binary_loader() {
@@ -55,7 +78,7 @@ void test_binary_loader() {
     assert(state.memory.memory[2] == 0x00);
     assert(state.memory.memory[3] == 0x91);
 
-    printf("binary_loader passed\n");
+    printf("binary_loader PASSED\n");
 }
 
 // TEST 4: output_write
@@ -81,22 +104,28 @@ void test_output_write() {
     state.special_registers.psr.c_flag = 0;
     state.special_registers.psr.v_flag = 0;
 
-    printf("output_write test output\n");
+    printf("output_write test output:\n");
 
     output_write(&state, stdout);
 
     printf("end output\n");
 
-    printf("output_write executed (manual check required)\n");
+    printf("output_write EXECUTED (manual check required)\n");
 }
 
 // MAIN TEST RUNNER
 int main() {
 
     test_validate_args_valid();
+    test_validate_args_with_output();
+
+    /*
     test_setup_output();
+
     test_binary_loader();
+
     test_output_write();
+    */
 
     printf("\nAll IO tests completed\n");
     return 0;
