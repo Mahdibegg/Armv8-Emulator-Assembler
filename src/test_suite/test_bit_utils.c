@@ -61,5 +61,16 @@ static void sign_extend_negative_values_test(void) {
     printf("sign_extend_negative_values_test: PASSED\n");
 }
 
+int main(void) {
+    printf("Testing bit_utils...\n");
+
+    extract_bits_single_bit_test();
+    extract_bits_range_test();
+    sign_extend_positive_values_test();
+    sign_extend_negative_values_test();
+
+    printf("test_bit_utils: ALL TESTS PASSED\n");
+}
+
 
 
