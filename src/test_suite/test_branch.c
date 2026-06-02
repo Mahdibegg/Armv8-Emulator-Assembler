@@ -66,6 +66,8 @@ static void unconditional_branch_forward_test(void) {
     assert(read_pc(&state.special_registers) == 104);
 
     // Testing that general and special registers remain unchanged after their initialisations
+    assert_general_registers_are_zero(&state);
+    assert_special_registers_initialised_except_pc(&state, 104);
 
     printf("Unconditional branch forward: PASSED\n");
 }
@@ -97,6 +99,10 @@ static void unconditional_branch_backward_test(void) {
     assert(result == EXEC_BRANCH);
     assert(read_pc(&state.special_registers) == 96);
 
+    // Testing that general and special registers remain unchanged after their initialisations
+    assert_general_registers_are_zero(&state);
+    assert_special_registers_initialised_except_pc(&state, 96);
+    
     printf("Unconditional branch backward: PASSED\n");
 }
 
