@@ -159,6 +159,50 @@ static dword_t sign_extend(word_t value, unsigned bits) {
     return ((dword_t) value ^ sign_bit) - sign_bit;
 }
 
+/*
+
+compute_address resolves the address for a single data transfer
+
+reads the base register Xn, then adjusts it per the addressing mode
+pre/post index also write the updated address back to Xn
+
+*/
+
+static addr_t compute_address(machine_state_t *state, ls_instr_fields_t fields) {
+
+    // base register, always read as a 64-bit X-register
+    dword_t base = read_reg(state, fields.xn, 1);
+
+    switch (fields.type) {
+
+        // unsigned offset: scale imm12 by transfer size, 8 (X) or 4 (W)
+        case LS_UNSIGNED_OFFSET:
+            return (addr_t) (base + (dword_t) fields.imm12 * (fields.sf ? 8 : 4));
+
+        // register offset: add the value in Xm
+        case LS_REGISTER_OFFSET:
+            return (addr_t) (base + read_reg(state, fields.xm, 1));
+
+        // pre-index: address is base + simm9, written back before transfer
+        case LS_PRE_INDEX: {
+            addr_t address = (addr_t) (base + sign_extend(fields.simm9, 9));
+            write_reg(state, fields.xn, 1, address);
+            return address;
+        }
+
+        // post-index: transfer at base, then Xn updated by simm9
+        case LS_POST_INDEX:
+            write_reg(state, fields.xn, 1, base + sign_extend(fields.simm9, 9));
+            return (addr_t) base;
+
+        default:
+
+            // load literal handled separately, so this should be unreachable
+            unsupported_load_store_error(fields.type, read_pc(&state->special_registers));
+            return 0;
+    }
+}
+
 exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) {
     return EXEC_NEXT;
 }
