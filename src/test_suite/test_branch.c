@@ -14,7 +14,7 @@ static void unconditional_branch_forward_test(void) {
     init_gen_registers(&state.general_registers);
     init_spec_registers(&state.special_registers);
 
-    write_pc(&state.special_registers.pc, 100);
+    write_pc(&state.special_registers, 100);
 
     /*
        Unconditional branch encoding:
@@ -32,7 +32,7 @@ static void unconditional_branch_forward_test(void) {
     exec_result_t result = execute_branch(&state, instr);
 
     assert(result == EXEC_BRANCH);
-    assert(read_pc(&state.special_registers.pc) == 104);
+    assert(read_pc(&state.special_registers) == 104);
 
     printf("Unconditional branch forward: PASSED\n");
 }
@@ -40,7 +40,7 @@ static void unconditional_branch_forward_test(void) {
 int main(void) {
     printf("Running branch tests...\n\n");
 
-    test_unconditional_branch_forward();
+    unconditional_branch_forward_test();
 
     printf("\nAll branch tests passed!\n");
 
