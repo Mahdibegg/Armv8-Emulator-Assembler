@@ -37,12 +37,32 @@ static void unconditional_branch_forward_test(void) {
     printf("Unconditional branch forward: PASSED\n");
 }
 
-int main(void) {
-    printf("Running branch tests...\n\n");
+static void unconditional_branch_backward_test(void) {
+    machine_state_t state;
 
-    unconditional_branch_forward_test();
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
 
-    printf("\nAll branch tests passed!\n");
+    write_pc(&state.special_registers, 100);
 
-    return 0;
+    /*
+       simm26 = -1
+
+       In 26-bit two's complement, -1 is all 26 bits set to 1:
+       0x03FFFFFF
+
+       Actual offset = -1 << 2 = -4
+
+       PC should become 100 - 4 = 96.
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_BRANCH;
+    instr.instr = (0x5 << 26) | 0x03FFFFFF;
+
+    exec_result_t result = execute_branch(&state, instr);
+
+    assert(result == EXEC_BRANCH);
+    assert(read_pc(&state.special_registers) == 96);
+
+    printf("Unconditional branch backward: PASSED\n");
 }
