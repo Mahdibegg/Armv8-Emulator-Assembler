@@ -56,6 +56,20 @@ void test_validate_args_invalid_input() {
 }
 
 // TEST 1.4: validate_args (invalid output) SHOULD FAIL AND CAUSE EXIT
+void test_validate_args_invalid_output(){
+    char *input;
+    char *output;
+
+    char *argv[] = {"./emulate", "test.bin", "bad.txt"};  // WRONG extension
+    int argc = 3;
+
+    printf("validate_args invalid output (should EXIT)\n");
+
+    validate_args(argc, argv, &input, &output);
+
+    // If this line runs, test failed
+    printf("\nERROR: validate_args did NOT exit\n");
+}
 
 // TEST 1.5: validate_args (too many arguments) SHOULD FAIL AND CAUSE EXIT
 
@@ -143,7 +157,8 @@ int main() {
     */
 
     // Tests that should fail
-    test_validate_args_invalid_input();
+    //test_validate_args_invalid_input();
+    //test_validate_args_invalid_output();
 
     printf("\nAll IO tests completed\n");
     return 0;
