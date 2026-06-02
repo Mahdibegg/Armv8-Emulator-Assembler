@@ -248,56 +248,70 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
 
     // case for logical shift
     // 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
-    switch (shift_opcode) {
-        case AND:
 
-            if (fields.sf == 0) {
+    if (fields.sf == 0) {
 
-                // create result in a single variable by reading desired w register to calculate rn & operand
-                // where operand is in rm 
-                word_t result =
-                    read_w_register(&state->general_registers, fields.rn) &
-                    read_w_register(&state->general_registers, fields.rm);
+        // read value of register Rn to store into Rn and operand value from Rm register into op 
+        word_t rn = read_w_register(&state->general_registers, fields.rn);
+        word_t op = read_w_register(&state->general_registers, fields.rm);
 
-                // set rd = rn & operand (named op)
-                write_w_register(&state->general_registers, (unsigned) fields.rd, result);
-            
-                // get the size of the shift needed to get sign bit (sizeof returns byte size, multiply by 8 for bit size)
-                int shift_bits = sizeof(word_t) * 8 - 1;
+        word_t result;
 
-                // set flags, n = field.n, c = v = 0, z = 1 if result = 0
-                bit_t n = (result >> shift_bits) & 1;
-                bit_t z = result == 0;
-                write_pstate(&state->special_registers, n, z, 0, 0);
-            } else {
-                
-                // similar as above but 64 bit version
+        // go through each case after extracting the values from the correct registers
+        // set result to the operation that it is required to be
+        switch (shift_opcode) {
+            case AND:
+            case BIC:
+            case ORR:
+            case ORN:
+            case EOR:
+            case EON:
+            case ANDS:
+            case BICS:
+            default:
+                void;
+        }
 
-                dword_t result =
-                    read_x_register(&state->general_registers, fields.rn) &
-                    read_x_register(&state->general_registers, fields.rm);
-            
-                write_x_register(&state->general_registers, (unsigned) fields.rd, result);
-            
-                int shift_bits = sizeof(dword_t) * 8 - 1;
-                
-                bit_t n = (result >> shift_bits) & 1;
-                bit_t z = result == 0;
-                write_pstate(&state->special_registers, n, z, 0, 0);
-            }
+        // set rd = rn & operand (named op)
+        write_w_register(&state->general_registers, (unsigned) fields.rd, result);
+    
+        // get the size of the shift needed to get sign bit (sizeof returns byte size, multiply by 8 for bit size)
+        int shift_bits = sizeof(word_t) * 8 - 1;
 
-        case BIC:
-        case ORR:
-        case ORN:
-        case EOR:
-        case EON:
-        case ANDS:
-        case BICS:
-        default:
+        // set flags, n = field.n, c = v = 0, z = 1 if result = 0
+        bit_t n = (result >> shift_bits) & 1;
+        bit_t z = result == 0;
+        write_pstate(&state->special_registers, n, z, 0, 0);
+    } else {
+        
+        // similar as above but 64 bit version
 
-            unsupported_opcode_error(shift_opcode, read_pc(&state->special_registers));
+        dword_t rn = read_x_register(&state->general_registers, fields.rn);
+        dword_t op = read_x_register(&state->general_registers, fields.rm);
+
+        dword_t result;
+
+        switch (shift_opcode) {
+            case AND:
+            case BIC:
+            case ORR:
+            case ORN:
+            case EOR:
+            case EON:
+            case ANDS:
+            case BICS:
+            default:
+                void;
+        }
+    
+        write_x_register(&state->general_registers, (unsigned) fields.rd, result);
+    
+        int shift_bits = sizeof(dword_t) * 8 - 1;
+        
+        bit_t n = (result >> shift_bits) & 1;
+        bit_t z = result == 0;
+        write_pstate(&state->special_registers, n, z, 0, 0);
     }
-
 }
 
 static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
