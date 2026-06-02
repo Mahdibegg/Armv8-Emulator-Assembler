@@ -37,7 +37,8 @@ CLEAN_OBJS = *.o \
 	include_emulate/bit_utils/*.o \
 	test_suite/*.o \
 	test_registers \
-	test_memory 
+	test_memory \
+	test_branch
 clean:
 	$(RM) $(CLEAN_OBJS)
 
@@ -52,3 +53,9 @@ TEST_MEMORY_OBJS = test_suite/test_memory.o \
 	include_emulate/memory/memory.o
 test_memory: $(TEST_MEMORY_OBJS)
 	$(CC) $(CFLAGS) -o test_memory $(TEST_MEMORY_OBJS)
+TEST_BRANCH_OBJS = test_suite/test_branch.o \
+	include_emulate/instruction_types/branch/branch.o \
+	include_emulate/registers/registers.o \
+	include_emulate/bit_utils/bit.o
+test_branch: $(TEST_BRANCH_OBJS)
+	$(CC) $(CFLAGS) -o test_branch $(TEST_BRANCH_OBJS)

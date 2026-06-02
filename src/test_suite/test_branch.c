@@ -2,10 +2,10 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include "../branch/branch.h"
-#include "../state.h"
-#include "../registers/registers.h"
-#include "../types.h"
+#include "instruction_types/branch/branch.h"
+#include "state.h"
+#include "registers/registers.h"
+#include "types.h"
 
 static void unconditional_branch_forward_test(void) {
 
