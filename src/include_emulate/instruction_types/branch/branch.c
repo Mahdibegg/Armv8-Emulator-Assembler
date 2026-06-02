@@ -28,8 +28,10 @@ static bool is_conditional(decoded_instr_t instr) {
     // get the raw instruction
     instr_t raw = instr.instr;
 
-    // check raw instructoin shifted 24 bits to the right
-    return (raw >> 24) == 0x54;
+    bool opcode_matches = (raw >> 24) == 0x54;
+    bool bit_4_zero = ((raw >> 4) & 0x1) == 0;
+    
+    return opcode_matches && bit_4_zero;
 }
 
 static bool is_reg_branch(decoded_instr_t instr) {
