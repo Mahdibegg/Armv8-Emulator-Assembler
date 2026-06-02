@@ -71,6 +71,9 @@ static void sign_extend_negative_values_test(void) {
     printf("sign_extend_negative_values_test: PASSED\n");
 }
 
+/*
+    Main function that combines helper test functions to test_bit_utils
+*/
 int main(void) {
     printf("Testing bit_utils...\n");
 
