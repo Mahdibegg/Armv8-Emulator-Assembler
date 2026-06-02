@@ -302,25 +302,33 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         dword_t result;
 
         switch (shift_opcode) {
-            case AND:
-            case BIC:
-            case ORR:
-            case ORN:
-            case EOR:
-            case EON:
             case ANDS:
+            case AND:
+                result = rn & op;
             case BICS:
+            case BIC:
+                result = rn & ~op;
+            case ORR:
+                result = rn | op;
+            case ORN:
+                result = rn | ~op;
+            case EOR:
+                result = rn ^ op;
+            case EON:
+                result = rn ^ ~op;
             default:
                 invalid_field_error("Opcode", shift_opcode, instr);
         }
     
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
-    
-        int shift_bits = sizeof(dword_t) * 8 - 1;
-        
-        bit_t n = (result >> shift_bits) & 1;
-        bit_t z = result == 0;
-        write_pstate(&state->special_registers, n, z, 0, 0);
+        if (shift_opcode == ANDS || shift_opcode == BICS) {
+
+            int shift_bits = sizeof(dword_t) * 8 - 1;
+            
+            bit_t n = (result >> shift_bits) & 1;
+            bit_t z = result == 0;
+            write_pstate(&state->special_registers, n, z, 0, 0);
+        }
     }
 }
 
