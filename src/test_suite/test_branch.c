@@ -102,7 +102,7 @@ static void unconditional_branch_backward_test(void) {
     // Testing that general and special registers remain unchanged after their initialisations
     assert_general_registers_are_zero(&state);
     assert_special_registers_initialised_except_pc(&state, 96);
-    
+
     printf("Unconditional branch backward: PASSED\n");
 }
 
@@ -131,6 +131,9 @@ static void register_branch_test(void) {
     assert(result == EXEC_BRANCH);
     assert(read_pc(&state.special_registers) == 500);
 
+    //Testing that only register 3 has been changed and special registesr are all initialised
+    assert_special_registers_initialised_except_pc(&state, 500);
+    assert_only_x_register_changed(&state, 3, 500);
     printf("Register branch: PASSED\n");
 }
 
