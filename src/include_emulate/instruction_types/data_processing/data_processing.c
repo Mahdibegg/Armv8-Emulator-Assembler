@@ -11,16 +11,22 @@
 // register instruction field cases (OPR)
 #define MULTIPLY_OPR 0x8
 
-// immediate arithmetic instructions
+// immediate arithmetic instructions (opcode)
 #define ADD 0x0
 #define ADD_S 0x1
 #define SUB 0x2
 #define SUB_S 0x3
 
-// immediate wide move instructions
+// immediate wide move instructions (opcode)
 #define MOVN 0x0
 #define MOVZ 0x2
 #define MOVK 0x3
+
+// register arithmetic shift instructions (shift)
+#define LSL 0x0
+#define LSR 0x1
+#define ASR 0x2
+#define ROR 0x3
 
 /*
 
@@ -148,6 +154,17 @@ static void unsupported_opcode_error(byte_t opcode, word_t address) {
         exit(EXIT_FAILURE);
 }
 
+static void unsupported_shift_error(byte_t shift, word_t address) {
+
+        // provide invalid opcode number and the instruction that failed to execute
+        // so you are able to see which opcode is not available, and the address it failed at
+        fprintf(stderr, "Invalid operation: unsupported shift (0x%01x) at address 0x%016lx\n",
+            shift,
+            address
+        );
+        exit(EXIT_FAILURE);
+}
+
 /*
 
 5 execute functions below for the different type, each one ideally has a switch case and 
@@ -183,7 +200,19 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
     }
 }
 
-static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
+static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
+
+    // case for shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
+    switch (fields.shift) {
+        case LSL:
+        case LSR:
+        case ASR:
+        case ROR:
+        default: 
+
+            unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
+    }
+}
 
 static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
 
