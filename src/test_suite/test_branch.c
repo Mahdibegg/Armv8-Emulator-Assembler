@@ -17,6 +17,16 @@ static void assert_general_registers_are_zero(const machine_state_t *state) {
     }
 }
 
+static void assert_special_registers_initialised_except_pc(const machine_state_t *state, dword_t expected_pc) {
+
+    assert(read_pc(&state->special_registers) == expected_pc);
+
+    assert(state->special_registers.psr.c_flag == false);
+    assert(state->special_registers.psr.n_flag == false);
+    assert(state->special_registers.psr.v_flag == false);
+    assert(state->special_registers.psr.z_flag == true);
+}
+
 
 static void unconditional_branch_forward_test(void) {
 
