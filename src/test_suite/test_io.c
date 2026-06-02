@@ -124,6 +124,18 @@ void test_setup_output_file_valid() {
     printf("setup_output (output given) PASSED\n");
 }
 
+// TEST 2.3: setup_output, invalid path
+
+void test_setup_output_invalid_path() {
+    printf("setup_output invalid path (should EXIT)\n");
+
+    // This directory does not exist, fopen will fail
+    setup_output("nonexistent_dir/test.out");
+
+    // If execution reaches here, FAILURE
+    printf("\nERROR: setup_output did NOT exit\n");
+}
+
 // TEST 3.1: binary_loader
 void test_binary_loader() {
 
@@ -205,6 +217,7 @@ int main() {
     //test_validate_args_invalid_output();
     //test_validate_args_too_many_args();
     //test_validate_args_too_few_args();
+    test_setup_output_invalid_path();
 
     printf("\nAll IO tests completed\n");
     return 0;
