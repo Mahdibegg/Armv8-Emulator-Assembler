@@ -250,6 +250,29 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
     // 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
     switch (shift_opcode) {
         case AND:
+
+            if (fields.sf == 0) {
+
+                // create result in a single variable by reading desired w register to calculate rn & operand
+                // where operand is in rm 
+                word_t result =
+                    read_w_register(&state->general_registers, fields.rn) &
+                    read_w_register(&state->general_registers, fields.rm);
+
+                // set rd = rn & operand (named op)
+                write_w_register(&state->general_registers, (unsigned) fields.rd, result);
+            
+                // get the size of the shift needed to get sign bit (sizeof returns byte size, multiply by 8 for bit size)
+                int shift_bits = sizeof(word_t) * 8 - 1;
+
+                // set flags, n = field.n, c = v = 0, z = 1 if result = 0
+                bit_t n = (result >> shift_bits) & 1;
+                bit_t z = result == 0;
+                write_pstate(&state->special_registers, n, z, 0, 0);
+            } else {
+                void;
+            }
+
         case BIC:
         case ORR:
         case ORN:
