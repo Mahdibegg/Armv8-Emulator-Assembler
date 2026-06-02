@@ -10,7 +10,7 @@
 
 
 // TEST 1.1: validate_args (valid input, no output)
-void test_validate_args_valid() {
+void test_validate_args_valid_input() {
     char *input;
     char *output;
 
@@ -26,7 +26,7 @@ void test_validate_args_valid() {
 }
 
 // TEST 1.2: validate_args (valid input, valid output)
-void test_validate_args_with_output() {
+void test_validate_args_valid_output() {
     char *input;
     char *output;
 
@@ -40,6 +40,20 @@ void test_validate_args_with_output() {
 }
 
 // TEST 1.3: validate_args (invalid input) SHOULD FAIL AND CAUSE EXIT
+void test_validate_args_invalid_input() {
+    char *input;
+    char *output;
+
+    char *argv[] = {"./emulate", "bad.txt"};  // WRONG extension
+    int argc = 2;
+
+    printf("validate_args invalid input (should EXIT)\n");
+
+    validate_args(argc, argv, &input, &output);
+
+    // If this line runs, test failed
+    printf("\nERROR: validate_args did NOT exit\n");
+}
 
 // TEST 1.4: validate_args (invalid output) SHOULD FAIL AND CAUSE EXIT
 
@@ -57,7 +71,7 @@ void test_setup_output() {
 }
 
 
-// TEST 3: binary_loader
+// TEST 3.1: binary_loader
 void test_binary_loader() {
 
     machine_state_t state;
@@ -81,7 +95,7 @@ void test_binary_loader() {
     printf("binary_loader PASSED\n");
 }
 
-// TEST 4: output_write
+// TEST 4.1: output_write
 void test_output_write() {
 
     machine_state_t state;
@@ -116,16 +130,20 @@ void test_output_write() {
 // MAIN TEST RUNNER
 int main() {
 
-    test_validate_args_valid();
-    test_validate_args_with_output();
-
     /*
+    // Tests that should pass 
+    test_validate_args_valid_input();
+    test_validate_args_valid_output();
+
     test_setup_output();
 
     test_binary_loader();
 
     test_output_write();
     */
+
+    // Tests that should fail
+    test_validate_args_invalid_input();
 
     printf("\nAll IO tests completed\n");
     return 0;

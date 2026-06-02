@@ -40,14 +40,14 @@ void validate_args(int argc, char **argv, char **input, char **output) {
     // Validate input file extension using helper function ends_with
     if (!ends_with(*input, ".bin")) {
         
-        fprintf(stderr, "File input error: input file must have .bin extension\nUse: ./emulate <filename>.bin");
+        fprintf(stderr, "File input error: input file must have .bin extension\nUse: ./emulate <filename>.bin\n");
         exit(EXIT_FAILURE);
     }
 
     // Validate output file extension (if not provided short circuit)
     if (*output && !ends_with(*output, ".out")) {
 
-        fprintf(stderr, "File output error: output file must have .out extension\nUse: ./emulate <filename>.bin <filename>.out");
+        fprintf(stderr, "File output error: output file must have .out extension\nUse: ./emulate <filename>.bin <filename>.out\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -66,7 +66,7 @@ FILE *setup_output(char *outputfile) {
     // Fail if unsuccessful (if it doesn't exist then exit the program)
     if (out == NULL) {
 
-        perror("File error: file cannot be opened - may not exist");
+        perror("File error: file cannot be opened - may not exist\n");
         exit(EXIT_FAILURE);
     }
 
@@ -81,7 +81,7 @@ void binary_loader(machine_state_t *state, char *inputfile) {
 
     // If the file does not exit the program to prevent further crashes
     if (file == NULL) {
-        perror("Error opening input file");
+        perror("Error opening input file\n");
         exit(EXIT_FAILURE);
     }
 
