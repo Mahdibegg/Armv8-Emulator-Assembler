@@ -14,7 +14,7 @@ static void extract_bits_single_bit_test(void) {
     assert(extract_bits(instruction, 2, 2) == 0);
     assert(extract_bits(instruction, 3, 3) == 1);
 
-    printf("extract_bits_single_bit_test: PASSED");
+    printf("extract_bits_single_bit_test: PASSED\n");
 }
 
 static void extract_bits_range_test(void) {
@@ -27,7 +27,7 @@ static void extract_bits_range_test(void) {
     // bits 2-5  1111 = 0xF
     assert(extract_bits(instruction, 2, 5) == 0xF);
 
-    printf("extract_bits_range_test: PASSED");
+    printf("extract_bits_range_test: PASSED\n");
 }
 
 static void sign_extend_positive_values_test(void) {
@@ -38,11 +38,27 @@ static void sign_extend_positive_values_test(void) {
     assert(sign_extend(0xFF, 13) == 255);
     assert(sign_extend(0x6, 13) == 6);
 
-    printf("sign_extend_positive_values_test: PASSED");
+    printf("sign_extend_positive_values_test: PASSED\n");
 }
 
-static void sign_extend_negative_test(void) {
-    
+static void sign_extend_negative_values_test(void) {
+
+    /*
+        13-bit value -1 = 0x1FFF
+
+        13-bit value -3 = 0x1FFD
+
+        19-bit value -1 = 0x7FFFF
+
+        26-bit value -4 = 0x3FFFFC
+    */
+
+    assert(sign_extend(0x1FFF, 13) == -1);
+    assert(sign_extend(0x1FFD, 13) == -3);
+    assert(sign_extend(0x7FFFF, 19) == -1);
+    assert(sign_extend(0x3FFFFFC, 26) == -4);
+
+    printf("sign_extend_negative_values_test: PASSED\n");
 }
 
 
