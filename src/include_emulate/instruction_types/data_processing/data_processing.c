@@ -3,6 +3,7 @@
 
 #include "data_processing.h"
 #include "bit_utils/bit.h"
+#include "../../registers/registers.h"
 
 // immediate instruction field cases (OPI)
 #define ARITHMETIC_OPI 0x2
@@ -257,7 +258,27 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
     // 0 - madd, 1 - msub
     switch (fields.x) {
         case MADD:
-        case MSUB:
+            
+            // sf = 0 -> 32 bit result to 32 bit register
+            // sf = 1 -> 64 bit result to 64 bit register
+            
+            if (fields.sf == 0) {
+                
+                // separating register reads for clarity 
+                word_t ra = read_w_register(&state->general_registers, (unsigned) fields.ra);
+                word_t rn = read_w_register(&state->general_registers, (unsigned) fields.rn);
+                word_t rm = read_w_register(&state->general_registers, (unsigned) fields.rm);
+
+                // result is of the form ra + (rn * rm)
+                word_t result = ra + (rn * rm);
+
+                // writing to rd using write_w 
+                write_w_register(&state->general_registers, (unsigned) fields.rd, result);
+            } else {
+                void;
+            }
+
+            case MSUB:
         default:
 
             unsupported_opcode_error(fields.x, read_pc(&state->special_registers));
