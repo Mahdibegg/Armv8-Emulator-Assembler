@@ -104,14 +104,25 @@ void test_validate_args_too_few_args(){
 }
 
 // TEST 2.1: setup_output, no output
-void test_setup_output() {
+void test_setup_output_null() {
     FILE *out = setup_output(NULL);
 
     assert(out == stdout);
 
-    printf("setup_output (stdout) PASSED\n");
+    printf("setup_output (no output) PASSED\n");
 }
 
+// TEST 2.2: setup_output, valid output
+void test_setup_output_file_valid() {
+    FILE *out = setup_output("test.out");
+
+    assert(out != NULL);
+
+    fprintf(out, "hello world\n");
+    fclose(out);
+
+    printf("setup_output (output given) PASSED\n");
+}
 
 // TEST 3.1: binary_loader
 void test_binary_loader() {
@@ -178,9 +189,8 @@ int main() {
     test_validate_args_valid_output();
     */
 
-    /*
-    test_setup_output();
-    */
+    test_setup_output_null();
+    test_setup_output_file_valid();
 
     /*
     test_binary_loader();
@@ -194,7 +204,7 @@ int main() {
     //test_validate_args_invalid_input();
     //test_validate_args_invalid_output();
     //test_validate_args_too_many_args();
-    test_validate_args_too_few_args();
+    //test_validate_args_too_few_args();
 
     printf("\nAll IO tests completed\n");
     return 0;

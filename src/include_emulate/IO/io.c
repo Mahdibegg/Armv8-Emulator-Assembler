@@ -65,8 +65,7 @@ FILE *setup_output(char *outputfile) {
 
     // Fail if unsuccessful (if it doesn't exist then exit the program)
     if (out == NULL) {
-
-        perror("File error: file cannot be opened - may not exist\n");
+        perror("File error: file cannot be opened\n");
         exit(EXIT_FAILURE);
     }
 
