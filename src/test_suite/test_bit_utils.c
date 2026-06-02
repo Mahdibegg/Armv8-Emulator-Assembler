@@ -35,6 +35,11 @@ static void extract_bits_range_test(void) {
     printf("extract_bits_range_test: PASSED\n");
 }
 
+/*
+    2 functions that test sign_extend
+    sign_extend_positive_values_test - tests if positive values are sign_extended to 64 bits correctly
+    sign_extend_negative_values_test - tests if negative values are sign_extended to 64 bits correctly
+*/
 static void sign_extend_positive_values_test(void) {
 
     // Positive values remain unchanged after sign extend
