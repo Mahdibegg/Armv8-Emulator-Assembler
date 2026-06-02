@@ -180,6 +180,18 @@ static void unsupported_shift_error(byte_t shift, word_t address) {
         exit(EXIT_FAILURE);
 }
 
+static void invalid_field_error(const char *field_name, word_t field_value, instr_t instr) {
+        
+    // provide invalid opcode number and the instruction that failed to execute
+        // so you are able to see which opcode is not available, and the address it failed at
+        fprintf(stderr, "Invalid field: unsupported operation due to %s field with value (0x%08x) in instruction (0x%08x)",
+            field_name,
+            field_value,
+            instr
+        );
+        exit(EXIT_FAILURE);
+}
+
 /*
 
 5 execute functions below for the different type, each one ideally has a switch case and 
@@ -253,35 +265,53 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
 }
 
 static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
+      
+    // sf = 0 -> 32 bit result to 32 bit register
+    // sf = 1 -> 64 bit result to 64 bit register
+    if (fields.sf == 0) {
+        
+        // separating register reads for clarity (32 bit)
+        word_t ra = read_w_register(&state->general_registers, (unsigned) fields.ra);
+        word_t rn = read_w_register(&state->general_registers, (unsigned) fields.rn);
+        word_t rm = read_w_register(&state->general_registers, (unsigned) fields.rm);
 
-    // case for multiplication
-    // 0 - madd, 1 - msub
-    switch (fields.x) {
-        case MADD:
-            
-            // sf = 0 -> 32 bit result to 32 bit register
-            // sf = 1 -> 64 bit result to 64 bit register
-            
-            if (fields.sf == 0) {
-                
-                // separating register reads for clarity 
-                word_t ra = read_w_register(&state->general_registers, (unsigned) fields.ra);
-                word_t rn = read_w_register(&state->general_registers, (unsigned) fields.rn);
-                word_t rm = read_w_register(&state->general_registers, (unsigned) fields.rm);
+        word_t result;
 
-                // result is of the form ra + (rn * rm)
+        // result is of the form ra + (rn * rm) for MADD
+        // result is of the form ra - (rn * rm) for MSUB
+        switch (fields.x) {
+
+            case MADD:
                 word_t result = ra + (rn * rm);
-
-                // writing to rd using write_w 
-                write_w_register(&state->general_registers, (unsigned) fields.rd, result);
-            } else {
-                void;
-            }
-
             case MSUB:
-        default:
+                word_t result = ra - (rn * rm);
+            default: 
+                invalid_field_error("x", fields.x, instr);
+        }
 
-            unsupported_opcode_error(fields.x, read_pc(&state->special_registers));
+        // writing to rd using write_w (32 bit)
+        write_w_register(&state->general_registers, (unsigned) fields.rd, result);
+    } else {
+        
+        // separating register reads for clarity (64 bit)
+        dword_t ra = read_x_register(&state->general_registers, (unsigned) fields.ra);
+        dword_t rn = read_x_register(&state->general_registers, (unsigned) fields.rn);
+        dword_t rm = read_x_register(&state->general_registers, (unsigned) fields.rm);
+
+        dword_t result;
+
+        switch (fields.x) {
+
+            case MADD:
+                word_t result = ra + (rn * rm);
+            case MSUB:
+                word_t result = ra - (rn * rm);
+            default: 
+                invalid_field_error("x", fields.x, instr);
+        }
+
+        // writing to rd using write_x (64 bit)
+        write_x_register(&state->general_registers, (unsigned) fields.rd, result);
     }
 }
 
