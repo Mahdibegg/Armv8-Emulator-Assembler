@@ -203,6 +203,45 @@ static addr_t compute_address(machine_state_t *state, ls_instr_fields_t fields) 
     }
 }
 
+/*
+
+execute_load_store carries out one load or store instruction
+
+decodes the instruction, works out the transfer address, then either
+loads from memory into Rt or stores Rt into memory, sized by sf
+
+*/
+
 exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) {
+
+    ls_instr_fields_t fields = decode_load_store(instr);
+
+    // resolve the address: load literal is PC + simm19 * 4, the rest use Xn
+    addr_t address;
+    if (fields.type == LS_LOAD_LITERAL) {
+        dword_t offset = sign_extend(fields.simm19, 19) * 4;
+        address = (addr_t) (read_pc(&state->special_registers) + offset);
+    } else {
+        address = compute_address(state, fields);
+    }
+
+    if (fields.L == 1) {
+
+        // load: read 8 bytes (X) or 4 bytes (W) from memory into Rt
+        dword_t value = fields.sf ? read_double_word(&state->memory, address)
+                                  : (dword_t) read_word(&state->memory, address);
+        write_reg(state, fields.rt, fields.sf, value);
+    } else {
+
+        // store: write Rt into memory as 8 bytes (X) or 4 bytes (W)
+        dword_t value = read_reg(state, fields.rt, fields.sf);
+        if (fields.sf) {
+            write_double_word(&state->memory, address, value);
+        } else {
+            write_word(&state->memory, address, (word_t) value);
+        }
+    }
+
+    // load/store never branches, so continue to the next instruction
     return EXEC_NEXT;
 }
