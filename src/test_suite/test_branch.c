@@ -131,7 +131,7 @@ static void register_branch_test(void) {
     assert(result == EXEC_BRANCH);
     assert(read_pc(&state.special_registers) == 500);
 
-    //Testing that only register 3 has been changed and special registesr are all initialised
+    // Testing that only register 3 has been changed and special registesr are all initialised
     assert_special_registers_initialised_except_pc(&state, 500);
     assert_only_x_register_changed(&state, 3, 500);
     printf("Register branch: PASSED\n");
@@ -165,6 +165,10 @@ static void conditional_branch_taken_eq_test(void) {
 
     assert(result == EXEC_BRANCH);
     assert(read_pc(&state.special_registers) == 104);
+
+    // Testing general registers and special registers
+    assert_general_registers_are_zero(&state);
+    assert_special_registers_initialised_except_pc(&state, 104);
 
     printf("Conditional branch taken EQ: PASSED\n");
 }
