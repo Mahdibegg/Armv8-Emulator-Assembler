@@ -95,3 +95,11 @@ reg32_t read_wzr(void) {
     
     return 0;
 }
+
+void write_pstate(spec_reg *registers, bit_t n, bit_t z, bit_t c, bit_t v) {
+
+    registers->psr.n_flag = n;
+    registers->psr.z_flag = z;    
+    registers->psr.c_flag = c;
+    registers->psr.v_flag = v;
+}
