@@ -94,3 +94,35 @@ static void register_branch_test(void) {
 
     printf("Register branch: PASSED\n");
 }
+
+static void conditional_branch_taken_eq_test(void) {
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_pc(&state.special_registers, 100);
+
+    /*
+       Conditional branch format:
+       01010100 simm19 0 cond
+
+       0x54 = 01010100
+       simm19 = 1
+       cond = 0x0 for EQ
+
+       Actual offset = 1 << 2 = 4
+
+       Since Z flag is true, PC should become 104.
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_BRANCH;
+    instr.instr = (0x54 << 24) | (1 << 5) | 0x0;
+
+    exec_result_t result = execute_branch(&state, instr);
+
+    assert(result == EXEC_BRANCH);
+    assert(read_pc(&state.special_registers) == 104);
+
+    printf("Conditional branch taken EQ: PASSED\n");
+}
