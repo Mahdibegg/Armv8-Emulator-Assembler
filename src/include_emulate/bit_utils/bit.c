@@ -1,5 +1,8 @@
 #include "bit.h"
 
+#define BIT_MSB_POS_64 63
+#define BIT_MSB_POS_32 31
+
 word_t extract_bits(instr_t instruction, unsigned low, unsigned high) {
 
     // validating bit input for internal error
@@ -19,4 +22,12 @@ word_t extract_bits(instr_t instruction, unsigned low, unsigned high) {
 
     // shift instruction to mask position and apply mask
     return (instruction >> low) & mask;
+}
+
+bit_t sign_bit_32(word_t word) {
+    return (bit_t) extract_bits(word, BIT_MSB_POS_32, BIT_MSB_POS_32);
+}
+
+bit_t sign_bit_64(dword_t word) {
+    return (bit_t) extract_bits(word, BIT_MSB_POS_64, BIT_MSB_POS_64);
 }
