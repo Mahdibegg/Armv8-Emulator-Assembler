@@ -4,8 +4,15 @@
 #include "data_processing.h"
 #include "bit_utils/bit.h"
 
-// extracts bits to create immediate instruction fields as struct
-// using the opi field against hardcoded constants (in data_processing.h) to set type and operand fields
+/*
+
+2 functions decode_imm_instr, decode_reg_instr build the immediate/register instr_fields for execution
+
+immediate version - using the opi field against hardcoded constants (in data_processing.h) to set type and operand fields
+register version - checking M, OPR's MSB and LSB and OPR to determine type field
+
+*/
+
 static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 
     // struct to return
@@ -49,8 +56,6 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
     return fields;
 }
 
-// extract bits to create register instruction fields as struct
-// checking M, OPR's MSB and LSB and OPR to determine type field
 static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     
     // struct to return
@@ -105,8 +110,16 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     return fields;
 }
 
-// executing fully decoded immediate instruction (state will be updated, hence its void)
-static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields) {
+
+/*
+
+2 higher level execution functions that group the immediate/register class of instructions
+
+executing instructions decoded into immediate/register class
+
+*/
+
+static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
     
     // checking type of immediate to execute it more specifically 
     // due to it having its own respective fields
@@ -122,17 +135,16 @@ static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields)
             
         default:
 
-            // provide address of invalid operation if IMM_NULL or
-            // non immedate instruction is attempted to be executed
-            fprintf(stderr, "Invalid operation: unsupported immediate execution at address 0x%x\n",
+            // provide address of invalid operation if IMM_NULL and actual instruction failed to execute
+            fprintf(stderr, "Invalid operation: unsupported immediate instruction (0x%x) executed at address 0x%x\n", 
+                instr,
                 read_pc(&state->special_registers)
             );
             exit(EXIT_FAILURE);
     }
 }
 
-//  executing fully decoded register instruction (state will be updated, hence its void)
-static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields) {
+static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
 
     // checking type of register to execute it more specifically 
     // due to it having its own respective fields
@@ -163,8 +175,14 @@ static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields)
     }
 }
 
-// final execute_data_processing function puts all helpers (the static functions)
-// then this will be used in the execution of pipeline 
+/*
+
+final execute_data_processing function puts all helpers (the static functions) 
+
+should be used in the execution of pipeline 
+
+*/
+
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
 
     // distinguish between immediate and register instruction so it can further decode
@@ -172,11 +190,11 @@ exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t in
     if (instr.type == INSTR_DP_IMM) {
 
         // pass further decoded result into execution straight away along with state pointer
-        execute_imm_instr(state, decode_imm_instr(instr));
+        execute_imm_instr(state, decode_imm_instr(instr), instr.instr);
     } else if (instr.type == INSTR_DP_REG) {
 
         // similar as above but with reg version
-        execute_reg_instr(state, decode_reg_instr(instr));
+        execute_reg_instr(state, decode_reg_instr(instr), instr.instr);
     } else {
 
         // error message for unsupported other forms of data_processing (or branching/load_store)
