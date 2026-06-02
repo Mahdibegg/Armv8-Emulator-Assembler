@@ -270,7 +270,20 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
                 bit_t z = result == 0;
                 write_pstate(&state->special_registers, n, z, 0, 0);
             } else {
-                void;
+                
+                // similar as above but 64 bit version
+
+                dword_t result =
+                    read_x_register(&state->general_registers, fields.rn) &
+                    read_x_register(&state->general_registers, fields.rm);
+            
+                write_x_register(&state->general_registers, (unsigned) fields.rd, result);
+            
+                int shift_bits = sizeof(dword_t) * 8 - 1;
+                
+                bit_t n = (result >> shift_bits) & 1;
+                bit_t z = result == 0;
+                write_pstate(&state->special_registers, n, z, 0, 0);
             }
 
         case BIC:
