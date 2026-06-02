@@ -27,6 +27,16 @@ static void assert_special_registers_initialised_except_pc(const machine_state_t
     assert(state->special_registers.psr.z_flag == true);
 }
 
+static void assert_only_x_register_changed(const machine_state_t *state, unsigned changed_index, dword_t expected_value) {
+    for (unsigned i = 0; i < REG_NUM; i++) {
+        if (i == changed_index) {
+            assert(read_x_register(&state->general_registers, i) == expected_value);
+        } else {
+            assert(read_x_register(&state->general_registers, i) == 0);
+        }
+    }
+}
+
 
 static void unconditional_branch_forward_test(void) {
 
