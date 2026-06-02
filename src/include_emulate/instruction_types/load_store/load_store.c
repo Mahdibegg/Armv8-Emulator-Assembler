@@ -1,5 +1,7 @@
 #include "load_store.h"
 #include "bit_utils/bit.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 // register field value 11111 (31) encodes the zero register
 #define ZERO_REGISTER 0x1F
@@ -125,6 +127,36 @@ static void write_double_word(memory_t *memory, addr_t address, dword_t value) {
 
     write_word(memory, address, (word_t) value);
     write_word(memory, address + 4, (word_t) (value >> 32));
+}
+
+/*
+
+unsupported_load_store_error reports getting an addressing mode the
+decoder shouldn't produce also shows the failing instruction address
+
+*/
+
+static void unsupported_load_store_error(byte_t mode, word_t address) {
+
+    fprintf(stderr, "Invalid operation: unsupported load/store mode (0x%02x) at address 0x%016lx\n",
+        mode,
+        address
+    );
+    exit(EXIT_FAILURE);
+}
+
+/*
+
+sign_extend turns a raw n-bit field into a full 64-bit signed value,
+used for the signed offsets in the pre/post index and load literal forms
+
+*/
+
+static dword_t sign_extend(word_t value, unsigned bits) {
+
+    // flip then subtract the sign bit to propagate it upwards
+    dword_t sign_bit = (dword_t) 1 << (bits - 1);
+    return ((dword_t) value ^ sign_bit) - sign_bit;
 }
 
 exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) {
