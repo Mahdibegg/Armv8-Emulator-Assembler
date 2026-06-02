@@ -60,3 +60,7 @@ TEST_BRANCH_OBJS = test_suite/test_branch.o \
 	include_emulate/bit_utils/bit.o
 test_branch: $(TEST_BRANCH_OBJS)
 	$(CC) $(CFLAGS) -o test_branch $(TEST_BRANCH_OBJS)
+TEST_BIT_UTILS_OBJS = test_suite/test_bit_utils.o \
+	include_emulate/bit_utils/bit.o
+test_bit_utils: $(TEST_BIT_UTILS_OBJS)
+	$(CC) $(CFLAGS) -o test_bit_utils $(TEST_BIT_UTILS_OBJS)
