@@ -66,3 +66,31 @@ static void unconditional_branch_backward_test(void) {
 
     printf("Unconditional branch backward: PASSED\n");
 }
+
+static void register_branch_test(void) {
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_pc(&state.special_registers, 100);
+    write_x_register(&state.general_registers, 3, 500);
+
+    /*
+       Register branch pattern:
+       1101011000011111000000 Xn 00000
+
+       Fixed bits 31-10 = 0x3587C0
+       Xn = 3
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_BRANCH;
+    instr.instr = (0x3587C0 << 10) | (3 << 5);
+
+    exec_result_t result = execute_branch(&state, instr);
+
+    assert(result == EXEC_BRANCH);
+    assert(read_pc(&state.special_registers) == 500);
+
+    printf("Register branch: PASSED\n");
+}
