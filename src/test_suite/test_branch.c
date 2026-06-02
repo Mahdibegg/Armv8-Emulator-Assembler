@@ -8,7 +8,12 @@
 #include "types.h"
 
 /*
- x - Helper functions to test state of general and special purpose reigsters
+ 3 - Helper functions to test state of general and special purpose reigsters
+
+ assert_general_registers_are_zero - tests if genearl registers are 0 only used with non register branch instructions
+ assert_special_registers_initialised_except_pc - tests if special registers remain unchanged except for pc
+ assert_only_x_register_changed - tests if the xth register is the only register that is changed, the rest should be 0
+ 
 */
 static void assert_general_registers_are_zero(const machine_state_t *state) {
 
@@ -199,6 +204,7 @@ static void conditional_branch_not_taken_ne_test(void) {
     // Testing general registers, special registers 
     assert_general_registers_are_zero(&state);
     assert_special_registers_initialised_except_pc(&state, 100);
+
     printf("Conditional branch not taken NE: PASSED\n");
 }
 
