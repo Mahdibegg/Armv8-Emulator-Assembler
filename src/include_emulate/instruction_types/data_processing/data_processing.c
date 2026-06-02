@@ -183,11 +183,11 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
     }
 }
 
-static void execute_reg_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
 
-static void execute_reg_logic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
 
-static void execute_multiply_logic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
 
 /*
 
