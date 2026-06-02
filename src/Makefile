@@ -2,7 +2,7 @@ CC      ?= gcc
 CFLAGS  ?= -std=c17 -g\
 	-D_POSIX_SOURCE -D_DEFAULT_SOURCE\
 	-Wall -Werror -pedantic\
-	-I src/include_emulate
+	-I include_emulate
 
 .SUFFIXES: .c .o
 
@@ -56,10 +56,9 @@ TEST_MEMORY_OBJS = test_suite/test_memory.o \
 test_memory: $(TEST_MEMORY_OBJS)
 	$(CC) $(CFLAGS) -o test_memory $(TEST_MEMORY_OBJS)
 
-TEST_IO_OBJS = include_emulate/tests/test_io.o \
+TEST_IO_OBJS = test_suite/test_io.o \
 	include_emulate/IO/io.o \
 	include_emulate/memory/memory.o \
     include_emulate/registers/registers.o
-
 test_io: $(TEST_IO_OBJS)
 	$(CC) $(CFLAGS) -o test_io $(TEST_IO_OBJS)
