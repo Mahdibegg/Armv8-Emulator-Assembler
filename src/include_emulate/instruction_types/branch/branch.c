@@ -87,3 +87,84 @@ static reg_branch_t decode_reg_branch( decoded_instr_t instr) {
 
     return branch;
 }
+
+// Functions for executing the appropriate branch instruction
+// Execute Unconditional Branch
+static void execute_unconditional_branch(machine_state_t *state, uncond_branch_t branch) {
+
+    // get the offset from the decoded branch
+    int64_t offset = branch.offset;
+    
+    // read the current value of the pc 
+    dword_t current_pc = read_pc(&state->special_registers.pc);
+
+    // then write new value to the pc (PC += offset)
+    dword_t new_pc = (dword_t)((int64_t)current_pc + offset);
+    write_pc(&state->special_registers.pc, new_pc);
+}
+
+// Execute Register Branch
+static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
+
+    // get the register number 
+    unsigned xn = branch.xn;
+
+    // get the target address held in that register
+    reg64_t target = read_x_register(&state->general_registers, xn);
+
+    // set pc to the new register that it needs to point to
+    write_pc(&state->special_registers.pc, target);
+}
+
+// Checks if the condition holds relative to machine state
+// Used in execute_conditional_branch
+static bool condition_holds(unsigned cond,  const spec_reg *spec_regs) {
+    switch(cond) {
+
+        case 0x0: // Z==1 
+            return spec_regs->psr.z_flag == true;
+
+        case 0x1: // Z == 0
+            return spec_regs->psr.z_flag == false;
+
+        case 0xA: // N == V
+            return spec_regs->psr.n_flag == spec_regs->psr.v_flag;
+
+        case 0xB: // N != V
+            return spec_regs->psr.n_flag != spec_regs->psr.v_flag;
+
+        case 0xC: // Z == 0 and N == V
+            return (spec_regs->psr.z_flag == false) && (spec_regs->psr.n_flag == spec_regs->psr.v_flag);
+
+        case 0xD: // Z == 1 or N != V
+            return (spec_regs->psr.z_flag == true) || (spec_regs->psr.n_flag != spec_regs->psr.v_flag);
+
+        case 0xE: // Any
+            return true;
+
+        default:
+            fprintf(stderr, "Invalid conditional branch: Unsupported condition code %u\n", 
+                cond
+            );
+            exit(EXIT_FAILURE);
+    }
+}
+
+// Execute Conditional Branch
+static void execute_conditional_branch(machine_state_t *state, cond_branch_t branch) {
+
+    // get the offset from the decoded branch 
+    int64_t offset = branch.offset;
+
+    // get the condition that needs to be met
+    unsigned cond = branch.cond;
+
+    //check if the condition holds
+    if (condition_holds(cond, &state->special_registers)) {
+        // PC = PC + offset
+        dword_t current_pc = read_pc(&state->special_registers.pc);
+
+        dword_t new_pc = (dword_t)((int64_t)current_pc + branch.offset);
+        write_pc(&state->special_registers.pc, new_pc);
+    }
+}
