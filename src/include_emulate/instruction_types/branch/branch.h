@@ -4,6 +4,7 @@
 #include "state.h"
 #include "pipeline/decode_struct.h"
 #include "types.h"
+#include <stdint.h>
 
 // Unconditional Branch: b
 typedef struct {
