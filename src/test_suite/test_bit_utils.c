@@ -30,5 +30,9 @@ static void extract_bits_range_test(void) {
     printf("extract_bits_range_test: PASSED");
 }
 
+static void sign_extend_positive_values_test(void) {
+    
+}
+
 
 
