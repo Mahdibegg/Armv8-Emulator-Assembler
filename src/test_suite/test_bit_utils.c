@@ -70,6 +70,8 @@ int main(void) {
     sign_extend_negative_values_test();
 
     printf("test_bit_utils: ALL TESTS PASSED\n");
+
+    return 0;
 }
 
 
