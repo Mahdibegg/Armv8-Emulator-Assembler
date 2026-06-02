@@ -132,11 +132,11 @@ static void execute_unconditional_branch(machine_state_t *state, uncond_branch_t
     int64_t offset = branch.offset;
     
     // read the current value of the pc 
-    dword_t current_pc = read_pc(&state->special_registers.pc);
+    dword_t current_pc = read_pc(&state->special_registers);
 
     // then write new value to the pc (PC += offset)
     dword_t new_pc = (dword_t)((int64_t)current_pc + offset);
-    write_pc(&state->special_registers.pc, new_pc);
+    write_pc(&state->special_registers, new_pc);
 }
 
 static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
@@ -148,7 +148,7 @@ static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
     reg64_t target = read_x_register(&state->general_registers, xn);
 
     // set pc to the new register that it needs to point to
-    write_pc(&state->special_registers.pc, target);
+    write_pc(&state->special_registers, target);
 }
 
 static bool condition_holds(unsigned cond,  const spec_reg *spec_regs) {
@@ -194,10 +194,10 @@ static void execute_conditional_branch(machine_state_t *state, cond_branch_t bra
     //check if the condition holds
     if (condition_holds(cond, &state->special_registers)) {
         // PC = PC + offset
-        dword_t current_pc = read_pc(&state->special_registers.pc);
+        dword_t current_pc = read_pc(&state->special_registers);
 
         dword_t new_pc = (dword_t)((int64_t)current_pc + offset);
-        write_pc(&state->special_registers.pc, new_pc);
+        write_pc(&state->special_registers, new_pc);
     }
 }
 
