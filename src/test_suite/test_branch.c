@@ -152,3 +152,17 @@ static void conditional_branch_not_taken_ne_test(void) {
 
     printf("Conditional branch not taken NE: PASSED\n");
 }
+
+int main(void) {
+    printf("Running branch tests...\n\n");
+
+    unconditional_branch_forward_test();
+    unconditional_branch_backward_test();
+    register_branch_test();
+    conditional_branch_taken_eq_test();
+    conditional_branch_not_taken_ne_test();
+
+    printf("\nAll branch tests passed!\n");
+
+    return 0;
+}
