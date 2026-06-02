@@ -9,16 +9,16 @@
 #include "../memory/memory.h"
 #include "../state.h"
 
-// Argument + file handling
+// Argument checking + validating correct file extensions
 void validate_args(int argc, char **argv, char **input, char **output);
 
-// File setup
+// Select the output stream
 FILE *setup_output(char *outputfile);
 
-// Binary loader
+// Load binary input file into emulated memory
 void binary_loader(machine_state_t *state, char *inputfile);
 
-// Output writer
+// Write output to given stream
 void output_write(machine_state_t *state, FILE *out);
 
 #endif
