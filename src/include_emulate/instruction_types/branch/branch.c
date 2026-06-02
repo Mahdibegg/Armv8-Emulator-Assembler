@@ -168,3 +168,44 @@ static void execute_conditional_branch(machine_state_t *state, cond_branch_t bra
         write_pc(&state->special_registers.pc, new_pc);
     }
 }
+
+// Execute Branch Instruction: This runs in the pipeline and updates the PC appropriately
+// Returns EXEC_BRANCH but is ignored in the pipeline
+exec_result_t execute_branch(machine_state_t *state, decoded_instr_t instr) {
+
+    // check type of the instructoin if the isntruction is not of tpe branch then error
+    if (instr.type != INSTR_BRANCH) {
+
+        fprintf(stderr, "Invalid branch instruction: unsupported instruction type %u in instruction 0x%08x\n",
+            instr.type,
+            instr.instr
+        );
+        exit(EXIT_FAILURE);
+    }
+    // the instruction is a branch instruction now need to check what type of branch instruction it is
+
+    if (is_conditional(instr)) {
+        
+        // Decode and execute conditional branch instruction (updates pc)
+        cond_branch_t branch = decode_cond_branch(instr);
+        execute_conditional_branch(state, branch);
+    } else if (is_unconditional(instr)) {
+
+        // Decode and execute unconditional branch instruction (updates pc)
+        uncond_branch_t branch = decode_uncond_branch(instr);
+        execute_unconditional_branch(state, branch);
+    } else if (is_reg_branch(instr)) {
+
+        // Decode and execute register branch instruction (updates pc)
+        reg_branch_t branch = decode_reg_branch(instr);
+        execute_reg_branch(state, branch);
+    } else {
+
+        // it is an unknown branch instruction so we return an error 
+        fprintf(stderr, "Invalid branch instruction: unsupported branch encoding in instruction 0x%08x\n",
+            instr.instr
+        );
+        exit(EXIT_FAILURE);
+    }
+    return EXEC_BRANCH;
+}
