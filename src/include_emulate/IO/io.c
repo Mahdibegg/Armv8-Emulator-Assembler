@@ -1,12 +1,11 @@
 #include "io.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-// Helper function for checking file ending
+// Helper function for checking file format
+// Used to output error if suffix is not correct
 static int ends_with(const char *str, const char *suffix) {
     if (!str || !suffix) return 0;
 
+    // String lengths and suffix lengths for comparison
     size_t lenstr = strlen(str);
     size_t lensuffix = strlen(suffix);
 
@@ -17,9 +16,11 @@ static int ends_with(const char *str, const char *suffix) {
 }
 
 // Validate arguments passed in
+// Length of arguments
 void validate_args(int argc, char **argv, char **input, char **output) {
 
     // Check number of arguments
+    // Expected format: ./emulate <input .bin> <output .out>, max arguments 2, min arguments 1
     if (argc < 2 || argc > 3) {
         fprintf(stderr, "Usage: ./emulate <input.bin> OR ./emulate <input.bin> <output.out>\n");
         exit(EXIT_FAILURE);
@@ -32,18 +33,21 @@ void validate_args(int argc, char **argv, char **input, char **output) {
     if (argc == 3) {
         *output = argv[2];
     } else {
+        // Ignore if no second command line argument passed
         *output = NULL;
     }
 
-    // Validate input file extension
+    // Validate input file extension using helper function ends_with
     if (!ends_with(*input, ".bin")) {
-        fprintf(stderr, "Error: input file must have .bin extension\n");
+        
+        fprintf(stderr, "File input error: input file must have .bin extension\nUse: ./emulate <filename>.bin");
         exit(EXIT_FAILURE);
     }
 
     // Validate output file extension (if not provided short circuit)
     if (*output && !ends_with(*output, ".out")) {
-        fprintf(stderr, "Error: output file must have .out extension\n");
+
+        fprintf(stderr, "File output error: output file must have .out extension\nUse: ./emulate <filename>.bin <filename>.out");
         exit(EXIT_FAILURE);
     }
 }
@@ -51,31 +55,31 @@ void validate_args(int argc, char **argv, char **input, char **output) {
 // Select whether to output to stdout or to an output file
 FILE *setup_output(char *outputfile) {
 
-    // If no output file is provided -> use stdout
+    // If no output file is provided -> use stdout to output to terminal
     if (outputfile == NULL) {
         return stdout;
     }
 
-    // Try to open the output file
+    // Attempt to open the output file, in order to check whether it exists
     FILE *out = fopen(outputfile, "w");
 
-    // Fail if unsuccessful
+    // Fail if unsuccessful (if it doesn't exist then exit the program)
     if (out == NULL) {
-        perror("Error opening output file");
+
+        perror("File error: file cannot be opened - may not exist");
         exit(EXIT_FAILURE);
     }
 
-    // Use if successful
     return out;
 }
 
-// Load the binary input file into state
+// Load the binary input file into state (specifically the memory field, since instructions will be fetched)
 void binary_loader(machine_state_t *state, char *inputfile) {
 
-    // Try to open the input file
+    // Attempt to open file to check existence
     FILE *file = fopen(inputfile, "rb");
 
-    // Fail if unsuccesful
+    // If the file does not exit the program to prevent further crashes
     if (file == NULL) {
         perror("Error opening input file");
         exit(EXIT_FAILURE);
@@ -94,7 +98,7 @@ void binary_loader(machine_state_t *state, char *inputfile) {
     }
 }
 
-// Write to given output stream
+// Write to given output stream (command line output since no provided .out file)
 void output_write(machine_state_t *state, FILE *out) {
 
     // Registers

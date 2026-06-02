@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "registers/registers.h"
-#include "memory/memory.h"
-#include "types.h"
-#include "state.h"
-#include "IO/io.h"
-#include "pipeline/pipeline.h"
+#include "include_emulate/IO/emulate.h"
 
 int main(int argc, char **argv) {
 
