@@ -11,22 +11,32 @@
 // register instruction field cases (OPR)
 #define MULTIPLY_OPR 0x8
 
-// immediate arithmetic instructions (opcode)
+// immediate arithmetic instructions (opcode field)
 #define ADD 0x0
 #define ADD_S 0x1
 #define SUB 0x2
 #define SUB_S 0x3
 
-// immediate wide move instructions (opcode)
+// immediate wide move instructions (opcode field)
 #define MOVN 0x0
 #define MOVZ 0x2
 #define MOVK 0x3
 
-// register arithmetic shift instructions (shift)
+// register arithmetic shift instructions (shift field)
 #define LSL 0x0
 #define LSR 0x1
 #define ASR 0x2
 #define ROR 0x3
+
+// register logical shift instructions (shift field)
+#define AND 0x0
+#define BIC 0x1
+#define ORR 0x2
+#define ORN 0x3
+#define EOR 0x4
+#define EON 0x5
+#define ANDS 0x6
+#define BICS 0x7
 
 /*
 
@@ -158,7 +168,7 @@ static void unsupported_shift_error(byte_t shift, word_t address) {
 
         // provide invalid opcode number and the instruction that failed to execute
         // so you are able to see which opcode is not available, and the address it failed at
-        fprintf(stderr, "Invalid operation: unsupported shift (0x%01x) at address 0x%016lx\n",
+        fprintf(stderr, "Invalid operation: unsupported shift (0x%02x) at address 0x%016lx\n",
             shift,
             address
         );
@@ -202,7 +212,7 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
 
-    // case for shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
+    // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
     switch (fields.shift) {
         case LSL:
         case LSR:
@@ -214,7 +224,28 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
     }
 }
 
-static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
+static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
+
+    // combine shift opcode and N bits to create 3 bit binary digit
+    byte_t shift_opcode = (fields.opc << 1) + fields.N;
+
+    // case for logical shift
+    // 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
+    switch (shift_opcode) {
+        case AND:
+        case BIC:
+        case ORR:
+        case ORN:
+        case EOR:
+        case EON:
+        case ANDS:
+        case BICS:
+        default:
+
+            unsupported_opcode_error(shift_opcode, read_pc(&state->special_registers));
+    }
+
+}
 
 static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {}
 
