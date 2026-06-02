@@ -300,11 +300,9 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         // for ANDS and BICS, the pstate register will need to be updated
         // in the case switching, they do the exact same thing as AND and BIC respectively
         if (shift_opcode == ANDS || shift_opcode == BICS) {
-            // get the size of the shift needed to get sign bit (sizeof returns byte size, multiply by 8 for bit size)
-            int shift_bits = sizeof(word_t) * 8 - 1;
 
             // set flags, n = field.n, c = v = 0, z = 1 if result = 0
-            bit_t n = (result >> shift_bits) & 1;
+            bit_t n = sign_bit_32(result);
             bit_t z = result == 0;
             write_pstate(&state->special_registers, n, z, 0, 0);
         }
@@ -339,7 +337,7 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
         if (shift_opcode == ANDS || shift_opcode == BICS) {
 
-            bit_t n = sign;
+            bit_t n = sign_bit_64(result);
             bit_t z = result == 0;
             write_pstate(&state->special_registers, n, z, 0, 0);
         }
