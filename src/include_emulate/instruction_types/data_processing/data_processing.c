@@ -110,6 +110,23 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     return fields;
 }
 
+/*
+
+5 execute functions below for the different type, each one ideally has a switch case and 
+
+uses the desired field to do real operations that would update the state
+
+*/
+
+static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+
+static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+
+static void execute_reg_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+
+static void execute_reg_logic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
+
+static void execute_multiply_logic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr);
 
 /*
 
