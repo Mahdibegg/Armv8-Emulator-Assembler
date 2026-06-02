@@ -87,7 +87,21 @@ void test_validate_args_too_many_args(){
     printf("\nERROR: validate_args did NOT exit\n");
 }
 
-// TEST 1.6: validate_args (too little arguments) SHOULD FAIL AND CAUSE EXIT
+// TEST 1.6: validate_args (too few arguments) SHOULD FAIL AND CAUSE EXIT
+void test_validate_args_too_few_args(){
+    char *input;
+    char *output;
+
+    char *argv[] = {"./emulate"};  // too few
+    int argc = 1;
+
+    printf("validate_args too few args (should EXIT)\n");
+
+    validate_args(argc, argv, &input, &output);
+
+    // If this line runs, test failed
+    printf("\nERROR: validate_args did NOT exit\n");
+}
 
 // TEST 2.1: setup_output, no output
 void test_setup_output() {
@@ -180,6 +194,7 @@ int main() {
     //test_validate_args_invalid_input();
     //test_validate_args_invalid_output();
     //test_validate_args_too_many_args();
+    test_validate_args_too_few_args();
 
     printf("\nAll IO tests completed\n");
     return 0;
