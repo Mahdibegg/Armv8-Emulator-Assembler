@@ -31,7 +31,14 @@ static void extract_bits_range_test(void) {
 }
 
 static void sign_extend_positive_values_test(void) {
-    
+
+    // Positive values remain unchanged after sign extend
+
+    assert(sign_extend(0x0, 19) == 0);
+    assert(sign_extend(0xFF, 13) == 255);
+    assert(sign_extend(0x6, 13) == 6);
+
+    printf("sign_extend_positive_values_test: PASSED");
 }
 
 
