@@ -126,7 +126,7 @@ void test_setup_output_file_valid() {
 
 // TEST 2.3: setup_output, invalid path
 
-void test_setup_output_invalid_path() {
+void test_setup_output_invalid() {
     printf("setup_output invalid path (should EXIT)\n");
 
     // This directory does not exist, fopen will fail
@@ -136,13 +136,13 @@ void test_setup_output_invalid_path() {
     printf("\nERROR: setup_output did NOT exit\n");
 }
 
-// TEST 3.1: binary_loader
-void test_binary_loader() {
+// TEST 3.1: binary_loader with valid path
+void test_binary_loader_valid() {
 
     machine_state_t state;
     init_memory(&state.memory);
 
-    // create temporary file
+    // temporary file
     FILE *f = fopen("test.bin", "wb");
 
     byte_t test_bytes[4] = {0x22, 0x08, 0x00, 0x91};
@@ -160,8 +160,22 @@ void test_binary_loader() {
     printf("binary_loader PASSED\n");
 }
 
-// TEST 4.1: output_write
-void test_output_write() {
+// TEST 3.2: binary_loader with an invalid file
+void test_binary_loader_invalid() {
+    printf("binary_loader invalid file (should EXIT)\n");
+
+    machine_state_t state;
+
+    // invalid file path, fopen fails
+    binary_loader(&state, "nonexistent_file.bin");
+
+    // If reached, FAIL
+    printf("ERROR: binary_loader did NOT exit\n");
+}
+
+
+// TEST 4.1: output_write valid
+void test_output_write_valid() {
 
     machine_state_t state;
 
@@ -201,15 +215,17 @@ int main() {
     test_validate_args_valid_output();
     */
 
-    test_setup_output_null();
-    test_setup_output_file_valid();
-
     /*
-    test_binary_loader();
+    test_setup_output_null();
+    test_setup_output_valid();
     */
 
     /*
-    test_output_write();
+    test_binary_loader_valid();
+    */
+
+    /*
+    test_output_write_valid();
     */
 
     // Tests that should fail
@@ -217,7 +233,8 @@ int main() {
     //test_validate_args_invalid_output();
     //test_validate_args_too_many_args();
     //test_validate_args_too_few_args();
-    test_setup_output_invalid_path();
+    //test_setup_output_invalid();
+    test_binary_loader_invalid();
 
     printf("\nAll IO tests completed\n");
     return 0;
