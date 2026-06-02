@@ -229,15 +229,31 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
 
-    // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
-    switch (fields.shift) {
-        case LSL:
-        case LSR:
-        case ASR:
-        case ROR:
-        default: 
+    if (fields.sf == 0) {
 
-            unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
+        // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
+        switch (fields.shift) {
+            case LSL:
+            case LSR:
+            case ASR:
+            case ROR:
+            default: 
+
+                unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
+        }
+    } else {
+
+        // similar as above but 64 bit version
+
+        switch (fields.shift) {
+            case LSL:
+            case LSR:
+            case ASR:
+            case ROR:
+            default: 
+
+                unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
+        }
     }
 }
 
