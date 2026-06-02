@@ -40,8 +40,10 @@ static bool is_reg_branch(decoded_instr_t instr) {
 
     instr_t raw = instr.instr;
 
-    // check the raw instruction shifted 10 bits to the right
-    return (raw >> 10) == 0x3587C0;
+    bool opcode_matches = (raw >> 10) == 0x3587C0;
+    bool bottom_bits_zero = (raw & 0x1F) == 0;
+
+    return opcode_matches && bottom_bits_zero;
 }
 
 // 3 functions to extract the fields from each instruction (decoding)
