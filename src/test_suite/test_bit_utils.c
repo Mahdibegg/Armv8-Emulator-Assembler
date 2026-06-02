@@ -41,5 +41,9 @@ static void sign_extend_positive_values_test(void) {
     printf("sign_extend_positive_values_test: PASSED");
 }
 
+static void sign_extend_negative_test(void) {
+    
+}
+
 
 
