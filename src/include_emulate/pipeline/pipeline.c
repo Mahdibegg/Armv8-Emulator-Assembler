@@ -52,7 +52,7 @@ decoded_instr_t decode_instr_type(word_t instruction) {
         return decoded_instruction;
     }
 
-    word_t op0 = extract_bits(instruction, OP0_HIGH, OP0_LOW);
+    word_t op0 = extract_bits(instruction, OP0_LOW, OP0_HIGH);
 
     // using the mask we are able to ignore the "dont care" bits
     if ((op0 & OP0_MASK_DP_IMM) == OP0_VALUE_DP_IMM) {

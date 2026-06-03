@@ -33,3 +33,4 @@ assemble
 *.nav
 *.toc
 test.bin
+test.out
