@@ -128,8 +128,11 @@ void read_write_PC_register_test(void) {
 void read_zero_registers_test(void) {
 
     printf("Testing read xzr and wzr...\n");
+    
+    gen_regs general;
+    init_gen_registers(&general)
 
-    assert(read_xzr() == 0);
+    assert(read_w_register(&general, 31) == 0);
     assert(read_wzr() == 0);
 
     printf("zero registers hold correct value : PASSED\n");
