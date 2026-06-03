@@ -69,3 +69,16 @@ void write_word(memory_t *memory, addr_t address, word_t value) {
         exit(EXIT_FAILURE);
     }
 }
+
+static dword_t read_double_word(const memory_t *memory, addr_t address) {
+
+    dword_t lo = read_word(memory, address);
+    dword_t hi = read_word(memory, address + 4);
+    return lo | (hi << 32);
+}
+
+static void write_double_word(memory_t *memory, addr_t address, dword_t value) {
+
+    write_word(memory, address, (word_t) value);
+    write_word(memory, address + 4, (word_t) (value >> 32));
+}

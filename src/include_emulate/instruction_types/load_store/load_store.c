@@ -65,33 +65,6 @@ static ls_instr_fields_t decode_load_store(decoded_instr_t instr) {
 
 /*
 
-read_double_word reads a 64-bit value as two little-endian words:
-the low word at address, the high word at address + 4
-
-*/
-
-static dword_t read_double_word(const memory_t *memory, addr_t address) {
-
-    dword_t lo = read_word(memory, address);
-    dword_t hi = read_word(memory, address + 4);
-    return lo | (hi << 32);
-}
-
-/*
-
-write_double_word writes a 64-bit value as two little-endian words:
-the low word at address, the high word at address + 4
-
-*/
-
-static void write_double_word(memory_t *memory, addr_t address, dword_t value) {
-
-    write_word(memory, address, (word_t) value);
-    write_word(memory, address + 4, (word_t) (value >> 32));
-}
-
-/*
-
 unsupported_load_store_error reports getting an addressing mode the
 decoder shouldn't produce also shows the failing instruction address
 
@@ -104,20 +77,6 @@ static void unsupported_load_store_error(byte_t mode, word_t address) {
         address
     );
     exit(EXIT_FAILURE);
-}
-
-/*
-
-sign_extend turns a raw n-bit field into a full 64-bit signed value,
-used for the signed offsets in the pre/post index and load literal forms
-
-*/
-
-static dword_t sign_extend(word_t value, unsigned bits) {
-
-    // flip then subtract the sign bit to propagate it upwards
-    dword_t sign_bit = (dword_t) 1 << (bits - 1);
-    return ((dword_t) value ^ sign_bit) - sign_bit;
 }
 
 /*
