@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include <stdbool.h>
+#include "state.h"
 #define REG_NUM 31
 #define ZERO_REGISTER 31
 
@@ -40,6 +41,10 @@ void write_x_register(gen_regs *registers, unsigned index, dword_t value);
 // read/write on 32 bit registers (referred to as W in the spec)
 reg32_t read_w_register(const gen_regs *registers, unsigned index);
 void write_w_register(gen_regs *registers, unsigned index, word_t value);
+
+// wrapper for read/write, chooses between 64 and 32 bit
+dword_t read_reg_sf(const machine_state_t state, unsigned index, bit_t sf);
+void write_reg_sf(machine_state_tstate, unsigned index, bit_t sf, dword_t value);
 
 // Special purpose register functions
 
