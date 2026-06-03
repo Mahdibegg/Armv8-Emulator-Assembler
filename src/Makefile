@@ -44,7 +44,9 @@ CLEAN_OBJS = *.o \
 	test_io \
 	test_registers \
 	test_memory \
-	test_load_store
+	test_load_store \
+	test_branch \
+	test_data_processing
 clean:
 	$(RM) $(CLEAN_OBJS)
 
