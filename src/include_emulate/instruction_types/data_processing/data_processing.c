@@ -328,7 +328,6 @@ uses the desired field to do real operations that would update the state
 
 */
 
-
 static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
 
     // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
@@ -343,16 +342,47 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
     }
 }
 
-static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
+static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields) {
 
-    // cases for opc, 00 - movn (move with not), 10 - movz (move with zero), 11 - movk (move with keep)
-    switch (fields.opc) {
-        case MOVN:
-        case MOVZ:
-        case MOVK:
-        default:
-            
-            unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
+    // Op = imm16 shifted left by hw * 16
+    byte_t shift = fields.hw * 16;
+
+    if (fields.sf == 0) {
+
+        // 32-bit mode
+        word_t op = (word_t) fields.imm16 << shift;
+        word_t result;
+        word_t rd = read_w_register(&state->general_registers, fields.rd);
+
+        switch (fields.opc) {
+            case MOVN:
+
+                // bitwise negate Op, upper 32 bits zeroed by word_t cast
+                result = ~op;
+                break;
+
+            case MOVZ:
+
+                // set Rd to Op
+                result = op;
+                break;
+
+            case MOVK:
+
+                // keep all bits of Rd except the 16 bits between shift and shift+15
+                // clear those 16 bits then insert imm16 into that position
+                result = (rd & ~((word_t) 0xFFFF << shift)) | op;
+                break;
+
+            default:
+
+                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
+        }
+
+        write_w_register(&state->general_registers, fields.rd, result);
+
+    } else {
+        void;
     }
 }
 
