@@ -8,6 +8,28 @@
 #include "instruction_types/branch/branch.h"
 #include "instruction_types/data_processing/data_processing.h"
 #include "instruction_types/load_store/load_store.h"
+#include "bit_utils/bit.h"
+
+#define HALT_INSTR 0x8a000000
+
+#define OP0_HIGH 28
+#define OP0_LOW  25
+
+// 100x
+#define OP0_MASK_DP_IMM     0xEu
+#define OP0_VALUE_DP_IMM    0x8u   
+
+// x101
+#define OP0_MASK_DP_REG     0x7u
+#define OP0_VALUE_DP_REG    0x5u   
+
+// x1x0
+#define OP0_MASK_LOAD_STORE  0x5u
+#define OP0_VALUE_LOAD_STORE 0x4u   
+
+// 101x
+#define OP0_MASK_BRANCH      0xEu
+#define OP0_VALUE_BRANCH     0xAu   
 
 // no storing variables, all pointers makes it efficient fetch
 word_t fetch_instr(const machine_state_t *state) {
@@ -16,8 +38,7 @@ word_t fetch_instr(const machine_state_t *state) {
     return read_word(&state->memory, read_pc(&state->special_registers));
 }
 
-// TODO - WHEN FUNCTION IS COMPLETED DELETE THIS ------------
-// decodes instruction
+// decodes instruction type includes: INSTR_HALT, INSTR_DP_IMM, INSTR_DP_REG, INSTR_LOAD_STORE, INSTR_BRANCH 
 decoded_instr_t decode_instr_type(word_t instruction) {
 
     // fill in struct to return, passed to exec_result
@@ -26,12 +47,27 @@ decoded_instr_t decode_instr_type(word_t instruction) {
         .type = INSTR_UNKNOWN
     };
 
-    // halting instruction case (special case)
-    if (instruction == 0x8a000000) {
+    if (instruction == HALT_INSTR) {
         decoded_instruction.type = INSTR_HALT;
+        return decoded_instruction;
     }
 
-    // --------- CONTINUE HERE, DELETE WHEN ADDED -----------
+    word_t op0 = extract_bits(instruction, OP0_HIGH, OP0_LOW);
+
+    // using the mask we are able to ignore the "dont care" bits
+    if ((op0 & OP0_MASK_DP_IMM) == OP0_VALUE_DP_IMM) {
+
+        decoded_instruction.type = INSTR_DP_IMM;
+    } else if ((op0 & OP0_MASK_DP_REG) == OP0_VALUE_DP_REG) {
+
+        decoded_instruction.type = INSTR_DP_REG;
+    } else if ((op0 & OP0_MASK_LOAD_STORE) == OP0_VALUE_LOAD_STORE) {
+
+        decoded_instruction.type = INSTR_LOAD_STORE;
+    } else if ((op0 & OP0_MASK_BRANCH) == OP0_VALUE_BRANCH) {
+
+        decoded_instruction.type = INSTR_BRANCH;
+    }
 
     return decoded_instruction;
 }
@@ -65,13 +101,15 @@ exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t decode
 
             // error handling on an unknown decoded instruction type 
             // stops the program before wrongly executing this unkown instruction 
-            fprintf(stderr, "Unknown instruction: %" PRIu32 "\n", decoded_instr_type.instr);
+            fprintf(stderr, "Unknown instruction: 0x%" PRIx32 "\n", decoded_instr_type.instr);
             exit(EXIT_FAILURE);
     }
 }
 
 // FDE pipeline while loop wrapper
 void run_pipeline(machine_state_t *state) {
+
+    state->halted = false;
 
     while (!state->halted) {
 
@@ -89,17 +127,18 @@ void run_pipeline(machine_state_t *state) {
 
             // Halt loop
             case EXEC_HALT:
+
+                // will stop the pipeline
                 state->halted = true;
                 break;
-
             case EXEC_NEXT:
+
                 // move to next instruction (4 bytes ahead)
                 // could move this to data_processing and load_store but would be repeated logic
-                write_pc(&state->special_registers,
-                         read_pc(&state->special_registers) + 4);
+                write_pc(&state->special_registers, read_pc(&state->special_registers) + 4);
                 break;
-
             case EXEC_BRANCH:
+
                 // modify PC in execute_branch()
                 // unique logic so better to handle in branch
                 break;
