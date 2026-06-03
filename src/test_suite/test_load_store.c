@@ -194,6 +194,7 @@ int main(void) {
     unsigned_offset_str_64_test();
     unsigned_offset_ldr_64_test();
     unsigned_offset_ldr_32_test();
+    unsigned_offset_str_32_test();
 
     return 0;
 }
