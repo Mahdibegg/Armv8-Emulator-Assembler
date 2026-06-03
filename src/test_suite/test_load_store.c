@@ -488,6 +488,50 @@ static void load_literal_64_negative_test(void) {
     printf("Load literal 64-bit (negative offset): PASSED\n");
 }
 
+// TEST 5.1: store_zero_register
+// Testing that storing from the zero register writes zero to memory
+static void store_zero_register_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+    init_memory(&state.memory);
+
+    write_x_register(&state.general_registers, 1, 0x8000);
+    write_word(&state.memory, 0x8000, 0xFFFFFFFF);
+    write_word(&state.memory, 0x8004, 0xFFFFFFFF);
+
+    /*
+
+       Single data transfer STR (unsigned offset, 64-bit) from xzr:
+       bit 31 = 1, sf = 1, fixed 111, U = 1, L = 0 (store)
+       imm12 = 0, xn = 1, rt = 31 (zero register)
+       Stores 0 over the existing doubleword at 0x8000
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_LOAD_STORE;
+    instr.instr = (0x1 << 31) | (0x1 << 30) | (0x1 << 29) | (0x1 << 28) | (0x1 << 27) |
+                  (0x1 << 24) | (0x0 << 22) | (0 << 10) | (1 << 5) | 31;
+
+    exec_result_t result = execute_load_store(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_word(&state.memory, 0x8000) == 0x0);
+    assert(read_word(&state.memory, 0x8004) == 0x0);
+
+    // load/store must not touch PC or the condition flags
+    assert(read_pc(&state.special_registers) == 0x0);
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+
+    printf("Store from zero register: PASSED\n");
+}
+
 int main(void) {
 
     printf("Running load/store tests...\n\n");
@@ -510,6 +554,9 @@ int main(void) {
     printf("\nLOAD LITERAL TESTS --->\n");
     load_literal_64_test();
     load_literal_64_negative_test();
+
+    printf("\nZERO REGISTER TESTS --->\n");
+    store_zero_register_test();
     
     return 0;
 }
