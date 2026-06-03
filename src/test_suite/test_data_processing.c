@@ -580,7 +580,7 @@ static void reg_arithmetic_add_lsl_32_test(void) {
     decoded_instr_t instr;
     instr.type = INSTR_DP_REG;
     instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
-                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (2 << 10) | (1 << 5) | 0;
+                  (0x1 << 24) | (0x0 << 22) | (2 << 16) | (2 << 10) | (1 << 5) | 0;
  
     exec_result_t result = execute_data_processing(&state, instr);
  
@@ -618,7 +618,7 @@ static void reg_arithmetic_add_lsr_32_test(void) {
     decoded_instr_t instr;
     instr.type = INSTR_DP_REG;
     instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
-                  (0x0 << 24) | (0x1 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
+                  (0x1 << 24) | (0x1 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
  
     exec_result_t result = execute_data_processing(&state, instr);
  
@@ -656,7 +656,7 @@ static void reg_arithmetic_add_asr_32_test(void) {
     decoded_instr_t instr;
     instr.type = INSTR_DP_REG;
     instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
-                  (0x0 << 24) | (0x2 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
+                  (0x1 << 24) | (0x2 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
  
     exec_result_t result = execute_data_processing(&state, instr);
  
@@ -694,7 +694,7 @@ static void reg_arithmetic_add_ror_32_test(void) {
     decoded_instr_t instr;
     instr.type = INSTR_DP_REG;
     instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
-                  (0x0 << 24) | (0x3 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
+                  (0x1 << 24) | (0x3 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
  
     exec_result_t result = execute_data_processing(&state, instr);
  
@@ -728,11 +728,11 @@ static void reg_arithmetic_sub_64_test(void) {
        Result = 0x200000000 - 0x100000000 = 0x100000000
 
     */
-   
+
     decoded_instr_t instr;
     instr.type = INSTR_DP_REG;
     instr.instr = (0x1 << 31) | (0x2 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
-                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+                  (0x1 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
  
     exec_result_t result = execute_data_processing(&state, instr);
  

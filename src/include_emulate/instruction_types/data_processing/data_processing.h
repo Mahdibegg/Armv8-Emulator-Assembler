@@ -54,6 +54,7 @@ typedef struct {
     bit_t M;
     byte_t opr;
     byte_t rm;
+    byte_t operand;
     byte_t rn;
     byte_t rd;
 

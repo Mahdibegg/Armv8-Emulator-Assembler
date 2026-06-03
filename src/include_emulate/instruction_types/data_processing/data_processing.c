@@ -105,12 +105,13 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
         .opr = extract_bits(instr.instr, 21, 24),
         .opr_MSB = extract_bits(instr.instr, 24, 24),
         .rm = extract_bits(instr.instr, 16, 20),
+        .operand = extract_bits(instr.instr, 10,15),
         .rn = extract_bits(instr.instr, 5, 9),
         .rd = extract_bits(instr.instr, 0, 4)
     };
 
     // differentiate between arithmetic/logic and multiply
-    if (fields.M == 0 && fields.opr_MSB == 0) {
+    if (fields.M == 0) {
 
         // fields.type updated to arithmetic
         fields.type = REG_ARITHMETIC;
@@ -125,7 +126,7 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
             // setting N fields (for negation)
             fields.N = extract_bits(instr.instr, 24, 24);
         }
-    } else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
+    }else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
 
         // field.type updated to multiply
         fields.type = REG_MULTIPLY;
@@ -444,6 +445,9 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
 
+    // amount to shift by is the operand field of the instruction
+    byte_t shift_amount = fields.operand;
+
     // sf = 0 -> 32 bit result to 32 bit register
     // sf = 1 -> 64 bit result to 64 bit register
     if (fields.sf == 0) {
@@ -452,8 +456,6 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         word_t rn = read_w_register(&state->general_registers, fields.rn);
         word_t rm = read_w_register(&state->general_registers, fields.rm);
 
-        // amount to shift by is the operand field of the instruction
-        byte_t shift_amount = fields.opr;
         word_t shifted_rm;
 
         // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
@@ -497,7 +499,6 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         dword_t rn = read_x_register(&state->general_registers, fields.rn);
         dword_t rm = read_x_register(&state->general_registers, fields.rm);
 
-        byte_t shift_amount = fields.opr;
         dword_t shifted_rm;
 
         switch (fields.shift) {
