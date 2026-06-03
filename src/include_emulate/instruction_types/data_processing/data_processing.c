@@ -450,74 +450,38 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 
     // sf = 0 -> 32 bit result to 32 bit register
     // sf = 1 -> 64 bit result to 64 bit register
-    if (fields.sf == 0) {
 
-        // operand has to be shifted by shift variables defined outside branch casted to 32 bit
-        word_t op = (word_t) fields.imm16 << shift;
-        word_t rd = read_w_register(&state->general_registers, fields.rd);
+    // operand has to be shifted by shift variables defined outside branch casted to 32 bit
+    dword_t op = (dword_t) fields.imm16 << shift;
+    dword_t rd = read_reg_sf(&state->general_registers, fields.rd, fields.sf);
 
-        word_t result;
+    // create 16-bit mask at the position by hw
+    dword_t mask = (dword_t) 0xFFFF << shift;
+    dword_t result;
 
-        switch (fields.opc) {
-            case MOVN:
+    switch (fields.opc) {
+        case MOVN:
 
-                // bitwise negate Op, upper 32 bits zeroed by word_t cast
-                result = ~op;
-                break;
+            // bitwise negate Op, upper 32 bits zeroed by word_t cast
+            result = ~op;
+            break;
+        case MOVZ:
 
-            case MOVZ:
+            // set Rd to Op
+            result = op;
+            break;
+        case MOVK:
 
-                // set Rd to Op
-                result = op;
-                break;
+            // keep all bits of Rd except the 16 bits between shift and shift+15
+            // clear those 16 bits then insert imm16 into that position
+            result = (rd & ~mask) | op;
+            break;
+        default:
 
-            case MOVK:
-
-                // keep all bits of Rd except the 16 bits between shift and shift+15
-                // clear those 16 bits then insert imm16 into that position
-                result = (rd & ~((word_t) 0xFFFF << shift)) | op;
-                break;
-
-            default:
-
-                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
-        }
-
-        write_w_register(&state->general_registers, fields.rd, result);
-        
-    } else {
-        
-        // similar as in the other branch but 64 bit version
-
-        dword_t op = (dword_t) fields.imm16 << shift;
-        dword_t rd = read_x_register(&state->general_registers, fields.rd);
-
-        dword_t result;
-
-        switch (fields.opc) {
-            case MOVN:
-
-                result = ~op;
-                break;
-
-            case MOVZ:
-
-                result = op;
-                break;
-
-            case MOVK:
-
-                // 64 bit masking
-                result = (rd & ~((dword_t) 0xFFFF << shift)) | op;
-                break;
-
-            default:
-
-                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
-        }
-
-        write_x_register(&state->general_registers, fields.rd, result);
+            unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
     }
+
+    write_reg_sf(&state->general_registers, fields.rd, fields.sf, result);
 }
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
