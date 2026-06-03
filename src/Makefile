@@ -28,27 +28,25 @@ emulate: $(EMULATE_OBJS)
 # CLEAN MAKE CONFIG
 
 CLEAN_OBJS = *.o \
-    assemble \
-    emulate \
-    include_emulate/IO/*.o \
-    include_emulate/memory/*.o \
-    include_emulate/registers/*.o \
-    include_emulate/pipeline/*.o \
-    include_emulate/instruction_types/branch/*.o \
-    include_emulate/instruction_types/data_processing/*.o \
-    include_emulate/instruction_types/load_store/*.o \
-    include_emulate/memory_registers_tests/*.o \
-    include_emulate/bit_utils/*.o \
-    test_suite/test_utils/*.o \
-    test_suite/*.o \
-    test_io \
-    test_registers \
-    test_memory \
-    test_load_store
+	assemble \
+	emulate \
+	include_emulate/IO/*.o \
+	include_emulate/memory/*.o \
+	include_emulate/registers/*.o \
+	include_emulate/pipeline/*.o \
+	include_emulate/instruction_types/branch/*.o \
+	include_emulate/instruction_types/data_processing/*.o \
+	include_emulate/instruction_types/load_store/*.o \
+	include_emulate/memory_registers_tests/*.o \
+	include_emulate/bit_utils/*.o \
+	test_suite/test_utils/*.o \
+	test_suite/*.o \
+	test_io \
+	test_registers \
+	test_memory \
+	test_load_store
 clean:
-    $(RM) $(CLEAN_OBJS)
-
-# TEST MAKE CONFIGS
+	$(RM) $(CLEAN_OBJS)
 
 # TEST MAKE CONFIGS
 
@@ -66,41 +64,40 @@ test_memory: $(TEST_MEMORY_OBJS)
 
 # branch unit test make config
 TEST_BRANCH_OBJS = test_suite/test_branch.o \
-    test_suite/test_utils/test_utils.o \
-    include_emulate/instruction_types/branch/branch.o \
-    include_emulate/registers/registers.o \
-    include_emulate/bit_utils/bit.o
+	test_suite/test_utils/test_utils.o \
+	include_emulate/instruction_types/branch/branch.o \
+	include_emulate/registers/registers.o \
+	include_emulate/bit_utils/bit.o
 test_branch: $(TEST_BRANCH_OBJS)
-    $(CC) $(CFLAGS) -o test_branch $(TEST_BRANCH_OBJS)
+	$(CC) $(CFLAGS) -o test_branch $(TEST_BRANCH_OBJS)
 
 # bit_utils unit test make config
 TEST_BIT_UTILS_OBJS = test_suite/test_bit_utils.o \
-    include_emulate/bit_utils/bit.o
+	include_emulate/bit_utils/bit.o
 test_bit_utils: $(TEST_BIT_UTILS_OBJS)
-    $(CC) $(CFLAGS) -o test_bit_utils $(TEST_BIT_UTILS_OBJS)
+	$(CC) $(CFLAGS) -o test_bit_utils $(TEST_BIT_UTILS_OBJS)
 
 # IO unit test make config
 TEST_IO_OBJS = test_suite/test_io.o \
-    include_emulate/IO/io.o \
-    include_emulate/memory/memory.o \
+	include_emulate/IO/io.o \
+	include_emulate/memory/memory.o \
     include_emulate/registers/registers.o
 test_io: $(TEST_IO_OBJS)
-    $(CC) $(CFLAGS) -o test_io $(TEST_IO_OBJS)
+	$(CC) $(CFLAGS) -o test_io $(TEST_IO_OBJS)
 
 # data_processing unit test make config
 TEST_DATA_PROCESSING_OBJS = test_suite/test_data_processing.o \
-    test_suite/test_utils/test_utils.o \
-    include_emulate/registers/registers.o \
-    include_emulate/instruction_types/data_processing/data_processing.o \
-    include_emulate/bit_utils/bit.o
+	test_suite/test_utils/test_utils.o \
+	include_emulate/registers/registers.o \
+	include_emulate/instruction_types/data_processing/data_processing.o \
+	include_emulate/bit_utils/bit.o
 test_data_processing: $(TEST_DATA_PROCESSING_OBJS)
-    $(CC) $(CFLAGS) -o test_data_processing $(TEST_DATA_PROCESSING_OBJS)
+	$(CC) $(CFLAGS) -o test_data_processing $(TEST_DATA_PROCESSING_OBJS)
 
 TEST_LOAD_STORE_OBJS = test_suite/test_load_store.o \
-    include_emulate/instruction_types/load_store/load_store.o \
-    include_emulate/registers/registers.o \
-    include_emulate/memory/memory.o \
-    include_emulate/bit_utils/bit.o
+	include_emulate/instruction_types/load_store/load_store.o \
+	include_emulate/registers/registers.o \
+	include_emulate/memory/memory.o \
+	include_emulate/bit_utils/bit.o
 test_load_store: $(TEST_LOAD_STORE_OBJS)
-    $(CC) $(CFLAGS) -o test_load_store $(TEST_LOAD_STORE_OBJS)
 	$(CC) $(CFLAGS) -o test_load_store $(TEST_LOAD_STORE_OBJS)
