@@ -653,47 +653,27 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
       
     // sf = 0 -> 32 bit result to 32 bit register
     // sf = 1 -> 64 bit result to 64 bit register
-    if (fields.sf == 0) {
-        
-        // separating register reads for clarity (32 bit)
-        word_t ra = read_w_register(&state->general_registers, (unsigned) fields.ra);
-        word_t rn = read_w_register(&state->general_registers, (unsigned) fields.rn);
-        word_t rm = read_w_register(&state->general_registers, (unsigned) fields.rm);
 
-        word_t result;
+    // separating register reads for clarity
+    dword_t ra = read_reg_sf(&state->general_registers, (unsigned) fields.ra, fields.sf);
+    dword_t rn = read_reg_sf(&state->general_registers, (unsigned) fields.rn, fields.sf);
+    dword_t rm = read_reg_sf(&state->general_registers, (unsigned) fields.rm, fields.sf);
 
-        // result is of the form ra + (rn * rm) for MADD
-        // result is of the form ra - (rn * rm) for MSUB
-        if (fields.x == MADD)
+    // result will mask to 32 bits for 32 bit execution
+    dword_t result;
 
-            result = ra + (rn * rm);
-        else if (fields.x == MSUB) {
+    // result is of the form ra + (rn * rm) for MADD
+    // result is of the form ra - (rn * rm) for MSUB
+    if (fields.x == MADD)
 
-            result = ra - (rn * rm);
-        }
+        result = ra + (rn * rm);
+    else if (fields.x == MSUB) {
 
-        // writing to rd using write_w (32 bit)
-        write_w_register(&state->general_registers, (unsigned) fields.rd, result);
-    } else {
-
-        // similar as in the other branch but 64 bit version
-        
-        dword_t ra = read_x_register(&state->general_registers, (unsigned) fields.ra);
-        dword_t rn = read_x_register(&state->general_registers, (unsigned) fields.rn);
-        dword_t rm = read_x_register(&state->general_registers, (unsigned) fields.rm);
-
-        dword_t result;
-
-        if (fields.x == MADD)
-
-            result = ra + (rn * rm);
-        else if (fields.x == MSUB) {
-
-            result = ra - (rn * rm);
-        }
-
-        write_x_register(&state->general_registers, (unsigned) fields.rd, result);
+        result = ra - (rn * rm);
     }
+
+    // writing to rd using write_w (32 bit)
+    write_reg_sf(&state->general_registers, (unsigned) fields.rd, fields.sf, result);
 }
 
 /*
