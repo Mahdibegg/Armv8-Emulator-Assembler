@@ -395,7 +395,9 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
 
-        word_t result = execute_general_arithmetic_32(state, fields.opc, rn, rm);
+        // obtain the result from checking the general arithmetic opcode case and producing the desired result
+        // pstate registers are updated within this function execution
+        word_t result = execute_general_arithmetic_32(state, fields.opc, rn, shifted_rm);
 
         // writing final result to the Rd register
         write_w_register(&state->general_registers, (unsigned) fields.rd, result);
@@ -433,9 +435,9 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
 
-        dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, rm);
+        dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, shifted_rm);
 
-        write_x_register(&state->general_registers, (unsigned) fields.rd, (dword_t) result);
+        write_x_register(&state->general_registers, (unsigned) fields.rd, result);
     }
 }
 
