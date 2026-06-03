@@ -338,3 +338,23 @@ static void imm_arithmetic_adds_64_carry_test(void) {
  
     printf("IMM arithmetic ADDS 64-bit carry: PASSED\n");
 }
+
+int main(void) {
+
+    printf("Running data processing tests...\n\n");
+ 
+    printf("IMM ARITHMETIC TESTS ->\n");
+    imm_arithmetic_add_32_test();
+    imm_arithmetic_add_32_shifted_test();
+    imm_arithmetic_adds_32_sets_flags_test();
+    imm_arithmetic_adds_32_signed_overflow_test();
+    imm_arithmetic_sub_32_test();
+    imm_arithmetic_subs_32_sets_flags_test();
+    imm_arithmetic_subs_32_zero_result_test();
+    imm_arithmetic_add_64_test();
+    imm_arithmetic_adds_64_carry_test();
+ 
+    printf("\nAll data processing tests PASSED\n");
+ 
+    return 0;
+}
