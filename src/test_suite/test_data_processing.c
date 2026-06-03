@@ -13,6 +13,7 @@
 
 // IMM ARITHMETIC TESTS 1 - 1.9
 
+
 // TEST 1.1: imm_arithmetic_add_32 (32-bit ADD)
 // Testing that 32-bit ADD correctly adds an unshifted immediate value
 static void imm_arithmetic_add_32_test(void) {
@@ -343,7 +344,9 @@ static void imm_arithmetic_adds_64_carry_test(void) {
     printf("IMM arithmetic ADDS 64-bit carry: PASSED\n");
 }
 
+
 // IMM WIDE MOVE TESTS 2 - 2.6
+
 
 // TEST 2.1: imm_wide_move_movz_32
 // Testing that 32-bit MOVZ correctly writes an unshifted 16-bit immediate value
@@ -553,8 +556,10 @@ static void imm_wide_move_movk_64_upper_bits_test(void) {
     printf("IMM wide move MOVK 64-bit upper bits: PASSED\n");
 }
 
+
 // REG ARITHMETIC TESTS 3 - 3.5
  
+
 // TEST 3.1: reg_arithmetic_add_lsl_32
 // Testing that 32-bit ADD correctly applies LSL to the register operand before adding
 static void reg_arithmetic_add_lsl_32_test(void) {
@@ -745,6 +750,254 @@ static void reg_arithmetic_sub_64_test(void) {
     printf("REG arithmetic SUB 64-bit: PASSED\n");
 }
 
+
+// REG LOGIC TESTS 4 - 4.7
+
+
+// TEST 4.1: reg_logic_and_32
+// Testing that 32-bit AND correctly performs a bitwise AND between two register operands
+static void reg_logic_and_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0xFF00FF00);
+    write_w_register(&state.general_registers, 2, 0xFFFF0000);
+ 
+    /*
+       Register logic AND (32-bit):
+       sf = 0, opc = 00, N = 0, M = 0, opr = 0000
+       rn = 1, rm = 2, rd = 0
+       Result = 0xFF00FF00 & 0xFFFF0000 = 0xFF000000
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0xFF000000);
+ 
+    // Testing that special registers remain unchanged after and without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG logic AND 32-bit: PASSED\n");
+}
+ 
+// TEST 4.2: reg_logic_orr_32
+// Testing that 32-bit ORR correctly performs a bitwise OR between two register operands
+static void reg_logic_orr_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0xFF000000);
+    write_w_register(&state.general_registers, 2, 0x00FF0000);
+ 
+    /*
+       Register logic ORR (32-bit):
+       sf = 0, opc = 01, N = 0, M = 0, opr = 0000
+       rn = 1, rm = 2, rd = 0
+       Result = 0xFF000000 | 0x00FF0000 = 0xFFFF0000
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x1 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0xFFFF0000);
+ 
+    // Testing that special registers remain unchanged after orr without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG logic ORR 32-bit: PASSED\n");
+}
+ 
+// TEST 4.3: reg_logic_eor_32
+// Testing that 32-bit EOR correctly performs a bitwise exclusive OR between two register operands
+static void reg_logic_eor_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0xFFFFFFFF);
+    write_w_register(&state.general_registers, 2, 0xFFFFFFFF);
+ 
+    /*
+       Register logic EOR (32-bit):
+       sf = 0, opc = 10, N = 0, M = 0, opr = 0000
+       rn = 1, rm = 2, rd = 0
+       Result = 0xFFFFFFFF ^ 0xFFFFFFFF = 0x0
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x2 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0x0);
+ 
+    // Testing that special registers remain unchanged after eor without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG logic EOR 32-bit: PASSED\n");
+}
+ 
+// TEST 4.4: reg_logic_bic_32
+// Testing that 32-bit BIC correctly performs a bitwise AND with the negated register operand
+static void reg_logic_bic_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0xFFFFFFFF);
+    write_w_register(&state.general_registers, 2, 0xFF000000);
+ 
+    /*
+       Register logic BIC (32-bit):
+       sf = 0, opc = 00, N = 1 (BIC), M = 0, opr = 0001
+       rn = 1, rm = 2, rd = 0
+       Result = 0xFFFFFFFF & ~0xFF000000 = 0x00FFFFFF
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x1 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0x00FFFFFF);
+ 
+    // Testing that special registers remain unchanged after bic without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG logic BIC 32-bit: PASSED\n");
+}
+ 
+// TEST 4.5: reg_logic_ands_32_sets_flags
+// Testing that 32-bit ANDS correctly sets the zero flag when the bitwise result is zero
+static void reg_logic_ands_32_sets_flags_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0x00000000);
+    write_w_register(&state.general_registers, 2, 0xFFFFFFFF);
+ 
+    /*
+       Register logic ANDS (32-bit) resulting in zero:
+       sf = 0, opc = 11, N = 0 (ANDS), M = 0, opr = 0110
+       rn = 1, rm = 2, rd = 0
+       Result = 0x00000000 & 0xFFFFFFFF = 0x0 (z flag set, c = v = 0)
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x3 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0x0);
+ 
+    // Testing that z flag is set and c, v flags are 0 after ands with zero result
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+ 
+    printf("REG logic ANDS 32-bit sets flags (zero result): PASSED\n");
+}
+ 
+// TEST 4.6: reg_logic_ands_32_negative_result
+// Testing that 32-bit ANDS correctly sets the negative flag when the sign bit is set
+static void reg_logic_ands_32_negative_result_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0x80000000);
+    write_w_register(&state.general_registers, 2, 0x80000000);
+ 
+    /*
+       Register logic ANDS (32-bit) with negative result:
+       sf = 0, opc = 11, N = 0 (ANDS)
+       rn = 1, rm = 2, rd = 0
+       Result = 0x80000000 & 0x80000000 = 0x80000000 (n flag set, c = v = 0)
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x3 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0x80000000);
+ 
+    // Testing that n flag is set and c, v flags are 0 after ands with negative result
+    assert(state.special_registers.psr.n_flag == true);
+    assert(state.special_registers.psr.z_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+ 
+    printf("REG logic ANDS 32-bit sets flags (negative result): PASSED\n");
+}
+ 
+// TEST 4.7: reg_logic_orn_64
+// Testing that 64-bit ORN correctly performs a bitwise OR with the negated register operand
+static void reg_logic_orn_64_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_x_register(&state.general_registers, 1, 0x0000000000000000);
+    write_x_register(&state.general_registers, 2, 0xFFFFFFFF00000000);
+ 
+    /*
+       Register logic ORN (64-bit):
+       sf = 1, opc = 01, N = 1 (ORN)
+       rn = 1, rm = 2, rd = 0
+       Result = 0x0 | ~0xFFFFFFFF00000000 = 0x00000000FFFFFFFF
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x1 << 31) | (0x1 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x1 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 0) == 0x00000000FFFFFFFF);
+ 
+    // Testing that special registers remain unchanged after orn without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG logic ORN 64-bit: PASSED\n");
+}
+
 int main(void) {
 
     printf("Running data processing tests...\n\n");
@@ -775,6 +1028,15 @@ int main(void) {
     reg_arithmetic_add_ror_32_test();
     reg_arithmetic_sub_64_test();
  
+    printf("\nREG Logic --->\n");
+    reg_logic_and_32_test();
+    reg_logic_orr_32_test();
+    reg_logic_eor_32_test();
+    reg_logic_bic_32_test();
+    reg_logic_ands_32_sets_flags_test();
+    reg_logic_ands_32_negative_result_test();
+    reg_logic_orn_64_test();
+
     printf(BLUE "\nAll data processing tests PASSED\n" WHITE);
  
     return 0;
