@@ -138,7 +138,7 @@ decoder shouldn't produce also shows the failing instruction address
 
 static void unsupported_load_store_error(byte_t mode, word_t address) {
 
-    fprintf(stderr, "Invalid operation: unsupported load/store mode (0x%02x) at address 0x%016lx\n",
+    fprintf(stderr, "Invalid operation: unsupported load/store mode (0x%02x) at address 0x%08x\n",
         mode,
         address
     );
