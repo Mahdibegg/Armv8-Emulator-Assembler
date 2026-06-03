@@ -6,7 +6,7 @@
 #include "state.h"
 #include "registers/registers.h"
 #include "types.h"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 static void unconditional_branch_forward_test(void) {
 

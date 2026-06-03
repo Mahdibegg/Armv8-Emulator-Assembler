@@ -6,7 +6,7 @@
 #include "state.h"
 #include "registers/registers.h"
 #include "types.h"
-#include "test_utils.h"
+#include "test_utils/test_utils.h"
 
 #define BLUE "\033[34m"
 #define WHITE "\033[0m"
