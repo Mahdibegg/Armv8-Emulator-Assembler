@@ -155,41 +155,43 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
 Error messages for execution phase
 
 unsupported_opcode_error -> opcode not defined for emulator to execute, show both invalid opcode and address
+unsupported_shift_error -> shift function is not defined for emulator to execute, showing the shift field and address
+invalid_field_error -> any fields other than opcode/shift that are invalid, show both field name, field value and instr 
 
 */
 
 static void unsupported_opcode_error(byte_t opcode, word_t address) {
 
-        // provide invalid opcode number and the instruction that failed to execute
-        // so you are able to see which opcode is not available, and the address it failed at
-        fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%016lx\n",
-            opcode,
-            address
-        );
-        exit(EXIT_FAILURE);
+    // provide invalid opcode number and the instruction that failed to execute
+    // so you are able to see which opcode is not available, and the address it failed at
+    fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%016lx\n",
+        opcode,
+        address
+    );
+    exit(EXIT_FAILURE);
 }
 
 static void unsupported_shift_error(byte_t shift, word_t address) {
 
-        // provide invalid opcode number and the instruction that failed to execute
-        // so you are able to see which opcode is not available, and the address it failed at
-        fprintf(stderr, "Invalid operation: unsupported shift (0x%02x) at address 0x%016lx\n",
-            shift,
-            address
-        );
-        exit(EXIT_FAILURE);
+    // provide invalid opcode number and the instruction that failed to execute
+    // so you are able to see which opcode is not available, and the address it failed at
+    fprintf(stderr, "Invalid operation: unsupported shift (0x%02x) at address 0x%016lx\n",
+        shift,
+        address
+    );
+    exit(EXIT_FAILURE);
 }
 
 static void invalid_field_error(const char *field_name, word_t field_value, instr_t instr) {
         
     // provide invalid opcode number and the instruction that failed to execute
-        // so you are able to see which opcode is not available, and the address it failed at
-        fprintf(stderr, "Invalid field: unsupported operation due to %s field with value (0x%08x) in instruction (0x%08x)",
-            field_name,
-            field_value,
-            instr
-        );
-        exit(EXIT_FAILURE);
+    // so you are able to see which opcode is not available, and the address it failed at
+    fprintf(stderr, "Invalid field: unsupported operation due to %s field with value (0x%08x) in instruction (0x%08x)",
+        field_name,
+        field_value,
+        instr
+    );
+    exit(EXIT_FAILURE);
 }
 
 /*
@@ -344,6 +346,7 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
 
         // only write to rd if it isn't the zero register
         if (fields.rd != ZERO_REGISTER) {
+
             write_w_register(&state->general_registers, fields.rd, result);
         }
     } else {
@@ -357,6 +360,7 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
         dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, op2);
 
         if (fields.rd != ZERO_REGISTER) {
+
             write_x_register(&state->general_registers, fields.rd, result);
         }
     }
@@ -572,6 +576,7 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
                 result = rn ^ ~op;
                 break;
             default:
+
                 invalid_field_error("Opcode", shift_opcode, instr);
         }
 
@@ -664,6 +669,7 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
                 word_t result = ra - (rn * rm);
                 break;
             default: 
+
                 invalid_field_error("x", fields.x, instr);
         }
 
@@ -690,9 +696,10 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
                 word_t result = ra - (rn * rm);
                 break;
             default: 
+
                 invalid_field_error("x", fields.x, instr);
         }
-        
+
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
     }
 }
@@ -713,12 +720,14 @@ static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields,
 
         // specifically execute the arithmetic instruction with sh, imm12, rn for (add, sub, adds, subs)
         case IMM_ARITHMETIC:
-            break;
 
+            execute_imm_arithmetic(state, fields);
+            break;
         // specifically execute the immediate with hw, imm16 for (movn, movz, movk)
         case IMM_WIDE_MOVE:
+
+            execute_imm_wide_move(state, fields);
             break;
-            
         default:
 
             // provide address of invalid operation if IMM_NULL and actual instruction failed to execute
@@ -738,18 +747,21 @@ static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields,
 
         // execute arithmetic shift using the shift field for (lsl, lsr, asr, ror)
         case REG_ARITHMETIC:
-            break;
 
+            execute_reg_arithmetic(state, fields);
+            break;
         // using logical shift and N field for executing
         // (and, bic, orr, orn, eor, eon, ands, bics)
         case REG_LOGIC:
-            break;
 
+            execute_reg_logic(state, fields, instr);
+            break;
         // using the x field for executing (madd, msub)
         // then using the ra field as a third input register for multiply instructions
         case REG_MULTIPLY:
-            break;
 
+            execute_reg_multiply(state, fields, instr);
+            break;
         default:
 
             // provide address of invalid operation if IMM_NULL or
