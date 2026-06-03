@@ -6,7 +6,7 @@
 #include "state.h"
 #include "registers/registers.h"
 #include "types.h"
-#include "test_utils"
+#include "test_utils.h"
 
 // IMM ARITHMETIC TESTS
 
@@ -41,7 +41,7 @@ static void imm_arithmetic_add_32_test(void) {
     assert(read_w_register(&state.general_registers, 0) == 15);
  
     // Testing that special registers remain unchanged after add without flags
-    assert_special_registers_initialised(&state);
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
  
     printf("IMM arithmetic ADD 32-bit: PASSED\n");
 }
@@ -77,7 +77,7 @@ static void imm_arithmetic_add_32_shifted_test(void) {
     assert(read_w_register(&state.general_registers, 3) == 4096);
  
     // Testing that special registers remain unchanged after add without flags
-    assert_special_registers_initialised(&state);
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
  
     printf("IMM arithmetic ADD 32-bit shifted: PASSED\n");
 }
@@ -188,7 +188,7 @@ static void imm_arithmetic_sub_32_test(void) {
     assert(read_w_register(&state.general_registers, 0) == 15);
  
     // Testing that special registers remain unchanged after sub without flags
-    assert_special_registers_initialised(&state);
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
  
     printf("IMM arithmetic SUB 32-bit: PASSED\n");
 }
@@ -296,7 +296,7 @@ static void imm_arithmetic_add_64_test(void) {
     assert(read_x_register(&state.general_registers, 0) == 0x100000001);
  
     // Testing that special registers remain unchanged after 64-bit add without flags
-    assert_special_registers_initialised(&state);
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
  
     printf("IMM arithmetic ADD 64-bit: PASSED\n");
 }

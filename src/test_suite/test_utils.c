@@ -14,7 +14,7 @@
 
 */
 
-static void assert_general_registers_are_zero(const machine_state_t *state) {
+void assert_general_registers_are_zero(const machine_state_t *state) {
     
     // Loop to test if general registers are set to 0
     for (unsigned i = 0; i < REG_NUM; i++) {
@@ -23,7 +23,7 @@ static void assert_general_registers_are_zero(const machine_state_t *state) {
     }
 }
 
-static void assert_special_registers_initialised_except_pc(const machine_state_t *state, dword_t expected_pc) {
+void assert_special_registers_initialised_except_pc(const machine_state_t *state, dword_t expected_pc) {
 
     // Separately check if pc is set to expected value
     assert(read_pc(&state->special_registers) == expected_pc);
@@ -33,9 +33,9 @@ static void assert_special_registers_initialised_except_pc(const machine_state_t
     assert(state->special_registers.psr.n_flag == false);
     assert(state->special_registers.psr.v_flag == false);
     assert(state->special_registers.psr.z_flag == true);
-}
-
-static void assert_only_x_register_changed(const machine_state_t *state, unsigned changed_index, dword_t expected_value) {
+} 
+ 
+void assert_only_x_register_changed(const machine_state_t *state, unsigned changed_index, dword_t expected_value) {
 
     // Loop through all general registers testing that only the xth register is not 0 
     for (unsigned i = 0; i < REG_NUM; i++) {
