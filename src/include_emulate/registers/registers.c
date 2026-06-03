@@ -88,13 +88,13 @@ void write_w_register(gen_regs *registers, unsigned index, word_t value) {
     }
 }
 
-static dword_t read_reg_sf(gen_regs *registers, unsigned index, bit_t sf) {
+dword_t read_reg_sf(gen_regs *registers, unsigned index, bit_t sf) {
 
     return sf ? read_x_register(registers, index)
               : read_w_register(registers, index);
 }
 
-static void write_reg_sf(gen_regs *registers, unsigned index, bit_t sf, dword_t value) {
+void write_reg_sf(gen_regs *registers, unsigned index, bit_t sf, dword_t value) {
 
     if (sf) {
 
