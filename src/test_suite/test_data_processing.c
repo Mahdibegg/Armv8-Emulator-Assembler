@@ -8,7 +8,7 @@
 #include "types.h"
 #include "test_utils.h"
 
-#define GREEN "\033[32m"
+#define BLUE "\033[34m"
 #define WHITE "\033[0m"
 
 // IMM ARITHMETIC TESTS 1 - 1.9
@@ -553,6 +553,198 @@ static void imm_wide_move_movk_64_upper_bits_test(void) {
     printf("IMM wide move MOVK 64-bit upper bits: PASSED\n");
 }
 
+// REG ARITHMETIC TESTS 3 - 3.5
+ 
+// TEST 3.1: reg_arithmetic_add_lsl_32
+// Testing that 32-bit ADD correctly applies LSL to the register operand before adding
+static void reg_arithmetic_add_lsl_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 10);
+    write_w_register(&state.general_registers, 2, 1);
+ 
+    /*
+
+       Register arithmetic ADD (32-bit) with LSL:
+       sf = 0, opc = 00 (ADD), M = 0, opr = 1000, shift = 00 (LSL)
+       operand (shift_amount) = 2, rn = 1, rm = 2, rd = 0
+       Op2 = 1 << 2 = 4
+       Result = 10 + 4 = 14
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (2 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 14);
+ 
+    // Testing that special registers remain unchanged after add without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG arithmetic ADD 32-bit LSL: PASSED\n");
+}
+ 
+// TEST 3.2: reg_arithmetic_add_lsr_32
+// Testing that 32-bit ADD correctly applies LSR to the register operand before adding
+static void reg_arithmetic_add_lsr_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 10);
+    write_w_register(&state.general_registers, 2, 8);
+ 
+    /*
+
+       Register arithmetic ADD (32-bit) with LSR:
+       sf = 0, opc = 00 (ADD), shift = 01 (LSR)
+       shift_amount = 1, rn = 1, rm = 2, rd = 0
+       Op2 = 8 >> 1 = 4 (vacated bits filled with 0)
+       Result = 10 + 4 = 14
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x1 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 14);
+ 
+    // Testing that special registers remain unchanged after add without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG arithmetic ADD 32-bit LSR: PASSED\n");
+}
+ 
+// TEST 3.3: reg_arithmetic_add_asr_32
+// Testing that 32-bit ADD correctly applies ASR while preserving the sign bit before adding
+static void reg_arithmetic_add_asr_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0);
+    write_w_register(&state.general_registers, 2, 0x80000000);
+ 
+    /*
+
+       Register arithmetic ADD (32-bit) with ASR:
+       sf = 0, opc = 00 (ADD), shift = 10 (ASR)
+       shift_amount = 1, rn = 1, rm = 2, rd = 0
+       Op2 = 0x80000000 >> 1 = 0xC0000000 (sign bit preserved)
+       Result = 0 + 0xC0000000 = 0xC0000000
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x2 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0xC0000000);
+ 
+    // Testing that special registers remain unchanged after add without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG arithmetic ADD 32-bit ASR (sign preserved): PASSED\n");
+}
+ 
+// TEST 3.4: reg_arithmetic_add_ror_32
+// Testing that 32-bit ADD correctly applies ROR to the register operand before adding
+static void reg_arithmetic_add_ror_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 1, 0);
+    write_w_register(&state.general_registers, 2, 0x00000001);
+ 
+    /*
+
+       Register arithmetic ADD (32-bit) with ROR:
+       sf = 0, opc = 00 (ADD), shift = 11 (ROR)
+       shift_amount = 1, rn = 1, rm = 2, rd = 0
+       Op2 = rotate_right(0x00000001, 1) = 0x80000000
+       Result = 0 + 0x80000000 = 0x80000000
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x3 << 22) | (2 << 16) | (1 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0x80000000);
+ 
+    // Testing that special registers remain unchanged after add without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG arithmetic ADD 32-bit ROR: PASSED\n");
+}
+ 
+// TEST 3.5: reg_arithmetic_sub_64
+// Testing that 64-bit SUB correctly subtracts the shifted register operand
+static void reg_arithmetic_sub_64_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_x_register(&state.general_registers, 1, 0x200000000);
+    write_x_register(&state.general_registers, 2, 0x100000000);
+ 
+    /*
+
+       Register arithmetic SUB (64-bit) with LSL shift amount 0:
+       sf = 1, opc = 10 (SUB), shift = 00 (LSL), shift_amount = 0
+       rn = 1, rm = 2, rd = 0
+       Op2 = 0x100000000 << 0 = 0x100000000
+       Result = 0x200000000 - 0x100000000 = 0x100000000
+
+    */
+   
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x1 << 31) | (0x2 << 29) | (0x0 << 28) | (0x1 << 27) | (0x0 << 26) | (0x1 << 25) |
+                  (0x0 << 24) | (0x0 << 22) | (2 << 16) | (0 << 10) | (1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 0) == 0x100000000);
+ 
+    // Testing that special registers remain unchanged after sub without flags
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("REG arithmetic SUB 64-bit: PASSED\n");
+}
+
 int main(void) {
 
     printf("Running data processing tests...\n\n");
@@ -575,8 +767,15 @@ int main(void) {
     imm_wide_move_movk_32_test();
     imm_wide_move_movz_64_test();
     imm_wide_move_movk_64_upper_bits_test();
+
+    printf("\nREG ARITHMETIC TESTS --->\n");
+    reg_arithmetic_add_lsl_32_test();
+    reg_arithmetic_add_lsr_32_test();
+    reg_arithmetic_add_asr_32_test();
+    reg_arithmetic_add_ror_32_test();
+    reg_arithmetic_sub_64_test();
  
-    printf(GREEN "\nAll data processing tests PASSED\n" WHITE);
+    printf(BLUE "\nAll data processing tests PASSED\n" WHITE);
  
     return 0;
 }
