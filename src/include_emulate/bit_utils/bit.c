@@ -27,7 +27,7 @@ dword_t extract_bits(dword_t dword, unsigned low, unsigned high) {
     return (dword >> low) & mask;
 }
 
-int64_t sign_extend(dword_t value, unsigned bits) {
+sdword_t sign_extend(dword_t value, unsigned bits) {
 
     // sign bit is the last bit which is bits -1 
     unsigned sign_bit = bits-1;
