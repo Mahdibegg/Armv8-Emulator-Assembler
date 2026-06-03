@@ -133,7 +133,7 @@ void read_zero_registers_test(void) {
     init_gen_registers(&general)
 
     assert(read_w_register(&general, 31) == 0);
-    assert(read_wzr() == 0);
+    assert(read_x_register(&general, 31) == 0);
 
     printf("zero registers hold correct value : PASSED\n");
 }
