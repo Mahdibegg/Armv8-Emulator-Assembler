@@ -8,7 +8,10 @@
 #include "types.h"
 #include "test_utils.h"
 
-// IMM ARITHMETIC TESTS
+#define GREEN "\033[32m"
+#define WHITE "\033[0m"
+
+// IMM ARITHMETIC TESTS 1 - 1.9
 
 // TEST 1.1: imm_arithmetic_add_32 (32-bit ADD)
 // Testing that 32-bit ADD correctly adds an unshifted immediate value
@@ -286,7 +289,7 @@ static void imm_arithmetic_add_64_test(void) {
        Result = 0x100000000 + 1 = 0x100000001
 
     */
-   
+
     decoded_instr_t instr;
     instr.type = INSTR_DP_IMM;
     instr.instr = (0x1 << 31) | (0x0 << 29) | (0x1 << 28) | (0x2 << 23) | (0 << 22) | (1 << 10) | (1 << 5) | 0;
@@ -340,11 +343,221 @@ static void imm_arithmetic_adds_64_carry_test(void) {
     printf("IMM arithmetic ADDS 64-bit carry: PASSED\n");
 }
 
+// IMM WIDE MOVE TESTS 2 - 2.6
+
+// TEST 2.1: imm_wide_move_movz_32
+// Testing that 32-bit MOVZ correctly writes an unshifted 16-bit immediate value
+static void imm_wide_move_movz_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    /*
+
+       Immediate wide move MOVZ (32-bit):
+       sf = 0, opc = 10 (MOVZ), opi = 101, hw = 0
+       imm16 = 0xABCD, rd = 0
+       Op = 0xABCD << 0 = 0xABCD
+       Result = 0xABCD
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_IMM;
+    instr.instr = (0x0 << 31) | (0x2 << 29) | (0x1 << 28) | (0x5 << 23) | (0 << 21) | (0xABCD << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0xABCD);
+ 
+    // Testing that special registers and other general registers remain unchanged
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("IMM wide move MOVZ 32-bit: PASSED\n");
+}
+ 
+// TEST 2.2: imm_wide_move_movz_32_shifted
+// Testing that 32-bit MOVZ correctly applies hw = 1 before writing the immediate value
+static void imm_wide_move_movz_32_shifted_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    /*
+
+       Immediate wide move MOVZ (32-bit) with hw = 1:
+       sf = 0, opc = 10 (MOVZ), opi = 101, hw = 1
+       imm16 = 0x1, rd = 0
+       Op = 0x1 << 16 = 0x10000
+       Result = 0x10000
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_IMM;
+    instr.instr = (0x0 << 31) | (0x2 << 29) | (0x1 << 28) | (0x5 << 23) | (1 << 21) | (0x1 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0x10000);
+ 
+    // Testing that special registers remain unchanged after movz
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("IMM wide move MOVZ 32-bit shifted: PASSED\n");
+}
+ 
+// TEST 2.3: imm_wide_move_movn_32
+// Testing that 32-bit MOVN correctly writes the bitwise negation of the immediate value
+static void imm_wide_move_movn_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    /*
+
+       Immediate wide move MOVN (32-bit):
+       sf = 0, opc = 00 (MOVN), opi = 101, hw = 0
+       imm16 = 0, rd = 0
+       Op = 0 << 0 = 0
+       Result = ~0 truncated to 32 bits = 0xFFFFFFFF
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_IMM;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x1 << 28) | (0x5 << 23) | (0 << 21) | (0x0 << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0xFFFFFFFF);
+ 
+    // Testing that special registers remain unchanged after movn
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("IMM wide move MOVN 32-bit: PASSED\n");
+}
+ 
+// TEST 2.4: imm_wide_move_movk_32
+// Testing that 32-bit MOVK correctly keeps existing bits while replacing bits 15 - 0
+static void imm_wide_move_movk_32_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_w_register(&state.general_registers, 0, 0xFFFFFFFF);
+ 
+    /*
+
+       Immediate wide move MOVK (32-bit):
+       sf = 0, opc = 11 (MOVK), opi = 101, hw = 0
+       imm16 = 0x00FF, rd = 0
+       Rd was 0xFFFFFFFF, inserting 0x00FF at bits 15:0
+       Result = 0xFFFF00FF
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_IMM;
+    instr.instr = (0x0 << 31) | (0x3 << 29) | (0x1 << 28) | (0x5 << 23) | (0 << 21) | (0x00FF << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 0xFFFF00FF);
+ 
+    // Testing that special registers remain unchanged after movk
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("IMM wide move MOVK 32-bit: PASSED\n");
+}
+ 
+// TEST 2.5: imm_wide_move_movz_64
+// Testing that 64-bit MOVZ correctly writes an unshifted 16-bit immediate value
+static void imm_wide_move_movz_64_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    /*
+
+       Immediate wide move MOVZ (64-bit):
+       sf = 1, opc = 10 (MOVZ), opi = 101, hw = 0
+       imm16 = 0x1234, rd = 5
+       Result = 0x1234
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_IMM;
+    instr.instr = (0x1 << 31) | (0x2 << 29) | (0x1 << 28) | (0x5 << 23) | (0 << 21) | (0x1234 << 5) | 5;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 5) == 0x1234);
+ 
+    // Testing that special registers and other general registers remain unchanged
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+    assert_only_x_register_changed(&state, 5, 0x1234);
+ 
+    printf("IMM wide move MOVZ 64-bit: PASSED\n");
+}
+ 
+// TEST 2.6: imm_wide_move_movk_64_upper_bits
+// Testing that 64-bit MOVK correctly inserts the immediate value into the upper 16 bits
+static void imm_wide_move_movk_64_upper_bits_test(void) {
+ 
+    machine_state_t state;
+ 
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+ 
+    write_x_register(&state.general_registers, 0, 0x0000000000000000);
+ 
+    /*
+
+       Immediate wide move MOVK (64-bit) inserting into upper bits:
+       sf = 1, opc = 11 (MOVK), opi = 101, hw = 3
+       imm16 = 0x00FF, rd = 0
+       Inserting 0x00FF at bits 63:48
+       Result = 0x00FF000000000000
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_IMM;
+    instr.instr = (0x1 << 31) | (0x3 << 29) | (0x1 << 28) | (0x5 << 23) | (3 << 21) | (0x00FF << 5) | 0;
+ 
+    exec_result_t result = execute_data_processing(&state, instr);
+ 
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 0) == 0x00FF000000000000);
+ 
+    // Testing that special registers remain unchanged after movk
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+ 
+    printf("IMM wide move MOVK 64-bit upper bits: PASSED\n");
+}
+
 int main(void) {
 
     printf("Running data processing tests...\n\n");
  
-    printf("IMM ARITHMETIC TESTS ->\n");
+    printf("IMM ARITHMETIC TESTS --->\n");
     imm_arithmetic_add_32_test();
     imm_arithmetic_add_32_shifted_test();
     imm_arithmetic_adds_32_sets_flags_test();
@@ -354,8 +567,16 @@ int main(void) {
     imm_arithmetic_subs_32_zero_result_test();
     imm_arithmetic_add_64_test();
     imm_arithmetic_adds_64_carry_test();
+
+    printf("\nIMM WIDE MOVE TESTS --->\n");
+    imm_wide_move_movz_32_test();
+    imm_wide_move_movz_32_shifted_test();
+    imm_wide_move_movn_32_test();
+    imm_wide_move_movk_32_test();
+    imm_wide_move_movz_64_test();
+    imm_wide_move_movk_64_upper_bits_test();
  
-    printf("\nAll data processing tests PASSED\n");
+    printf(GREEN "\nAll data processing tests PASSED\n" WHITE);
  
     return 0;
 }
