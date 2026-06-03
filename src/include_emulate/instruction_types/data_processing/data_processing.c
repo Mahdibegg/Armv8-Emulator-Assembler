@@ -164,7 +164,7 @@ static void unsupported_opcode_error(byte_t opcode, word_t address) {
 
     // provide invalid opcode number and the instruction that failed to execute
     // so you are able to see which opcode is not available, and the address it failed at
-    fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%016lx\n",
+    fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%08x\n",
         opcode,
         address
     );
@@ -175,7 +175,7 @@ static void unsupported_shift_error(byte_t shift, word_t address) {
 
     // provide invalid opcode number and the instruction that failed to execute
     // so you are able to see which opcode is not available, and the address it failed at
-    fprintf(stderr, "Invalid operation: unsupported shift (0x%02x) at address 0x%016lx\n",
+    fprintf(stderr, "Invalid operation: unsupported shift (0x%02x) at address 0x%08x\n",
         shift,
         address
     );
