@@ -417,30 +417,24 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
 
     // sf = 0 -> 32 bit result to 32 bit register
     // sf = 1 -> 64 bit result to 64 bit register
+    dword_t rn = read_reg_sf(&state->general_registers, fields.rn, fields.sf);
+
+    // Op2 is imm12, shifted left by 12 if sh is set, otherwise just keep the imm12 as it is
+    dword_t op2 = fields.sh ? (dword_t) fields.imm12 << 12 : (dword_t) fields.imm12;
+
+    // execute arithmetic and update pstate if needed
+    dword_t result;
+    
     if (fields.sf == 0) {
 
-        word_t rn = read_w_register(&state->general_registers, fields.rn);
-
-        // Op2 is imm12, shifted left by 12 if sh is set
-        word_t op2 = fields.sh ? (word_t) fields.imm12 << 12 : (word_t) fields.imm12;
-
-        // execute arithmetic and update pstate if needed
-        word_t result = execute_general_arithmetic_32(state, fields.opc, rn, op2);
-    
-        write_w_register(&state->general_registers, fields.rd, result);
-        
+        result = (dword_t) execute_general_arithmetic_32(state, fields.opc, (word_t) rn, (word_t) op2);
     } else {
 
         // similar as in the other branch but 64 bit version
-
-        dword_t rn = read_x_register(&state->general_registers, fields.rn);
-
-        dword_t op2 = fields.sh ? (dword_t) fields.imm12 << 12 : (dword_t) fields.imm12;
-
-        dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, op2);
-        
-        write_x_register(&state->general_registers, fields.rd, result);
+        result = execute_general_arithmetic_64(state, fields.opc, rn, op2);
     }
+
+    write_reg_sf(&state->general_registers, fields.rd, fields.sf, result);
 }
 
 static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields) {
