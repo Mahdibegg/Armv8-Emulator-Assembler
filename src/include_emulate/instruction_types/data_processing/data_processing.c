@@ -347,12 +347,14 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
     // Op = imm16 shifted left by hw * 16
     byte_t shift = fields.hw * 16;
 
+    // sf = 0 -> 32 bit result to 32 bit register
+    // sf = 1 -> 64 bit result to 64 bit register
     if (fields.sf == 0) {
 
-        // 32-bit mode
         word_t op = (word_t) fields.imm16 << shift;
-        word_t result;
         word_t rd = read_w_register(&state->general_registers, fields.rd);
+
+        word_t result;
 
         switch (fields.opc) {
             case MOVN:
@@ -380,14 +382,45 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
         }
 
         write_w_register(&state->general_registers, fields.rd, result);
-
     } else {
-        void;
+        
+        // similar as in the other branch but 64 bit version
+
+        dword_t op = (dword_t) fields.imm16 << shift;
+        dword_t rd = read_x_register(&state->general_registers, fields.rd);
+
+        dword_t result;
+
+        switch (fields.opc) {
+            case MOVN:
+
+                result = ~op;
+                break;
+
+            case MOVZ:
+
+                result = op;
+                break;
+
+            case MOVK:
+
+                // 64 bit masking
+                result = (rd & ~((dword_t) 0xFFFF << shift)) | op;
+                break;
+
+            default:
+
+                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
+        }
+
+        write_x_register(&state->general_registers, fields.rd, result);
     }
 }
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
 
+    // sf = 0 -> 32 bit result to 32 bit register
+    // sf = 1 -> 64 bit result to 64 bit register
     if (fields.sf == 0) {
 
         // reading from registers (32 bit) from the rn, rm fields of the instruction
@@ -478,7 +511,8 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
 
     // case for logical shift
     // 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
-
+    // sf = 0 -> 32 bit result to 32 bit register
+    // sf = 1 -> 64 bit result to 64 bit register
     if (fields.sf == 0) {
 
         // read value of register Rn to store into Rn and operand value from Rm register into op 
