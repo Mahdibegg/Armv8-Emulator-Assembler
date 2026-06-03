@@ -124,7 +124,7 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
             fields.type = REG_LOGIC;
 
             // setting N fields (for negation)
-            fields.N = extract_bits(instr.instr, 24, 24);
+            fields.N = extract_bits(instr.instr, 21, 21);
         }
     }else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
 
