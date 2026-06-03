@@ -21,7 +21,11 @@ void init_spec_registers(spec_reg *registers) {
 reg64_t read_x_register(const gen_regs *registers, unsigned index) {
 
     // validate register index and return value
-    if (index < REG_NUM) {
+    if (index == REG_NUM) {
+
+        // zero register is reserved
+        return 0;
+    } else if (index < REG_NUM) {
 
         return registers->r[index];
     } else {
@@ -38,6 +42,8 @@ void write_x_register(gen_regs *registers, unsigned index, dword_t value) {
     if (index < REG_NUM) {
 
         registers->r[index] = (reg64_t) value;
+    } else if (index ==  REG_NUM) {
+        return;
     } else {
 
         // print error message and exit program
@@ -49,7 +55,11 @@ void write_x_register(gen_regs *registers, unsigned index, dword_t value) {
 reg32_t read_w_register(const gen_regs *registers, unsigned index) {
 
     // validate register index and return value
-    if (index < REG_NUM) {
+    if (index == REG_NUM) {
+
+        // zero register is reserved
+        return 0;
+    } else if (index < REG_NUM) {
 
         // mask off upper 32 bits to extract lower word of 64 bit register
         return (reg32_t) (registers->r[index] & 0xFFFFFFFF);
@@ -68,6 +78,8 @@ void write_w_register(gen_regs *registers, unsigned index, word_t value) {
 
         // cast zero-extends to 64 bit, clearing upper 32 bits as required
         registers->r[index] = (reg64_t) value;
+    } else if (index == REG_NUM) {
+        return;
     } else {
 
         // print error message and exit program
@@ -94,4 +106,12 @@ reg64_t read_xzr(void) {
 reg32_t read_wzr(void) {
     
     return 0;
+}
+
+void write_pstate(spec_reg *registers, bit_t n, bit_t z, bit_t c, bit_t v) {
+
+    registers->psr.n_flag = n;
+    registers->psr.z_flag = z;    
+    registers->psr.c_flag = c;
+    registers->psr.v_flag = v;
 }
