@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define WORD_BITS 32
+#define DWORD_BITS 64
+
 // shared types
 // typedef sizes: register, byte, instruction size (for readability)
 

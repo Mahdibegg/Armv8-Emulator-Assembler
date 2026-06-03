@@ -470,7 +470,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
             case ROR:
 
                 // rotate only lower 32 bits, sizeof(word_t)*8 give bytes * 8, so bit size of word_t
-                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(word_t)*8 - shift_amount));
+                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(WORD_BITS)*8 - shift_amount));
                 // truncate back to 32 bits by casing as word_t
                 shifted_rm = (word_t) shifted_rm;
                 break;
@@ -510,7 +510,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 break;
             case ROR:
 
-                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(dword_t)*8 - shift_amount));
+                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(DWORD_BITS)*8 - shift_amount));
                 shifted_rm = (dword_t) shifted_rm;
                 break;    
             default: 
