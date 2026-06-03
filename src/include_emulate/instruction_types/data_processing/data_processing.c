@@ -194,11 +194,140 @@ static void invalid_field_error(const char *field_name, word_t field_value, inst
 
 /*
 
+2 helper functions for arithmetic 
+
+one version is designed for 32, the other for 64 bit arithmetic
+the parameters are overlapping fields values from the imm/reg decode structs
+then produces a result and then in the outer case you can continue using the outputted result (such as writing to register etc.)
+these functions will update the pstate register (common to both immediate/register arithmetic)
+
+execute_general_arithmetic_64 is not commented since its just the 64 bit version of execute_general_arithmetic_32
+
+*/
+
+static word_t execute_general_arithmetic_32(machine_state_t *state, byte_t opcode, word_t rn, word_t rm) {
+    
+    // final value to return
+    word_t result;
+
+    // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
+    switch (opcode) {
+        case ADD_S: 
+        case ADD:
+
+            // ADD_S and ADD both create the result by adding
+            result = rn + rm;    
+            break;    
+        case SUB_S:
+        case SUB:
+
+            // SUB_S and SUB both create result by subtracting
+            result = rn - rm;
+            break;
+        default:
+
+            unsupported_opcode_error(opcode, read_pc(&state->special_registers));
+    }
+
+    // updating processor state register only if opcode fits add_s and sub_s
+    // otherwise ignore for the other instructions
+    if (opcode == ADD_S || opcode == SUB_S) {
+
+        // take sign bit of result in 32 bit
+        bit_t n = sign_bit_32(result);
+
+        bit_t z = result == 0;
+
+        // addition, check overflow past 32 bits (carry)
+        // subtraction, check borrow (rn >= rm)
+        bit_t c;
+        if (opcode == ADD_S) {
+
+            // do the addition in 64 bits and check if it spills past bit 31
+            c = ((dword_t) (word_t) rn + (word_t) rm) > 0xFFFFFFFF;
+        } else {
+
+            // borrow occurs when rn < rm (unsigned)
+            c = (word_t) rn >= (word_t) rm;
+        }
+
+        // addition, check cases where signs are the same
+        // subtraction, check cases where signs are different
+        bit_t v;
+        if (opcode == ADD_S) {
+            v = ((sword_t) rn > 0 && (sword_t) rm > 0 && (sword_t) result < 0) ||
+                ((sword_t) rn < 0 && (sword_t) rm < 0 && (sword_t) result > 0);
+        } else { 
+            v = ((sword_t) rn > 0 && (sword_t) rm < 0 && (sword_t) result < 0) ||
+                ((sword_t) rn < 0 && (sword_t) rm > 0 && (sword_t) result > 0);
+        }
+
+        write_pstate(&state->special_registers, n, z, c, v);
+    }
+
+    return result;
+}
+
+static word_t execute_general_arithmetic_64(machine_state_t *state, byte_t opcode, dword_t rn, dword_t rm) {
+
+    dword_t result;
+
+    switch (opcode) {
+        case ADD_S: 
+        case ADD:
+
+            result = (dword_t) rn + (dword_t) rm;
+            break;
+        case SUB_S:
+        case SUB:
+
+            result = (dword_t) rn - (dword_t) rm;
+            break;
+        default:
+
+            unsupported_opcode_error(opcode, read_pc(&state->special_registers));
+    }
+    
+    if (opcode == ADD_S || opcode == SUB_S) {
+
+        bit_t n = sign_bit_64(result);
+
+        bit_t z = result == 0;
+
+        bit_t c;
+        if (opcode == ADD_S) {
+
+            c = (UINT64_MAX - (dword_t) rn) < (dword_t) rm;
+        } else {
+
+            c = (dword_t) rn >= (dword_t) rm;
+        }
+
+        bit_t v;
+        if (opcode == ADD_S) {
+
+            v = ((sdword_t) rn > 0 && (sdword_t) rm > 0 && (sdword_t) result < 0) ||
+                ((sdword_t) rn < 0 && (sdword_t) rm < 0 && (sdword_t) result > 0);
+        } else { 
+
+            v = ((sdword_t) rn > 0 && (sdword_t) rm < 0 && (sdword_t) result < 0) ||
+                ((sdword_t) rn < 0 && (sdword_t) rm > 0 && (sdword_t) result > 0);
+        }
+
+        write_pstate(&state->special_registers, n, z, c, v);
+    }
+
+    return result;
+}
+
+/*
+
 5 execute functions below for the different type, each one ideally has a switch case and 
 
 uses the desired field to do real operations that would update the state
 
 */
+
 
 static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
 
@@ -227,7 +356,7 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
     }
 }
 
-static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
+static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
 
     if (fields.sf == 0) {
 
@@ -266,67 +395,10 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
 
-        // final value to return
-        word_t result;
-
-        // then adding the shifted result to the Rm to complete the instruction
-        // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
-        switch (fields.opc) {
-            case ADD_S: 
-            case ADD:
-
-                // update result to add the Rn value with the shifted version of the Rm value
-                result = (word_t) rn + (word_t) shifted_rm;    
-                break;    
-            case SUB_S:
-            case SUB:
-
-                // update result to subtract the Rn value with the shifted version of the Rm value
-                result = (word_t) rn - (word_t) shifted_rm;
-                break;
-            default:
-
-                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
-        }
+        word_t result = execute_general_arithmetic_32(state, fields.opc, rn, rm);
 
         // writing final result to the Rd register
-        write_w_register(&state->general_registers, (unsigned) fields.rd, (word_t) result);
-    
-        // updating processor state register only if opcode fits add_s and sub_s
-        // otherwise ignore for the other instructions
-        if (fields.opc == ADD_S || fields.opc == SUB_S) {
-
-            // take sign bit of result in 32 bit
-            bit_t n = sign_bit_32(result);
-
-            bit_t z = result == 0;
-
-            // addition, check overflow past 32 bits (carry)
-            // subtraction, check borrow (rn >= rm)
-            bit_t c;
-            if (fields.opc == ADD_S) {
-
-                // do the addition in 64 bits and check if it spills past bit 31
-                c = ((dword_t) (word_t) rn + (word_t) shifted_rm) > 0xFFFFFFFF;
-            } else {
-
-                // borrow occurs when rn < rm (unsigned)
-                c = (word_t) rn >= (word_t) shifted_rm;
-            }
-
-            // addition, check cases where signs are the same
-            // subtraction, check cases where signs are different
-            bit_t v;
-            if (fields.opc == ADD_S) {
-                v = ((sword_t) rn > 0 && (sword_t) shifted_rm > 0 && (sword_t) result < 0) ||
-                    ((sword_t) rn < 0 && (sword_t) shifted_rm < 0 && (sword_t) result > 0);
-            } else { 
-                v = ((sword_t) rn > 0 && (sword_t) shifted_rm < 0 && (sword_t) result < 0) ||
-                    ((sword_t) rn < 0 && (sword_t) shifted_rm > 0 && (sword_t) result > 0);
-            }
-
-            write_pstate(&state->special_registers, n, z, c, v);
-        }
+        write_w_register(&state->general_registers, (unsigned) fields.rd, result);
 
     } else {
 
@@ -361,54 +433,9 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
 
-        dword_t result;
-
-        switch (fields.opc) {
-            case ADD_S: 
-            case ADD:
-
-                result = (dword_t) rn + (dword_t) shifted_rm;
-                break;
-            case SUB_S:
-            case SUB:
-
-                result = (dword_t) rn - (dword_t) shifted_rm;
-                break;
-            default:
-
-                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
-        }
+        dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, rm);
 
         write_x_register(&state->general_registers, (unsigned) fields.rd, (dword_t) result);
-    
-        if (fields.opc == ADD_S || fields.opc == SUB_S) {
-
-            bit_t n = sign_bit_64(result);
-
-            bit_t z = result == 0;
-
-            bit_t c;
-            if (fields.opc == ADD_S) {
-
-                c = (UINT64_MAX - (dword_t) rn) < (dword_t) shifted_rm;
-            } else {
-
-                c = (dword_t) rn >= (dword_t) shifted_rm;
-            }
-
-            bit_t v;
-            if (fields.opc == ADD_S) {
-
-                v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result < 0) ||
-                    ((sdword_t) rn < 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result > 0);
-            } else { 
-
-                v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result < 0) ||
-                    ((sdword_t) rn < 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result > 0);
-            }
-
-            write_pstate(&state->special_registers, n, z, c, v);
-        }
     }
 }
 
@@ -514,6 +541,7 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         }
     
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
+
         if (shift_opcode == ANDS || shift_opcode == BICS) {
 
             bit_t n = sign_bit_64(result);
