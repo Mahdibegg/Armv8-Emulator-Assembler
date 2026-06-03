@@ -208,6 +208,8 @@ these functions will update the pstate register (common to both immediate/regist
 
 execute_general_arithmetic_64 is not commented since its just the 64 bit version of execute_general_arithmetic_32
 
+apply_reg_shift should be used for arithmetic and logic operations, also reduces redundant checks
+
 */
 
 static word_t execute_general_arithmetic_32(machine_state_t *state, byte_t opcode, word_t rn, word_t rm) {
@@ -322,6 +324,84 @@ static dword_t execute_general_arithmetic_64(machine_state_t *state, byte_t opco
         write_pstate(&state->special_registers, n, z, c, v);
     }
 
+    return result;
+}
+
+static dword_t apply_reg_shift(dword_t value, byte_t shift, byte_t shift_amount, bit_t sf, word_t address) {
+
+    dword_t result;
+
+    // separate 32 bit and 64 bit execution completely
+    if (sf == 0) {
+
+        // casting value to 32 bits
+        word_t w_value = (word_t) value;
+        // getting the bit shift to stay within the range 0 - 31
+        shift_amount %= 32;
+
+        switch (shift) {
+            case LSL:
+
+                result = (dword_t) (w_value << shift_amount);
+                break;
+            case LSR:
+
+                result = (dword_t) (w_value >> shift_amount);
+                break;
+            case ASR:
+
+                result = (dword_t) ((word_t) ((int32_t) w_value >> shift_amount));
+                break;
+            case ROR:
+
+                // shift_amount = 0 would cause error since we cant shift by 32, so just return value
+                if (shift_amount == 0) {
+
+                    result = (dword_t) w_value;
+                    break;
+                }
+                // return the rotated result
+                result = (dword_t) ((w_value >> shift_amount) |
+                                  (w_value << (32 - shift_amount)));
+                break;
+            default:
+
+                unsupported_shift_error(shift, address);
+        }
+
+    } else {
+
+        // similar code as above but for 64 bit execution
+
+        shift_amount %= 64;
+
+        switch (shift) {
+            case LSL:
+
+                result = value << shift_amount;
+                break;
+            case LSR:
+
+                result = value >> shift_amount;
+                break;
+            case ASR:
+
+                result = (dword_t) ((int64_t) value >> shift_amount);
+                break;
+            case ROR:
+
+                if (shift_amount == 0) {
+
+                    result = value;
+                    break;
+                }
+                result = (value >> shift_amount) |
+                    (value << (64 - shift_amount));
+                break;
+            default:
+                unsupported_shift_error(shift, address);
+        }
+    }
     return result;
 }
 
@@ -442,210 +522,116 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
 
+    // store address once (optimised by reducing pc reads) for multiple error handles
+    word_t address = read_pc(&state->special_registers);
+
     // for 32-bit, shift amount is only lower 5 bits
     // for 64-bit, shift amount stays at 6 bits
     byte_t shift_amount = (fields.sf == 0) ? fields.operand & 0x1F : fields.operand & 0x3F;
 
     // sf = 0 -> 32 bit result to 32 bit register
     // sf = 1 -> 64 bit result to 64 bit register
+
+    // reading from registers from the rn, rm fields of the instruction
+    dword_t rn = read_reg_sf(&state->general_registers, (unsigned) fields.rn, fields.sf);
+    dword_t rm = read_reg_sf(&state->general_registers, (unsigned) fields.rm, fields.sf);
+
+    // can cast this to word_t when writing to register, so initialise it as dword_t
+    dword_t shifted_rm;
+    dword_t result;
+
+    // ror cannot be used for arithmetic and shift operation, since it is ONLY logical 
+    // hence if we do find it, we handle this case as an error, we do not provide this shift case
+    if (fields.shift == ROR) {
+
+        unsupported_shift_error(fields.shift, address);
+    }
+
+    // even though apply_reg_shift does consider the ROR case, it will be eliminated in the previous if statement
+    shifted_rm = apply_reg_shift(rm, fields.shift, shift_amount, fields.sf, address);
+
+    // obtain the result from checking the general arithmetic opcode case and producing the desired result
+    // pstate registers are updated within this function execution
     if (fields.sf == 0) {
 
-        // reading from registers (32 bit) from the rn, rm fields of the instruction
-        word_t rn = read_w_register(&state->general_registers, fields.rn);
-        word_t rm = read_w_register(&state->general_registers, fields.rm);
-
-        word_t shifted_rm;
-        word_t result;
-
-        // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
-        switch (fields.shift) {
-            case LSL:
-
-                shifted_rm = rm << shift_amount;
-                break;
-            case LSR:
-
-                shifted_rm = rm >> shift_amount;
-                break;    
-            case ASR:
-
-                // making sure that the rm is casted to signed 32 bit size
-                shifted_rm = (word_t) ((sword_t) rm >> shift_amount);
-                break;    
-            case ROR:
-
-                // rotate only lower 32 bits, WORD_BITS is a constant for 32
-                // truncate back to 32 bits by casing as word_t
-                shifted_rm = (word_t) ((rm >> shift_amount) | (rm << (WORD_BITS - shift_amount)));
-                result = shifted_rm;
-                break;
-            default: 
-
-                unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
-        }
-        
-        if (fields.shift != ROR) {
-            // obtain the result from checking the general arithmetic opcode case and producing the desired result
-            // pstate registers are updated within this function execution
-            result = execute_general_arithmetic_32(state, fields.opc, rn, shifted_rm);
-        }
-
-        // writing final result to the Rd register
-        write_w_register(&state->general_registers, (unsigned) fields.rd, result);
-
+        // casting to dword_t to match type of result
+        result = (dword_t) execute_general_arithmetic_32(state, fields.opc, (word_t) rn, (word_t) shifted_rm);
     } else {
 
-        // similar as in the other branch but 64 bit version
-
-        dword_t rn = read_x_register(&state->general_registers, fields.rn);
-        dword_t rm = read_x_register(&state->general_registers, fields.rm);
-
-        dword_t shifted_rm;
-        dword_t result;
-
-        switch (fields.shift) {
-            case LSL:
-
-                shifted_rm = rm << shift_amount;
-                break;
-            case LSR:
-
-                shifted_rm = rm >> shift_amount;
-                break;
-            case ASR:
-
-                shifted_rm = (dword_t) ((sdword_t) rm >> shift_amount);
-                break;
-            case ROR:
-
-                shifted_rm = (dword_t) ((rm >> shift_amount) | (rm << (DWORD_BITS - shift_amount)));
-                result = shifted_rm;
-                break;    
-            default: 
-
-                unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
-        }
-
-        if (fields.shift != ROR) {
-
-            result = execute_general_arithmetic_64(state, fields.opc, rn, shifted_rm);
-        }
-
-        write_x_register(&state->general_registers, (unsigned) fields.rd, result);
+        result = execute_general_arithmetic_64(state, fields.opc, rn, shifted_rm);
     }
+
+    // writing final result to the Rd register
+    write_reg_sf(&state->general_registers, (unsigned) fields.rd, fields.sf, result);
 }
 
 static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
 
-    // combine shift opcode and N bits to create 3 bit binary digit for case checks
-    byte_t shift_opcode = (fields.opc << 1) + fields.N;
+    // combine opcode and N bit to create 3-bit case value
+    byte_t logic_opcode = (fields.opc << 1) + fields.N;
 
-    // case for logical shift
+    // read first operand from Rn
+    dword_t rn = read_reg_sf(&state->general_registers, (unsigned) fields.rn, fields.sf);
+
+    // read second operand from Rm, then apply the encoded shift to create op2
+    dword_t rm = read_reg_sf(&state->general_registers, (unsigned) fields.rm, fields.sf);
+
+    // first we need to apply the register shift before doing the actual logic operation
+    // using apply_reg_shift helper function, also passing in the current address of this instruction (via pc read) for error handling
+    dword_t op = apply_reg_shift(rm, fields.shift, fields.operand, fields.sf, read_pc(&state->special_registers));
+
+    dword_t result;
+
+    // case for logic opcode
     // 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
-    // sf = 0 -> 32 bit result to 32 bit register
-    // sf = 1 -> 64 bit result to 64 bit register
-    if (fields.sf == 0) {
+    switch (logic_opcode) {
+        case ANDS:
+        case AND:
 
-        // read value of register Rn to store into Rn and operand value from Rm register into op 
-        word_t rn = read_w_register(&state->general_registers, fields.rn);
-        word_t op = read_w_register(&state->general_registers, fields.rm);
+            result = rn & op;
+            break;
+        case BICS:
+        case BIC:
 
-        word_t result;
+            result = rn & ~op;
+            break;
+        case ORR:
 
-        // go through each case after extracting the values from the correct registers
-        // set result to the operation that it is required to be
-        switch (shift_opcode) {
-            case ANDS:
-            case AND:
+            result = rn | op;
+            break;
+        case ORN:
 
-                result = rn & op;
-                break;
-            case BICS:
-            case BIC:
+            result = rn | ~op;
+            break;
+        case EOR:
 
-                result = rn & ~op;
-                break;
-            case ORR:
+            result = rn ^ op;
+            break;
+        case EON:
 
-                result = rn | op;
-                break;
-            case ORN:
+            result = rn ^ ~op;
+            break;
+        default:
 
-                result = rn | ~op;
-                break;
-            case EOR:
+            invalid_field_error("Opcode", logic_opcode, instr);
+    }
 
-                result = rn ^ op;
-                break;
-            case EON:
+    // writing to register based on the sf bit using the wrapper function
+    write_reg_sf(&state->general_registers, (unsigned) fields.rd, fields.sf, result);
 
-                result = rn ^ ~op;
-                break;
-            default:
+    // only for ANDS and BICS do we need to change the n and z bits
+    if (logic_opcode == ANDS || logic_opcode == BICS) {
 
-                invalid_field_error("Opcode", shift_opcode, instr);
-        }
+        // the n flag is the sign bit of result
+        // using the sign_bit helper functions to extract the bit from the correct sized result
+        bit_t n = fields.sf ? sign_bit_64(result)
+                            : sign_bit_32((word_t) result);
 
-        // set rd = rn & operand (named op)
-        write_w_register(&state->general_registers, (unsigned) fields.rd, result);
+        // checking different sized results against 0 to set the z flag
+        bit_t z = fields.sf ? result == 0
+                            : (word_t) result == 0;
 
-        // for ANDS and BICS, the pstate register will need to be updated
-        // in the case switching, they do the exact same thing as AND and BIC respectively
-        if (shift_opcode == ANDS || shift_opcode == BICS) {
-
-            // set flags, n = field.n, c = v = 0, z = 1 if result = 0
-            bit_t n = sign_bit_32(result);
-            bit_t z = result == 0;
-            write_pstate(&state->special_registers, n, z, 0, 0);
-        }
-    } else {
-        
-        // similar as in the other branch but 64 bit version
-
-        dword_t rn = read_x_register(&state->general_registers, fields.rn);
-        dword_t op = read_x_register(&state->general_registers, fields.rm);
-
-        dword_t result;
-
-        switch (shift_opcode) {
-            case ANDS:
-            case AND:
-
-                result = rn & op;
-                break;
-            case BICS:
-            case BIC:
-
-                result = rn & ~op;
-                break;
-            case ORR:
-
-                result = rn | op;
-                break;
-            case ORN:
-
-                result = rn | ~op;
-                break;
-            case EOR:
-
-                result = rn ^ op;
-                break;
-            case EON:
-
-                result = rn ^ ~op;
-                break;
-            default:
-                invalid_field_error("Opcode", shift_opcode, instr);
-        }
-    
-        write_x_register(&state->general_registers, (unsigned) fields.rd, result);
-
-        if (shift_opcode == ANDS || shift_opcode == BICS) {
-
-            bit_t n = sign_bit_64(result);
-            bit_t z = result == 0;
-            write_pstate(&state->special_registers, n, z, 0, 0);
-        }
+        write_pstate(&state->special_registers, n, z, 0, 0);
     }
 }
 
