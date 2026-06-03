@@ -293,22 +293,22 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
             if (fields.opc == ADD_S) {
 
                 // do the addition in 64 bits and check if it spills past bit 31
-                c = ((uint64_t)(uint32_t)rn + (uint32_t)shifted_rm) > 0xFFFFFFFF;
+                c = ((dword_t) (word_t) rn + (word_t) shifted_rm) > 0xFFFFFFFF;
             } else {
 
                 // borrow occurs when rn < rm (unsigned)
-                c = (uint32_t)rn >= (uint32_t)shifted_rm;
+                c = (word_t) rn >= (word_t) shifted_rm;
             }
 
             // addition, check cases where signs are the same
             // subtraction, check cases where signs are different
             bit_t v;
             if (fields.opc == ADD_S) {
-                v = ((sword_t)rn > 0 && (sword_t)shifted_rm > 0 && (sword_t)result < 0) ||
-                    ((sword_t)rn < 0 && (sword_t)shifted_rm < 0 && (sword_t)result > 0);
-            } else {
-                v = ((sword_t)rn > 0 && (sword_t)shifted_rm < 0 && (sword_t)result < 0) ||
-                    ((sword_t)rn < 0 && (sword_t)shifted_rm > 0 && (sword_t)result > 0);
+                v = ((sword_t) rn > 0 && (sword_t) shifted_rm > 0 && (sword_t) result < 0) ||
+                    ((sword_t) rn < 0 && (sword_t) shifted_rm < 0 && (sword_t) result > 0);
+            } else { 
+                v = ((sword_t) rn > 0 && (sword_t) shifted_rm < 0 && (sword_t) result < 0) ||
+                    ((sword_t) rn < 0 && (sword_t) shifted_rm > 0 && (sword_t) result > 0);
             }
 
             write_pstate(&state->special_registers, n, z, c, v);
