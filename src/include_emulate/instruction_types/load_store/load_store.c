@@ -1,7 +1,9 @@
-#include "load_store.h"
-#include "bit_utils/bit.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "load_store.h"
+#include "bit_utils/bit.h"
+#include "registers/registers.h"
 
 // register field value 11111 (31) encodes the zero register
 #define ZERO_REGISTER 0x1F
@@ -59,47 +61,6 @@ static ls_instr_fields_t decode_load_store(decoded_instr_t instr) {
     }
  
     return fields;
-}
-
-/*
-
-read_reg reads a general register, returning 0 for the zero register
-(index 31, which is ZR here, not SP as not in spec)
-
-*/
-
-static dword_t read_reg(const machine_state_t *state, byte_t index, bit_t sf) {
-
-    // index 31 reads as the zero register
-    if (index == ZERO_REGISTER) {
-        return 0;
-    }
-
-    // otherwise read as a 64-bit X or 32-bit W register
-    return sf ? read_x_register(&state->general_registers, index)
-              : read_w_register(&state->general_registers, index);
-}
-
-/*
-
-write_reg writes a general register, discarding writes to the zero
-register (index 31); a W write zero-extends the upper 32 bits
-
-*/
-
-static void write_reg(machine_state_t *state, byte_t index, bit_t sf, dword_t value) {
-
-    // writes to the zero register are ignored
-    if (index == ZERO_REGISTER) {
-        return;
-    }
-
-    // 64-bit X write, or 32-bit W write (write_w_register zero-extends)
-    if (sf) {
-        write_x_register(&state->general_registers, index, value);
-    } else {
-        write_w_register(&state->general_registers, index, (word_t) value);
-    }
 }
 
 /*
@@ -171,7 +132,7 @@ pre/post index also write the updated address back to Xn
 static addr_t compute_address(machine_state_t *state, ls_instr_fields_t fields) {
 
     // base register, always read as a 64-bit X-register
-    dword_t base = read_reg(state, fields.xn, 1);
+    dword_t base = read_reg_sf(&state->general_registers, fields.xn, 1);
 
     switch (fields.type) {
 
@@ -181,18 +142,18 @@ static addr_t compute_address(machine_state_t *state, ls_instr_fields_t fields) 
 
         // register offset: add the value in Xm
         case LS_REGISTER_OFFSET:
-            return (addr_t) (base + read_reg(state, fields.xm, 1));
+            return (addr_t) (base + read_reg_sf(&state->general_registers, fields.xm, 1));
 
         // pre-index: address is base + simm9, written back before transfer
         case LS_PRE_INDEX: {
             addr_t address = (addr_t) (base + sign_extend(fields.simm9, 9));
-            write_reg(state, fields.xn, 1, address);
+            write_reg_sf(&state->general_registers, fields.xn, 1, address);
             return address;
         }
 
         // post-index: transfer at base, then Xn updated by simm9
         case LS_POST_INDEX:
-            write_reg(state, fields.xn, 1, base + sign_extend(fields.simm9, 9));
+            write_reg_sf(&state->general_registers, fields.xn, 1, base + sign_extend(fields.simm9, 9));
             return (addr_t) base;
 
         default:
@@ -230,11 +191,11 @@ exec_result_t execute_load_store(machine_state_t *state, decoded_instr_t instr) 
         // load: read 8 bytes (X) or 4 bytes (W) from memory into Rt
         dword_t value = fields.sf ? read_double_word(&state->memory, address)
                                   : (dword_t) read_word(&state->memory, address);
-        write_reg(state, fields.rt, fields.sf, value);
+        write_reg_sf(&state->general_registers, fields.rt, fields.sf, value);
     } else {
 
         // store: write Rt into memory as 8 bytes (X) or 4 bytes (W)
-        dword_t value = read_reg(state, fields.rt, fields.sf);
+        dword_t value = read_reg_sf(&state->general_registers, fields.rt, fields.sf);
         if (fields.sf) {
             write_double_word(&state->memory, address, value);
         } else {
