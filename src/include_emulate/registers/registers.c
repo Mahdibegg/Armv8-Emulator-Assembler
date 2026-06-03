@@ -88,6 +88,23 @@ void write_w_register(gen_regs *registers, unsigned index, word_t value) {
     }
 }
 
+static dword_t read_reg_sf(gen_regs *registers, unsigned index, bit_t sf) {
+
+    return sf ? read_x_register(registers, index)
+              : read_w_register(registers, index);
+}
+
+static void write_reg_sf(gen_regs *registers, unsigned index, bit_t sf, dword_t value) {
+
+    if (sf) {
+
+        write_x_register(registers, index, value);
+    } else {
+
+        write_w_register(registers, index, (word_t) value);
+    }
+}
+
 reg64_t read_pc(const spec_reg *registers) {
 
     return registers->pc;
@@ -97,16 +114,6 @@ void write_pc(spec_reg *registers, dword_t value) {
 
     registers->pc = (reg64_t) value;
 }
-
-// reg64_t read_xzr(void) {
-
-//     return 0;
-// }
-
-// reg32_t read_wzr(void) {
-    
-//     return 0;
-// }
 
 void write_pstate(spec_reg *registers, bit_t n, bit_t z, bit_t c, bit_t v) {
 
