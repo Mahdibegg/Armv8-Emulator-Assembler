@@ -277,7 +277,42 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
 
         // writing final result to the Rd register
         write_w_register(&state->general_registers, (unsigned) fields.rd, (word_t) result);
-        
+    
+        // updating processor state register only if opcode fits add_s and sub_s
+        // otherwise ignore for the other instructions
+        if (fields.opc == ADD_S || fields.opc == SUB_S) {
+
+            // take sign bit of result in 32 bit
+            bit_t n = sign_bit_32(result);
+
+            bit_t z = result == 0;
+
+            // addition, check overflow past 32 bits (carry)
+            // subtraction, check borrow (rn >= rm)
+            bit_t c;
+            if (fields.opc == ADD_S) {
+
+                // do the addition in 64 bits and check if it spills past bit 31
+                c = ((uint64_t)(uint32_t)rn + (uint32_t)shifted_rm) > 0xFFFFFFFF;
+            } else {
+
+                // borrow occurs when rn < rm (unsigned)
+                c = (uint32_t)rn >= (uint32_t)shifted_rm;
+            }
+
+            // addition, check cases where signs are the same
+            // subtraction, check cases where signs are different
+            bit_t v;
+            if (fields.opc == ADD_S) {
+                v = ((sword_t)rn > 0 && (sword_t)shifted_rm > 0 && (sword_t)result < 0) ||
+                    ((sword_t)rn < 0 && (sword_t)shifted_rm < 0 && (sword_t)result > 0);
+            } else {
+                v = ((sword_t)rn > 0 && (sword_t)shifted_rm < 0 && (sword_t)result < 0) ||
+                    ((sword_t)rn < 0 && (sword_t)shifted_rm > 0 && (sword_t)result > 0);
+            }
+
+            write_pstate(&state->special_registers, n, z, c, v);
+        }
 
     } else {
 
