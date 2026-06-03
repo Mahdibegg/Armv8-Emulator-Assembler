@@ -4,6 +4,7 @@
 #include "types.h"
 #include <stdbool.h>
 #define REG_NUM 31
+#define ZERO_REGISTER 31
 
 // general purpose registers 0-30
 typedef struct {
