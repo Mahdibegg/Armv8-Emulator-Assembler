@@ -351,51 +351,45 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         switch (fields.opc) {
             case ADD_S: 
             case ADD:
-                result = (word_t) rn + (word_t) shifted_rm;    
+                result = (dword_t) rn + (dword_t) shifted_rm;    
             case SUB_S:
             case SUB:
-                result = (word_t) rn - (word_t) shifted_rm;
+                result = (dword_t) rn - (dword_t) shifted_rm;
             default:
 
                 unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
         }
 
-        // writing final result to the Rd register
-        write_w_register(&state->general_registers, (unsigned) fields.rd, (word_t) result);
+        write_x_register(&state->general_registers, (unsigned) fields.rd, (dword_t) result);
     
-        // updating processor state register only if opcode fits add_s and sub_s
-        // otherwise ignore for the other instructions
         if (fields.opc == ADD_S || fields.opc == SUB_S) {
 
-            // take sign bit of result in 32 bit
-            bit_t n = sign_bit_32(result);
+            bit_t n = sign_bit_64(result);
 
             bit_t z = result == 0;
 
-            // addition, check overflow past 32 bits (carry)
-            // subtraction, check borrow (rn >= rm)
             bit_t c;
             if (fields.opc == ADD_S) {
 
-                c = (dword_t) rn + (dword_t) shifted_rm > 0xFFFFFFFFFFFFFFFF;
+                c = (UINT64_MAX - (dword_t) rn) < (dword_t) shifted_rm;
             } else {
 
-                // borrow occurs when rn < rm (unsigned)
                 c = (dword_t) rn >= (dword_t) shifted_rm;
             }
 
-            // addition, check cases where signs are the same
-            // subtraction, check cases where signs are different
             bit_t v;
             if (fields.opc == ADD_S) {
+
                 v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result < 0) ||
                     ((sdword_t) rn < 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result > 0);
             } else { 
+                
                 v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result < 0) ||
                     ((sdword_t) rn < 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result > 0);
             }
 
             write_pstate(&state->special_registers, n, z, c, v);
+        }
     }
 }
 
