@@ -4,9 +4,7 @@
 #include "load_store.h"
 #include "bit_utils/bit.h"
 #include "registers/registers.h"
-
-// register field value 11111 (31) encodes the zero register
-#define ZERO_REGISTER 0x1F
+#include "memory/memory.h"
 
 /*
  
