@@ -270,7 +270,7 @@ static word_t execute_general_arithmetic_32(machine_state_t *state, byte_t opcod
     return result;
 }
 
-static word_t execute_general_arithmetic_64(machine_state_t *state, byte_t opcode, dword_t rn, dword_t rm) {
+static dword_t execute_general_arithmetic_64(machine_state_t *state, byte_t opcode, dword_t rn, dword_t rm) {
 
     dword_t result;
 

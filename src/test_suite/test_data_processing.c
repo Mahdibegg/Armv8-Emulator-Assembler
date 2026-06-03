@@ -286,6 +286,7 @@ static void imm_arithmetic_add_64_test(void) {
        Result = 0x100000000 + 1 = 0x100000001
 
     */
+   
     decoded_instr_t instr;
     instr.type = INSTR_DP_IMM;
     instr.instr = (0x1 << 31) | (0x0 << 29) | (0x1 << 28) | (0x2 << 23) | (0 << 22) | (1 << 10) | (1 << 5) | 0;
