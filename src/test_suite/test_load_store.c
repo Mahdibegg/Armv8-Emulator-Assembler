@@ -142,6 +142,50 @@ static void unsigned_offset_ldr_32_test(void) {
     printf("Unsigned offset LDR 32-bit (zero-extends): PASSED\n");
 }
 
+// TEST 1.4: unsigned_offset_str_32
+// Testing that a 32-bit STR writes only the low word and leaves the next word untouched
+static void unsigned_offset_str_32_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+    init_memory(&state.memory);
+
+    write_x_register(&state.general_registers, 1, 0x3000);
+    write_x_register(&state.general_registers, 2, 0xAABBCCDD11223344);
+
+    /*
+
+       Single data transfer STR (unsigned offset, 32-bit):
+       bit 31 = 1, sf = 0, fixed 111, U = 1, L = 0 (store)
+       imm12 = 0, xn = 1, rt = 2
+       Stores only the low word of X2 (0x11223344) at 0x3000,
+       leaving 0x3004 untouched
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_LOAD_STORE;
+    instr.instr = (0x1 << 31) | (0x0 << 30) | (0x1 << 29) | (0x1 << 28) | (0x1 << 27) |
+                  (0x1 << 24) | (0x0 << 22) | (0 << 10) | (1 << 5) | 2;
+
+    exec_result_t result = execute_load_store(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_word(&state.memory, 0x3000) == 0x11223344);
+    assert(read_word(&state.memory, 0x3004) == 0x0);
+
+    // load/store must not touch PC or the condition flags
+    assert(read_pc(&state.special_registers) == 0x0);
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+
+    printf("Unsigned offset STR 32-bit (low word only): PASSED\n");
+}
+
 int main(void) {
 
     printf("Running load/store tests...\n\n");
