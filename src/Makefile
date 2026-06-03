@@ -54,7 +54,7 @@ TEST_MEMORY_OBJS = test_suite/test_memory.o \
 test_memory: $(TEST_MEMORY_OBJS)
 	$(CC) $(CFLAGS) -o test_memory $(TEST_MEMORY_OBJS)
 
-TEST_LOAD_STORE_OBJS = include_emulate/test_suite/test_load_store.o \
+TEST_LOAD_STORE_OBJS = test_suite/test_load_store.o \
 	include_emulate/instruction_types/load_store/load_store.o \
 	include_emulate/registers/registers.o \
 	include_emulate/memory/memory.o \
