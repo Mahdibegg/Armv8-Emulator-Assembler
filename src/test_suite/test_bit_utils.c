@@ -2,13 +2,16 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include "bit_utils/bit.h"
+#include "../bit_utils/bit.h"
 
 /*
+
     2 functions that test extract_bits 
     extract_bits_single_bit_test - tests if each bit is extracted correctly
     extract_bits_range_test - tests if the range of bits extracted correctly
+
 */
+
 static void extract_bits_single_bit_test(void) {
 
     // 0xA = 0000 0000 0000 0000 0000 0000 0000 1010
@@ -36,10 +39,13 @@ static void extract_bits_range_test(void) {
 }
 
 /*
+
     2 functions that test sign_extend
     sign_extend_positive_values_test - tests if positive values are sign_extended to 64 bits correctly
     sign_extend_negative_values_test - tests if negative values are sign_extended to 64 bits correctly
+
 */
+
 static void sign_extend_positive_values_test(void) {
 
     // Positive values remain unchanged after sign extend
@@ -54,6 +60,7 @@ static void sign_extend_positive_values_test(void) {
 static void sign_extend_negative_values_test(void) {
 
     /*
+
         13-bit value -1 = 0x1FFF
 
         13-bit value -3 = 0x1FFD
@@ -61,6 +68,7 @@ static void sign_extend_negative_values_test(void) {
         19-bit value -1 = 0x7FFFF
 
         26-bit value -4 = 0x3FFFFC
+
     */
 
     assert(sign_extend(0x1FFF, 13) == -1);
@@ -72,7 +80,9 @@ static void sign_extend_negative_values_test(void) {
 }
 
 /*
+
     Main function that combines helper test functions to test_bit_utils
+
 */
 int main(void) {
     printf("Testing bit_utils...\n");
@@ -86,6 +96,3 @@ int main(void) {
 
     return 0;
 }
-
-
-
