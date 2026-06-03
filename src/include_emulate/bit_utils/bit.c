@@ -15,7 +15,7 @@ dword_t extract_bits(dword_t dword, unsigned low, unsigned high) {
     }
 
     // rare case: bits 0-31 extracted
-    if (high - low == 64) {
+    if (high - low == 63) {
         return dword;
     }
 
