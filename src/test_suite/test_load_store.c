@@ -558,5 +558,7 @@ int main(void) {
     printf("\nZERO REGISTER TESTS --->\n");
     store_zero_register_test();
     
+    printf(BLUE "\nAll load/store tests PASSED\n" WHITE);
+    
     return 0;
 }
