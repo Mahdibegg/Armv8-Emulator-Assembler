@@ -998,6 +998,148 @@ static void reg_logic_orn_64_test(void) {
     printf("REG logic ORN 64-bit: PASSED\n");
 }
 
+
+// REG MULTIPLY TESTS 5 - 5.4
+
+// TEST 5.1: reg_multiply_madd_32
+// Testing that 32-bit MADD correctly adds the product of two registers to the accumulator register
+static void reg_multiply_madd_32_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_w_register(&state.general_registers, 1, 3);
+    write_w_register(&state.general_registers, 2, 4);
+    write_w_register(&state.general_registers, 3, 10);
+
+    /*
+       Register multiply MADD (32-bit):
+       sf = 0, opc = 00, M = 1, fixed = 1101 1000, x = 0 (MADD)
+       rn = 1, rm = 2, ra = 3, rd = 0
+       Result = ra + (rn * rm) = 10 + (3 * 4) = 22
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x1 << 28) | (0x1 << 27) | (0x1 << 26) | (0x0 << 25) |
+                  (0x1 << 24) | (0x0 << 21) | (2 << 16) | (0 << 15) | (3 << 10) | (1 << 5) | 0;
+
+    exec_result_t result = execute_data_processing(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 22);
+
+    // Testing that special registers remain unchanged after madd
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+
+    printf("REG multiply MADD 32-bit: PASSED\n");
+}
+
+// TEST 5.2: reg_multiply_msub_32
+// Testing that 32-bit MSUB correctly subtracts the product of two registers from the accumulator register
+static void reg_multiply_msub_32_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_w_register(&state.general_registers, 1, 3);
+    write_w_register(&state.general_registers, 2, 4);
+    write_w_register(&state.general_registers, 3, 20);
+
+    /*
+       Register multiply MSUB (32-bit):
+       sf = 0, opc = 00, M = 1, fixed = 1101 1000, x = 1 (MSUB)
+       rn = 1, rm = 2, ra = 3, rd = 0
+       Result = ra - (rn * rm) = 20 - (3 * 4) = 8
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x1 << 28) | (0x1 << 27) | (0x1 << 26) | (0x0 << 25) |
+                  (0x1 << 24) | (0x0 << 21) | (2 << 16) | (0x1 << 15) | (3 << 10) | (1 << 5) | 0;
+
+    exec_result_t result = execute_data_processing(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 8);
+
+    // Testing that special registers remain unchanged after msub
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+
+    printf("REG multiply MSUB 32-bit: PASSED\n");
+}
+
+// TEST 5.3: reg_multiply_madd_zero_ra_32
+// Testing that 32-bit MADD correctly uses the zero register as the accumulator value
+static void reg_multiply_madd_zero_ra_32_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_w_register(&state.general_registers, 1, 6);
+    write_w_register(&state.general_registers, 2, 7);
+
+    /*
+       Register multiply MADD (32-bit) with ra = zero register:
+       sf = 0, opc = 00, M = 1, fixed = 1101 1000, x = 0 (MADD)
+       rn = 1, rm = 2, ra = 31 (zero register), rd = 0
+       Result = 0 + (6 * 7) = 42
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x0 << 31) | (0x0 << 29) | (0x1 << 28) | (0x1 << 27) | (0x1 << 26) | (0x0 << 25) |
+                  (0x1 << 24) | (0x0 << 21) | (2 << 16) | (0x0 << 15) | (31 << 10) | (1 << 5) | 0;
+
+    exec_result_t result = execute_data_processing(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_w_register(&state.general_registers, 0) == 42);
+
+    // Testing that special registers remain unchanged after madd with zero register
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+
+    printf("REG multiply MADD 32-bit (ra = zero register): PASSED\n");
+}
+
+// TEST 5.4: reg_multiply_madd_64
+// Testing that 64-bit MADD correctly multiplies large 64-bit register values
+static void reg_multiply_madd_64_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+
+    write_x_register(&state.general_registers, 1, 0x100000000);
+    write_x_register(&state.general_registers, 2, 2);
+    write_x_register(&state.general_registers, 3, 0);
+
+    /*
+       Register multiply MADD (64-bit):
+       sf = 1, opc = 00, M = 1, fixed = 1101 1000, x = 0 (MADD)
+       rn = 1, rm = 2, ra = 3, rd = 0
+       Result = 0 + (0x100000000 * 2) = 0x200000000
+    */
+    decoded_instr_t instr;
+    instr.type = INSTR_DP_REG;
+    instr.instr = (0x1 << 31) | (0x0 << 29) | (0x1 << 28) | (0x1 << 27) | (0x1 << 26) | (0x0 << 25) |
+                  (0x1 << 24) | (0x0 << 21) | (2 << 16) | (0x0 << 15) | (3 << 10) | (1 << 5) | 0;
+
+    exec_result_t result = execute_data_processing(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 0) == 0x200000000);
+
+    // Testing that special registers remain unchanged after 64-bit madd
+    assert_special_registers_initialised_except_pc(&state, (dword_t) 0x0);
+
+    printf("REG multiply MADD 64-bit: PASSED\n");
+}
+
 int main(void) {
 
     printf("Running data processing tests...\n\n");
@@ -1036,6 +1178,12 @@ int main(void) {
     reg_logic_ands_32_sets_flags_test();
     reg_logic_ands_32_negative_result_test();
     reg_logic_orn_64_test();
+
+    printf("\nREG Multiply --->n\n");
+    reg_multiply_madd_32_test();
+    reg_multiply_msub_32_test();
+    reg_multiply_madd_zero_ra_32_test();
+    reg_multiply_madd_64_test();
 
     printf(BLUE "\nAll data processing tests PASSED\n" WHITE);
  
