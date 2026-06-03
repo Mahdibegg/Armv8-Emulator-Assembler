@@ -129,11 +129,13 @@ void read_zero_registers_test(void) {
 
     printf("Testing read xzr and wzr...\n");
     
-    gen_regs general;
-    init_gen_registers(&general)
+    gen_regs g_regs;
 
-    assert(read_w_register(&general, 31) == 0);
-    assert(read_x_register(&general, 31) == 0);
+    // initialise the general purpose registers 
+    init_gen_registers(&g_regs);
+
+    assert(read_w_register(&g_regs, 31) == 0);
+    assert(read_x_register(&g_regs, 31) == 0);
 
     printf("zero registers hold correct value : PASSED\n");
 }
