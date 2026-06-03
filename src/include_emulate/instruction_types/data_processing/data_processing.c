@@ -247,7 +247,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 shifted_rm = rm >> shift_amount;
             case ASR:
                 // making sure that the rm is casted to signed 32 bit size
-                shifted_rm = (word_t) ((int32_t) rm >> shift_amount);
+                shifted_rm = (word_t) ((sword_t) rm >> shift_amount);
             case ROR:
                 // rotate only lower 32 bits, sizeof(word_t)*8 give bytes * 8, so bit size of word_t
                 shifted_rm = (rm >> shift_amount) | (rm << (sizeof(word_t)*8 - shift_amount));
@@ -316,20 +316,86 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
 
     } else {
 
-        // similar as above but 64 bit version
+        // similar case in the previous branch but for 64 bit register
 
         dword_t rn = read_x_register(&state->general_registers, fields.rn);
         dword_t rm = read_x_register(&state->general_registers, fields.rm);
 
+        // amount to shift by is the operand field of the instruction
+        byte_t shift_amount = fields.opr;
+        dword_t shifted_rm;
+
+        // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
         switch (fields.shift) {
             case LSL:
+                shifted_rm = rm << shift_amount;
             case LSR:
+                shifted_rm = rm >> shift_amount;
             case ASR:
+                // making sure that the rm is casted to signed 32 bit size
+                shifted_rm = (dword_t) ((sdword_t) rm >> shift_amount);
             case ROR:
+                // rotate only lower 32 bits, sizeof(word_t)*8 give bytes * 8, so bit size of word_t
+                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(dword_t)*8 - shift_amount));
+                // truncate back to 32 bits by casing as word_t
+                shifted_rm = (dword_t) shifted_rm;
             default: 
 
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
+
+        dword_t result;
+
+        // then adding the shifted result to the Rm to complete the instruction
+        // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
+        switch (fields.opc) {
+            case ADD_S: 
+            case ADD:
+                result = (word_t) rn + (word_t) shifted_rm;    
+            case SUB_S:
+            case SUB:
+                result = (word_t) rn - (word_t) shifted_rm;
+            default:
+
+                unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
+        }
+
+        // writing final result to the Rd register
+        write_w_register(&state->general_registers, (unsigned) fields.rd, (word_t) result);
+    
+        // updating processor state register only if opcode fits add_s and sub_s
+        // otherwise ignore for the other instructions
+        if (fields.opc == ADD_S || fields.opc == SUB_S) {
+
+            // take sign bit of result in 32 bit
+            bit_t n = sign_bit_32(result);
+
+            bit_t z = result == 0;
+
+            // addition, check overflow past 32 bits (carry)
+            // subtraction, check borrow (rn >= rm)
+            bit_t c;
+            if (fields.opc == ADD_S) {
+
+                c = (dword_t) rn + (dword_t) shifted_rm > 0xFFFFFFFFFFFFFFFF;
+            } else {
+
+                // borrow occurs when rn < rm (unsigned)
+                c = (dword_t) rn >= (dword_t) shifted_rm;
+            }
+
+            // addition, check cases where signs are the same
+            // subtraction, check cases where signs are different
+            bit_t v;
+            if (fields.opc == ADD_S) {
+                v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result < 0) ||
+                    ((sdword_t) rn < 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result > 0);
+            } else { 
+                v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result < 0) ||
+                    ((sdword_t) rn < 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result > 0);
+            }
+
+            write_pstate(&state->special_registers, n, z, c, v);
     }
 }
 
