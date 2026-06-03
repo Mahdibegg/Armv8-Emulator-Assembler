@@ -78,7 +78,7 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
         fields.type = IMM_WIDE_MOVE;
 
         // for wide move case, fill in hw, imm16 fields, ignore sh, imm12, rn fields
-        fields.hw = extract_bits(instr.instr, 22, 22);
+        fields.hw = extract_bits(instr.instr, 21, 22);
         fields.imm16 = extract_bits(instr.instr, 5, 20);
     } else {
 
