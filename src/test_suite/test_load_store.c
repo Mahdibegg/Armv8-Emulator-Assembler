@@ -316,6 +316,51 @@ static void post_index_ldr_64_test(void) {
     printf("Post-index LDR 64-bit (write-back): PASSED\n");
 }
 
+// TEST 2.3: pre_index_str_64_negative
+// Testing that a pre-indexed STR sign-extends a negative simm9 and writes back
+static void pre_index_str_64_negative_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+    init_memory(&state.memory);
+
+    write_x_register(&state.general_registers, 1, 0x6010);
+    write_x_register(&state.general_registers, 2, 0x1122334455667788);
+
+    /*
+
+       Single data transfer STR (pre-index, negative offset, 64-bit):
+       bit 31 = 1, sf = 1, fixed 111, U = 0, L = 0 (store)
+       bit 21 = 0, simm9 = -16 (0x1F0 in 9 bits), I = 1 (pre), bit 10 = 1
+       xn = 1, rt = 2
+       Address = 0x6010 - 16 = 0x6000, stores X2, X1 written back to 0x6000
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_LOAD_STORE;
+    instr.instr = (0x1 << 31) | (0x1 << 30) | (0x1 << 29) | (0x1 << 28) | (0x1 << 27) |
+                  (0x0 << 24) | (0x0 << 22) | (0x1F0 << 12) | (0x1 << 11) | (0x1 << 10) | (1 << 5) | 2;
+
+    exec_result_t result = execute_load_store(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_word(&state.memory, 0x6000) == 0x55667788);
+    assert(read_word(&state.memory, 0x6004) == 0x11223344);
+    assert(read_x_register(&state.general_registers, 1) == 0x6000);
+
+    // load/store must not touch PC or the condition flags
+    assert(read_pc(&state.special_registers) == 0x0);
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+
+    printf("Pre-index STR 64-bit (negative offset, write-back): PASSED\n");
+}
+
 int main(void) {
 
     printf("Running load/store tests...\n\n");
@@ -330,6 +375,7 @@ int main(void) {
     printf("\nINDEXED TESTS --->\n");
     pre_index_ldr_64_test();
     post_index_ldr_64_test();
+    pre_index_str_64_negative_test();   
 
     return 0;
 }
