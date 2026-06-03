@@ -361,6 +361,133 @@ static void pre_index_str_64_negative_test(void) {
     printf("Pre-index STR 64-bit (negative offset, write-back): PASSED\n");
 }
 
+// TEST 3.1: register_offset_ldr_64
+// Testing that a register-offset LDR uses Xn + Xm as the transfer address
+static void register_offset_ldr_64_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+    init_memory(&state.memory);
+
+    write_x_register(&state.general_registers, 1, 0x7000);
+    write_x_register(&state.general_registers, 2, 0x20);
+    write_word(&state.memory, 0x7020, 0xFEEDFACE);
+    write_word(&state.memory, 0x7024, 0x00000000);
+
+    /*
+
+       Single data transfer LDR (register offset, 64-bit):
+       bit 31 = 1, sf = 1, fixed 111, U = 0, L = 1 (load)
+       bit 21 = 1, xm = 2, fixed selector bits 011 _ 10, xn = 1, rt = 8
+       Address = 0x7000 + 0x20 = 0x7020
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_LOAD_STORE;
+    instr.instr = (0x1 << 31) | (0x1 << 30) | (0x1 << 29) | (0x1 << 28) | (0x1 << 27) |
+                  (0x0 << 24) | (0x1 << 22) | (0x1 << 21) | (2 << 16) |
+                  (0x3 << 13) | (0x1 << 11) | (1 << 5) | 8;
+
+    exec_result_t result = execute_load_store(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 8) == 0x00000000FEEDFACE);
+
+    // load/store must not touch PC or the condition flags
+    assert(read_pc(&state.special_registers) == 0x0);
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+
+    printf("Register offset LDR 64-bit: PASSED\n");
+}
+
+// TEST 4.1: load_literal_64
+// Testing that a load literal reads from PC + (simm19 * 4)
+static void load_literal_64_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+    init_memory(&state.memory);
+
+    // PC is 0 after init, so the literal address is simm19 * 4 = 8 * 4 = 0x20
+    write_word(&state.memory, 0x20, 0x23456789);
+    write_word(&state.memory, 0x24, 0xABCDEF01);
+
+    /*
+
+       Load literal (64-bit):
+       bit 31 = 0, sf = 1, fixed 011000, simm19 = 8, rt = 9
+       Address = PC + 8 * 4 = 0x20, loads doubleword into X9
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_LOAD_STORE;
+    instr.instr = (0x1 << 30) | (0x1 << 28) | (0x1 << 27) | (8 << 5) | 9;
+
+    exec_result_t result = execute_load_store(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 9) == 0xABCDEF0123456789);
+
+    // load/store must not touch PC or the condition flags
+    assert(read_pc(&state.special_registers) == 0x0);
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+
+    printf("Load literal 64-bit: PASSED\n");
+}
+
+// TEST 4.2: load_literal_64_negative
+// Testing that a load literal sign-extends a negative simm19 (backward offset)
+static void load_literal_64_negative_test(void) {
+
+    machine_state_t state;
+
+    init_gen_registers(&state.general_registers);
+    init_spec_registers(&state.special_registers);
+    init_memory(&state.memory);
+
+    write_pc(&state.special_registers, 0x100);
+    write_word(&state.memory, 0xF0, 0x0BADF00D);
+    write_word(&state.memory, 0xF4, 0xFACEB00C);
+
+    /*
+
+       Load literal (64-bit) with negative simm19:
+       bit 31 = 0, sf = 1, fixed 011000, simm19 = -4 (0x7FFFC in 19 bits), rt = 10
+       Address = PC + (-4 * 4) = 0x100 - 16 = 0xF0, loads doubleword into X10
+
+    */
+
+    decoded_instr_t instr;
+    instr.type = INSTR_LOAD_STORE;
+    instr.instr = (0x1 << 30) | (0x1 << 28) | (0x1 << 27) | (0x7FFFC << 5) | 10;
+
+    exec_result_t result = execute_load_store(&state, instr);
+
+    assert(result == EXEC_NEXT);
+    assert(read_x_register(&state.general_registers, 10) == 0xFACEB00C0BADF00D);
+
+    // load/store must not touch the flags, and PC must be unchanged at 0x100
+    assert(read_pc(&state.special_registers) == 0x100);
+    assert(state.special_registers.psr.z_flag == true);
+    assert(state.special_registers.psr.n_flag == false);
+    assert(state.special_registers.psr.c_flag == false);
+    assert(state.special_registers.psr.v_flag == false);
+
+    printf("Load literal 64-bit (negative offset): PASSED\n");
+}
+
 int main(void) {
 
     printf("Running load/store tests...\n\n");
@@ -375,7 +502,14 @@ int main(void) {
     printf("\nINDEXED TESTS --->\n");
     pre_index_ldr_64_test();
     post_index_ldr_64_test();
-    pre_index_str_64_negative_test();   
+    pre_index_str_64_negative_test();
 
+    printf("\nREGISTER OFFSET TESTS --->\n");
+    register_offset_ldr_64_test();
+
+    printf("\nLOAD LITERAL TESTS --->\n");
+    load_literal_64_test();
+    load_literal_64_negative_test();
+    
     return 0;
 }
