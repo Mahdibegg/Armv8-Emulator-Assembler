@@ -60,6 +60,7 @@ typedef struct {
 
     // Arithmetic or logic shift (true/false)
     bit_t opr_MSB;
+    bit_t opr_LSB;
     byte_t shift;
     
     // Logical shift

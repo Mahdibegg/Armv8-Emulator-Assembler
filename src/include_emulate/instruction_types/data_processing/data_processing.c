@@ -104,6 +104,7 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
         .M = extract_bits(instr.instr, 28, 28),
         .opr = extract_bits(instr.instr, 21, 24),
         .opr_MSB = extract_bits(instr.instr, 24, 24),
+        .opr_LSB = extract_bits(instr.instr, 21, 21),
         .rm = extract_bits(instr.instr, 16, 20),
         .operand = extract_bits(instr.instr, 10,15),
         .rn = extract_bits(instr.instr, 5, 9),
@@ -111,22 +112,24 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
     };
 
     // differentiate between arithmetic/logic and multiply
-    if (fields.M == 0) {
+    if (fields.M == 0 && fields.opr_MSB == 1 && fields.opr_LSB == 0 ) {
 
         // fields.type updated to arithmetic
         fields.type = REG_ARITHMETIC;
 
         // arithmetic/logic overlap fields - opr_MSB already set
         fields.shift = extract_bits(instr.instr, 22, 23);
-        if (fields.opr_MSB == 0) {
+    } else if (fields.M == 0 && fields.opr_MSB == 0) {
 
-            // field.type updated to logic (from arithmetic)
-            fields.type = REG_LOGIC;
+        // field.type updated to logic (from arithmetic)
+        fields.type = REG_LOGIC;
+        
+        // arithmetic/logic overlap fields - opr_MSB already set
+        fields.shift = extract_bits(instr.instr, 22, 23);
 
-            // setting N fields (for negation)
-            fields.N = extract_bits(instr.instr, 21, 21);
-        }
-    }else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
+        // setting N fields (for negation)
+        fields.N = fields.opr_LSB;
+    } else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
 
         // field.type updated to multiply
         fields.type = REG_MULTIPLY;
@@ -246,7 +249,7 @@ static word_t execute_general_arithmetic_32(machine_state_t *state, byte_t opcod
         if (opcode == ADD_S) {
 
             // do the addition in 64 bits and check if it spills past bit 31
-            c = ((dword_t) (word_t) rn + (word_t) rm) > 0xFFFFFFFF;
+            c = ((dword_t) rn + (dword_t) rm) > UINT32_MAX;;
         } else {
 
             // borrow occurs when rn < rm (unsigned)
@@ -439,8 +442,9 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
 
-    // amount to shift by is the operand field of the instruction
-    byte_t shift_amount = fields.operand;
+    // for 32-bit, shift amount is only lower 5 bits
+    // for 64-bit, shift amount stays at 6 bits
+    byte_t shift_amount = (fields.sf == 0) ? fields.operand & 0x1F : fields.operand & 0x3F;
 
     // sf = 0 -> 32 bit result to 32 bit register
     // sf = 1 -> 64 bit result to 64 bit register
@@ -451,6 +455,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         word_t rm = read_w_register(&state->general_registers, fields.rm);
 
         word_t shifted_rm;
+        word_t result;
 
         // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
         switch (fields.shift) {
@@ -469,19 +474,21 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 break;    
             case ROR:
 
-                // rotate only lower 32 bits, sizeof(word_t)*8 give bytes * 8, so bit size of word_t
-                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(WORD_BITS)*8 - shift_amount));
+                // rotate only lower 32 bits, WORD_BITS is a constant for 32
                 // truncate back to 32 bits by casing as word_t
-                shifted_rm = (word_t) shifted_rm;
+                shifted_rm = (word_t) ((rm >> shift_amount) | (rm << (WORD_BITS - shift_amount)));
+                result = shifted_rm;
                 break;
             default: 
 
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
-
-        // obtain the result from checking the general arithmetic opcode case and producing the desired result
-        // pstate registers are updated within this function execution
-        word_t result = execute_general_arithmetic_32(state, fields.opc, rn, shifted_rm);
+        
+        if (fields.shift != ROR) {
+            // obtain the result from checking the general arithmetic opcode case and producing the desired result
+            // pstate registers are updated within this function execution
+            result = execute_general_arithmetic_32(state, fields.opc, rn, shifted_rm);
+        }
 
         // writing final result to the Rd register
         write_w_register(&state->general_registers, (unsigned) fields.rd, result);
@@ -494,6 +501,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         dword_t rm = read_x_register(&state->general_registers, fields.rm);
 
         dword_t shifted_rm;
+        dword_t result;
 
         switch (fields.shift) {
             case LSL:
@@ -510,15 +518,18 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 break;
             case ROR:
 
-                shifted_rm = (rm >> shift_amount) | (rm << (sizeof(DWORD_BITS)*8 - shift_amount));
-                shifted_rm = (dword_t) shifted_rm;
+                shifted_rm = (dword_t) ((rm >> shift_amount) | (rm << (DWORD_BITS - shift_amount)));
+                result = shifted_rm;
                 break;    
             default: 
 
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
         }
 
-        dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, shifted_rm);
+        if (fields.shift != ROR) {
+
+            result = execute_general_arithmetic_64(state, fields.opc, rn, shifted_rm);
+        }
 
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
     }
