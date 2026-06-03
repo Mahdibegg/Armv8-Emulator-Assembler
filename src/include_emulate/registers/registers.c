@@ -98,15 +98,15 @@ void write_pc(spec_reg *registers, dword_t value) {
     registers->pc = (reg64_t) value;
 }
 
-reg64_t read_xzr(void) {
+// reg64_t read_xzr(void) {
 
-    return 0;
-}
+//     return 0;
+// }
 
-reg32_t read_wzr(void) {
+// reg32_t read_wzr(void) {
     
-    return 0;
-}
+//     return 0;
+// }
 
 void write_pstate(spec_reg *registers, bit_t n, bit_t z, bit_t c, bit_t v) {
 
