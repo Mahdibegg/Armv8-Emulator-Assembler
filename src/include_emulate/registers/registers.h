@@ -47,8 +47,8 @@ reg64_t read_pc(const spec_reg *registers);
 void write_pc(spec_reg *registers, dword_t value);
 
 // both return 0 in 64/32 bit respectively
-reg64_t read_xzr(void);
-reg32_t read_wzr(void); 
+// reg64_t read_xzr(void);
+// reg32_t read_wzr(void); 
 
 // reading/writing PSTATE register discussed later on, according to spec (ignore for now)
 
