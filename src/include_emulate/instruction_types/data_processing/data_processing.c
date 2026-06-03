@@ -658,19 +658,12 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
 
         // result is of the form ra + (rn * rm) for MADD
         // result is of the form ra - (rn * rm) for MSUB
-        switch (fields.x) {
+        if (fields.x == MADD)
 
-            case MADD:
-            
-                word_t result = ra + (rn * rm);
-                break;
-            case MSUB:
+            result = ra + (rn * rm);
+        else if (fields.x == MSUB) {
 
-                word_t result = ra - (rn * rm);
-                break;
-            default: 
-
-                invalid_field_error("x", fields.x, instr);
+            result = ra - (rn * rm);
         }
 
         // writing to rd using write_w (32 bit)
@@ -685,19 +678,12 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
 
         dword_t result;
 
-        switch (fields.x) {
+        if (fields.x == MADD)
 
-            case MADD:
+            result = ra + (rn * rm);
+        else if (fields.x == MSUB) {
 
-                word_t result = ra + (rn * rm);
-                break;
-            case MSUB:
-
-                word_t result = ra - (rn * rm);
-                break;
-            default: 
-
-                invalid_field_error("x", fields.x, instr);
+            result = ra - (rn * rm);
         }
 
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
@@ -798,7 +784,7 @@ exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t in
 
         // error message for unsupported other forms of data_processing (or branching/load_store)
         fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%08x", 
-            instr
+            instr.instr
         );
         exit(EXIT_FAILURE);
     }
