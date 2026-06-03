@@ -242,17 +242,25 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
         switch (fields.shift) {
             case LSL:
+
                 shifted_rm = rm << shift_amount;
+                break;
             case LSR:
+
                 shifted_rm = rm >> shift_amount;
+                break;    
             case ASR:
+
                 // making sure that the rm is casted to signed 32 bit size
                 shifted_rm = (word_t) ((sword_t) rm >> shift_amount);
+                break;    
             case ROR:
+
                 // rotate only lower 32 bits, sizeof(word_t)*8 give bytes * 8, so bit size of word_t
                 shifted_rm = (rm >> shift_amount) | (rm << (sizeof(word_t)*8 - shift_amount));
                 // truncate back to 32 bits by casing as word_t
                 shifted_rm = (word_t) shifted_rm;
+                break;
             default: 
 
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
@@ -266,10 +274,16 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         switch (fields.opc) {
             case ADD_S: 
             case ADD:
+
+                // update result to add the Rn value with the shifted version of the Rm value
                 result = (word_t) rn + (word_t) shifted_rm;    
+                break;    
             case SUB_S:
             case SUB:
+
+                // update result to subtract the Rn value with the shifted version of the Rm value
                 result = (word_t) rn - (word_t) shifted_rm;
+                break;
             default:
 
                 unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
@@ -321,24 +335,27 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
         dword_t rn = read_x_register(&state->general_registers, fields.rn);
         dword_t rm = read_x_register(&state->general_registers, fields.rm);
 
-        // amount to shift by is the operand field of the instruction
         byte_t shift_amount = fields.opr;
         dword_t shifted_rm;
 
-        // case for arithmetic shift, 00 - lsl, 01 - lsr, 10 - asr, 11 - ror
         switch (fields.shift) {
             case LSL:
+
                 shifted_rm = rm << shift_amount;
+                break;
             case LSR:
+
                 shifted_rm = rm >> shift_amount;
+                break;
             case ASR:
-                // making sure that the rm is casted to signed 32 bit size
+
                 shifted_rm = (dword_t) ((sdword_t) rm >> shift_amount);
+                break;
             case ROR:
-                // rotate only lower 32 bits, sizeof(word_t)*8 give bytes * 8, so bit size of word_t
+
                 shifted_rm = (rm >> shift_amount) | (rm << (sizeof(dword_t)*8 - shift_amount));
-                // truncate back to 32 bits by casing as word_t
                 shifted_rm = (dword_t) shifted_rm;
+                break;    
             default: 
 
                 unsupported_shift_error(fields.shift, read_pc(&state->special_registers));
@@ -346,15 +363,17 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
 
         dword_t result;
 
-        // then adding the shifted result to the Rm to complete the instruction
-        // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
         switch (fields.opc) {
             case ADD_S: 
             case ADD:
-                result = (dword_t) rn + (dword_t) shifted_rm;    
+
+                result = (dword_t) rn + (dword_t) shifted_rm;
+                break;
             case SUB_S:
             case SUB:
+
                 result = (dword_t) rn - (dword_t) shifted_rm;
+                break;
             default:
 
                 unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
@@ -383,7 +402,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
                 v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result < 0) ||
                     ((sdword_t) rn < 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result > 0);
             } else { 
-                
+
                 v = ((sdword_t) rn > 0 && (sdword_t) shifted_rm < 0 && (sdword_t) result < 0) ||
                     ((sdword_t) rn < 0 && (sdword_t) shifted_rm > 0 && (sdword_t) result > 0);
             }
@@ -414,18 +433,30 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         switch (shift_opcode) {
             case ANDS:
             case AND:
+
                 result = rn & op;
+                break;
             case BICS:
             case BIC:
+
                 result = rn & ~op;
+                break;
             case ORR:
+
                 result = rn | op;
+                break;
             case ORN:
+
                 result = rn | ~op;
+                break;
             case EOR:
+
                 result = rn ^ op;
+                break;
             case EON:
+
                 result = rn ^ ~op;
+                break;
             default:
                 invalid_field_error("Opcode", shift_opcode, instr);
         }
@@ -454,18 +485,30 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         switch (shift_opcode) {
             case ANDS:
             case AND:
+
                 result = rn & op;
+                break;
             case BICS:
             case BIC:
+
                 result = rn & ~op;
+                break;
             case ORR:
+
                 result = rn | op;
+                break;
             case ORN:
+
                 result = rn | ~op;
+                break;
             case EOR:
+
                 result = rn ^ op;
+                break;
             case EON:
+
                 result = rn ^ ~op;
+                break;
             default:
                 invalid_field_error("Opcode", shift_opcode, instr);
         }
@@ -498,9 +541,13 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
         switch (fields.x) {
 
             case MADD:
+            
                 word_t result = ra + (rn * rm);
+                break;
             case MSUB:
+
                 word_t result = ra - (rn * rm);
+                break;
             default: 
                 invalid_field_error("x", fields.x, instr);
         }
@@ -519,9 +566,13 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
         switch (fields.x) {
 
             case MADD:
+
                 word_t result = ra + (rn * rm);
+                break;
             case MSUB:
+
                 word_t result = ra - (rn * rm);
+                break;
             default: 
                 invalid_field_error("x", fields.x, instr);
         }
@@ -547,11 +598,11 @@ static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields,
 
         // specifically execute the arithmetic instruction with sh, imm12, rn for (add, sub, adds, subs)
         case IMM_ARITHMETIC:
-            void;
+            break;
 
         // specifically execute the immediate with hw, imm16 for (movn, movz, movk)
         case IMM_WIDE_MOVE:
-            void;
+            break;
             
         default:
 
@@ -572,17 +623,17 @@ static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields,
 
         // execute arithmetic shift using the shift field for (lsl, lsr, asr, ror)
         case REG_ARITHMETIC:
-            void;
+            break;
 
         // using logical shift and N field for executing
         // (and, bic, orr, orn, eor, eon, ands, bics)
         case REG_LOGIC:
-            void;
+            break;
 
         // using the x field for executing (madd, msub)
         // then using the ra field as a third input register for multiply instructions
         case REG_MULTIPLY:
-            void;
+            break;
 
         default:
 
