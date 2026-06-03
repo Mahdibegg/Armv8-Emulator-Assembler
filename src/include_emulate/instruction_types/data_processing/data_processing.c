@@ -343,12 +343,9 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
 
         // execute arithmetic and update pstate if needed
         word_t result = execute_general_arithmetic_32(state, fields.opc, rn, op2);
-
-        // only write to rd if it isn't the zero register
-        if (fields.rd != ZERO_REGISTER) {
-
-            write_w_register(&state->general_registers, fields.rd, result);
-        }
+    
+        write_w_register(&state->general_registers, fields.rd, result);
+        
     } else {
 
         // similar as in the other branch but 64 bit version
@@ -358,11 +355,8 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
         dword_t op2 = fields.sh ? (dword_t) fields.imm12 << 12 : (dword_t) fields.imm12;
 
         dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, op2);
-
-        if (fields.rd != ZERO_REGISTER) {
-
-            write_x_register(&state->general_registers, fields.rd, result);
-        }
+        
+        write_x_register(&state->general_registers, fields.rd, result);
     }
 }
 
@@ -407,6 +401,7 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
         }
 
         write_w_register(&state->general_registers, fields.rd, result);
+        
     } else {
         
         // similar as in the other branch but 64 bit version
