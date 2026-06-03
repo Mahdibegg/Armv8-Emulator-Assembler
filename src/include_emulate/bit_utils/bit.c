@@ -6,7 +6,7 @@
 dword_t extract_bits(dword_t dword, unsigned low, unsigned high) {
 
     // validating bit input for internal error
-    if (low < 0 || high >= 64 || low > high) {
+    if ( high >= 64 || low > high) {
         fprintf(stderr,"Invalid bit range for extract_bits (data_process): high = %u, low = %u\n",
             high,
             low
