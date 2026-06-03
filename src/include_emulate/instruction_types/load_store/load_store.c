@@ -72,7 +72,7 @@ static dword_t read_reg(const machine_state_t *state, byte_t index, bit_t sf) {
 
     // index 31 reads as the zero register
     if (index == ZERO_REGISTER) {
-        return sf ? read_xzr() : read_wzr();
+        return 0;
     }
 
     // otherwise read as a 64-bit X or 32-bit W register
