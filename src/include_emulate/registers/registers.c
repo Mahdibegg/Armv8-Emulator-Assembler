@@ -21,7 +21,11 @@ void init_spec_registers(spec_reg *registers) {
 reg64_t read_x_register(const gen_regs *registers, unsigned index) {
 
     // validate register index and return value
-    if (index < REG_NUM) {
+    if (index == REG_NUM) {
+
+        // zero register is reserved
+        return 0;
+    } else if (index < REG_NUM) {
 
         return registers->r[index];
     } else {
@@ -49,7 +53,11 @@ void write_x_register(gen_regs *registers, unsigned index, dword_t value) {
 reg32_t read_w_register(const gen_regs *registers, unsigned index) {
 
     // validate register index and return value
-    if (index < REG_NUM) {
+    if (index == REG_NUM) {
+
+        // zero register is reserved
+        return 0;
+    } else if (index < REG_NUM) {
 
         // mask off upper 32 bits to extract lower word of 64 bit register
         return (reg32_t) (registers->r[index] & 0xFFFFFFFF);

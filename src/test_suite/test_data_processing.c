@@ -1179,7 +1179,7 @@ int main(void) {
     reg_logic_ands_32_negative_result_test();
     reg_logic_orn_64_test();
 
-    printf("\nREG Multiply --->n\n");
+    printf("\nREG Multiply --->\n");
     reg_multiply_madd_32_test();
     reg_multiply_msub_32_test();
     reg_multiply_madd_zero_ra_32_test();

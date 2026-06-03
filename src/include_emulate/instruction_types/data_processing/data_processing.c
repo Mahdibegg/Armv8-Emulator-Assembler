@@ -132,8 +132,8 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
         fields.type = REG_MULTIPLY;
 
         // multiplication extracts x and ra bits (ignoring the the shift and N fields)
-        fields.x = extract_bits(instr.instr, 16, 16);
-        fields.ra = extract_bits(instr.instr, 10,15);
+        fields.x = extract_bits(instr.instr, 15, 15);
+        fields.ra = extract_bits(instr.instr, 10,14);
     } else {
       
         // handling error case for any M/OPR that the emulator does not support
@@ -149,7 +149,6 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
 
     return fields;
 }
-
 
 /*
 
