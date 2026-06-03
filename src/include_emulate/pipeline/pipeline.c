@@ -11,6 +11,8 @@
 
 // no storing variables, all pointers makes it efficient fetch
 word_t fetch_instr(const machine_state_t *state) {
+
+    // using a memory function to read the current machine state memory with the address inside the PC
     return read_word(&state->memory, read_pc(&state->special_registers));
 }
 
@@ -24,7 +26,7 @@ decoded_instr_t decode_instr_type(word_t instruction) {
         .type = INSTR_UNKNOWN
     };
 
-    // halting instruction
+    // halting instruction case (special case)
     if (instruction == 0x8a000000) {
         decoded_instruction.type = INSTR_HALT;
     }
@@ -38,22 +40,31 @@ decoded_instr_t decode_instr_type(word_t instruction) {
 // pattern matches instruction type and passes down the instruction for exact instruction execution
 exec_result_t execute_instr(machine_state_t *state, const decoded_instr_t decoded_instr_type) {
 
+    // checking each case of instructions available to emulate respectively
     switch (decoded_instr_type.type) {
 
+        // exec_halt returned so that in the actual pipeline loop the state will be updated to halt
         case INSTR_HALT:
             return EXEC_HALT;
 
+        // both data processes will have their respective sub executions case handled in a single execution function
         case INSTR_DP_IMM:
         case INSTR_DP_REG:
+
             return execute_data_processing(state, decoded_instr_type);
-
         case INSTR_LOAD_STORE:
+
             return execute_load_store(state, decoded_instr_type);
-
         case INSTR_BRANCH:
-            return execute_branch(state, decoded_instr_type);
 
+
+            // the state should be updated, more specifically the PC will be updated with new address
+            // the branching will return exec_branch enum which can just be passed over
+            return execute_branch(state, decoded_instr_type);
         default:
+
+            // error handling on an unknown decoded instruction type 
+            // stops the program before wrongly executing this unkown instruction 
             fprintf(stderr, "Unknown instruction: %" PRIu32 "\n", decoded_instr_type.instr);
             exit(EXIT_FAILURE);
     }

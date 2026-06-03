@@ -44,7 +44,8 @@ CLEAN_OBJS = *.o \
 	test_registers \
 	test_memory \
 	test_branch \
-	test_bit_utils
+	test_bit_utils \
+	test_data_processing
 clean:
 	$(RM) $(CLEAN_OBJS)
 
@@ -83,3 +84,12 @@ TEST_IO_OBJS = test_suite/test_io.o \
     include_emulate/registers/registers.o
 test_io: $(TEST_IO_OBJS)
 	$(CC) $(CFLAGS) -o test_io $(TEST_IO_OBJS)
+
+# data_processing unit test make config
+TEST_DATA_PROCESSING_OBJS = test_suite/test_data_processing.o \
+	include_emulate/registers/registers.o \
+	include_emulate/instruction_types/data_processing/data_processing.o \
+	test_suite/test_utils.o \
+	include_emulate/bit_utils/bit.o
+test_data_processing: $(TEST_DATA_PROCESSING_OBJS)
+	$(CC) $(CFLAGS) -o test_data_processing $(TEST_DATA_PROCESSING_OBJS)

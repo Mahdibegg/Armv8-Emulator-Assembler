@@ -4,6 +4,7 @@
 #include "types.h"
 #include <stdbool.h>
 #define REG_NUM 31
+#define ZERO_REGISTER 31
 
 // general purpose registers 0-30
 typedef struct {
@@ -50,6 +51,7 @@ void write_pc(spec_reg *registers, dword_t value);
 reg64_t read_xzr(void);
 reg32_t read_wzr(void); 
 
-// reading/writing PSTATE register discussed later on, according to spec (ignore for now)
+// writing PSTATE register, taking all flags specifically and setting them
+void write_pstate(spec_reg *registers, bit_t n, bit_t z, bit_t c, bit_t v);
 
 #endif
