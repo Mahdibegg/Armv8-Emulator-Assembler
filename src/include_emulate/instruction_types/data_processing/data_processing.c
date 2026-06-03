@@ -328,17 +328,37 @@ uses the desired field to do real operations that would update the state
 
 */
 
-static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
+static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields) {
 
-    // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
-    switch (fields.opc) {
-        case ADD:
-        case ADD_S:
-        case SUB:
-        case SUB_S:
-        default:
+    // sf = 0 -> 32 bit result to 32 bit register
+    // sf = 1 -> 64 bit result to 64 bit register
+    if (fields.sf == 0) {
 
-            unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
+        word_t rn = read_w_register(&state->general_registers, fields.rn);
+
+        // Op2 is imm12, shifted left by 12 if sh is set
+        word_t op2 = fields.sh ? (word_t) fields.imm12 << 12 : (word_t) fields.imm12;
+
+        // execute arithmetic and update pstate if needed
+        word_t result = execute_general_arithmetic_32(state, fields.opc, rn, op2);
+
+        // only write to rd if it isn't the zero register
+        if (fields.rd != ZERO_REGISTER) {
+            write_w_register(&state->general_registers, fields.rd, result);
+        }
+    } else {
+
+        // similar as in the other branch but 64 bit version
+
+        dword_t rn = read_x_register(&state->general_registers, fields.rn);
+
+        dword_t op2 = fields.sh ? (dword_t) fields.imm12 << 12 : (dword_t) fields.imm12;
+
+        dword_t result = execute_general_arithmetic_64(state, fields.opc, rn, op2);
+
+        if (fields.rd != ZERO_REGISTER) {
+            write_x_register(&state->general_registers, fields.rd, result);
+        }
     }
 }
 
@@ -351,6 +371,7 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
     // sf = 1 -> 64 bit result to 64 bit register
     if (fields.sf == 0) {
 
+        // operand has to be shifted by shift variables defined outside branch casted to 32 bit
         word_t op = (word_t) fields.imm16 << shift;
         word_t rd = read_w_register(&state->general_registers, fields.rd);
 
@@ -467,7 +488,7 @@ static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fi
 
     } else {
 
-        // similar case in the previous branch but for 64 bit register
+        // similar as in the other branch but 64 bit version
 
         dword_t rn = read_x_register(&state->general_registers, fields.rn);
         dword_t rm = read_x_register(&state->general_registers, fields.rm);
@@ -568,7 +589,7 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
         }
     } else {
         
-        // similar as above but 64 bit version
+        // similar as in the other branch but 64 bit version
 
         dword_t rn = read_x_register(&state->general_registers, fields.rn);
         dword_t op = read_x_register(&state->general_registers, fields.rm);
@@ -649,8 +670,9 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
         // writing to rd using write_w (32 bit)
         write_w_register(&state->general_registers, (unsigned) fields.rd, result);
     } else {
+
+        // similar as in the other branch but 64 bit version
         
-        // separating register reads for clarity (64 bit)
         dword_t ra = read_x_register(&state->general_registers, (unsigned) fields.ra);
         dword_t rn = read_x_register(&state->general_registers, (unsigned) fields.rn);
         dword_t rm = read_x_register(&state->general_registers, (unsigned) fields.rm);
@@ -670,8 +692,7 @@ static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fiel
             default: 
                 invalid_field_error("x", fields.x, instr);
         }
-
-        // writing to rd using write_x (64 bit)
+        
         write_x_register(&state->general_registers, (unsigned) fields.rd, result);
     }
 }
