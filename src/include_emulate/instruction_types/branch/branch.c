@@ -233,17 +233,17 @@ exec_result_t execute_branch(machine_state_t *state, decoded_instr_t instr) {
         
         // Decode and execute conditional branch instruction (updates pc)
         cond_branch_t branch = decode_cond_branch(instr);
-        execute_conditional_branch(state, branch);
+        return execute_conditional_branch(state, branch);
     } else if (is_unconditional(instr)) {
 
         // Decode and execute unconditional branch instruction (updates pc)
         uncond_branch_t branch = decode_uncond_branch(instr);
-        execute_unconditional_branch(state, branch);
+        return execute_unconditional_branch(state, branch);
     } else if (is_reg_branch(instr)) {
 
         // Decode and execute register branch instruction (updates pc)
         reg_branch_t branch = decode_reg_branch(instr);
-        execute_reg_branch(state, branch);
+        return execute_reg_branch(state, branch);
     } else {
 
         // it is an unknown branch instruction so we return an error 
@@ -252,5 +252,4 @@ exec_result_t execute_branch(machine_state_t *state, decoded_instr_t instr) {
         );
         exit(EXIT_FAILURE);
     }
-    return EXEC_BRANCH;
 }
