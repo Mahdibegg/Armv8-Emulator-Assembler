@@ -126,7 +126,7 @@ unconditional version - always updates PC by offset
 register version - updates PC to the address stored in register Xn
 
 */
-static void execute_unconditional_branch(machine_state_t *state, uncond_branch_t branch) {
+static exec_result_t execute_unconditional_branch(machine_state_t *state, uncond_branch_t branch) {
 
     // get the offset from the decoded branch
     int64_t offset = branch.offset;
@@ -137,9 +137,11 @@ static void execute_unconditional_branch(machine_state_t *state, uncond_branch_t
     // then write new value to the pc (PC += offset)
     dword_t new_pc = (dword_t)((int64_t)current_pc + offset);
     write_pc(&state->special_registers, new_pc);
+
+    return EXEC_BRANCH;
 }
 
-static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
+static exec_result_t execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
 
     // get the register number 
     unsigned xn = branch.xn;
@@ -149,6 +151,8 @@ static void execute_reg_branch(machine_state_t *state, reg_branch_t branch) {
 
     // set pc to the new register that it needs to point to
     write_pc(&state->special_registers, target);
+
+    return EXEC_BRANCH;
 }
 
 static bool condition_holds(unsigned cond,  const spec_reg *spec_regs) {
