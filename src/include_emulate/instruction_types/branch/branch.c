@@ -183,7 +183,7 @@ static bool condition_holds(unsigned cond,  const spec_reg *spec_regs) {
     }
 }
 
-static void execute_conditional_branch(machine_state_t *state, cond_branch_t branch) {
+static exec_result_t execute_conditional_branch(machine_state_t *state, cond_branch_t branch) {
 
     // get the offset from the decoded branch 
     int64_t offset = branch.offset;
@@ -198,6 +198,10 @@ static void execute_conditional_branch(machine_state_t *state, cond_branch_t bra
 
         dword_t new_pc = (dword_t)((int64_t)current_pc + offset);
         write_pc(&state->special_registers, new_pc);
+        return EXEC_BRANCH;
+    } else {
+        // if the condition does not hold the PC should increment normally
+        return EXEC_NEXT;
     }
 }
 
