@@ -1,0 +1,16 @@
+# Fdb version 4
+["pdflatex"] 1780618473.07249 "Report.tex" "out/Report.pdf" "Report" 1780618473.13555 2
+  "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmr10.tfm" 1136768653 1296 45809c5a464d5f32c8f98ba97c1bb47f ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/article.cls" 1775001600 20144 d5ecf0a5140c8d8d8b72cbe86e320eff ""
+  "/usr/share/texlive/texmf-dist/tex/latex/base/size11.clo" 1775001600 8464 63bf71cc1214ffdd38288da73a7ca182 ""
+  "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1775001600 40900 887e0dc8cac988a9e9c574af364cf837 ""
+  "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1780618411 6444215 631b52215bc525e482ab59ef6c949e6c ""
+  "Report.tex" 1779626792.84636 611 a2f54b51c911da1ca7930978212cce75 ""
+  "fullpage.sty" 0 -1 0 ""
+  "out/Report.aux" 1780618465.07136 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
+  "out/fullpage.sty" 0 -1 0 ""
+  (generated)
+  "out/Report.aux"
+  "out/Report.log"
+  "out/Report.pdf"
+  (rewritten before read)
