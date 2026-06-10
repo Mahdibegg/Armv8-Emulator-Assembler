@@ -151,3 +151,7 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
     }
 }
 
+void symbol_table_print(symbol_table_t st) {
+    // Need to change the corresponding function in header file
+}
+
