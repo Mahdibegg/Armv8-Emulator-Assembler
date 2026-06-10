@@ -147,7 +147,7 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
 
     // iterate through symbol table, find the pair and return the address
     for (int i = 0; i < st->size; i++) {
-        if (st->data[i].label == label) {
+        if (strcmp(st->data[i].label, label) == 0) {
             return st->data[i].address;
         }
     }
