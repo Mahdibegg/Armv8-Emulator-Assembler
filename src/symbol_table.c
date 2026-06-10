@@ -124,3 +124,16 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
     }
 }
 
+bool symbol_table_contains(symbol_table_t st, const char *label) {
+    // We have to iterate through the list until we find it our until we reach the end which is up the size-1 index
+    for (int i = 0; i < st->size; i++) {
+        if (st->data[i].label == label) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+
