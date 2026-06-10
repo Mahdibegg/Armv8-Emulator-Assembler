@@ -66,6 +66,38 @@ symbol_table_t symbol_table_create(void) {
     return st;
 }
 
+/*
+ * Helper Functions for symbol_table_add():
+ * resize_needed() : Returns True or False based on wether a resize is needed.
+ * symbol_table_grow() : Grows Symbol Table if Resize was required.
+ */
+
+static bool resize_needed(symbol_table_t st) {
+    return (st->size + 1 >= st->capacity);
+}
+
+static void symbol_table_grow(symbol_table_t st) {
+
+    // First Get the new capacity
+    int new_capacity = st->capacity * 2;
+
+    Pair *temp_data = realloc(st->data, sizeof(Pair) * new_capacity);
+
+    // Check if reallocation was successful
+    if (temp_data == NULL) {
+        // we free the original symbol Table
+        fprintf(stderr, "ERROR: Reallocation of data was unsuccessful");
+        free(st);
+        abort();
+    }
+    // Defensive programming assertion check
+    assert(temp_data != NULL);
+
+    // now it is safe to reassign data
+    st->data = temp_data;
+    st->capacity = new_capacity;
+}
+
 bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
     // we can call the function to see if the label is already in the symbol table if so we will not add this pair
     if (symbol_table_contains(st, label)) {
@@ -74,7 +106,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
     // we want to check for a resize at the start and then we want to add if safe 
     if (resize_needed(st)) {
         // call grow function and then add 
-        // CALL GROW
+        symbol_table_grow(st);
         // Add pair  
         // we want to add on to the end of the array so what we do is add at index size onto the array
         st->data[st->size].label = label;
