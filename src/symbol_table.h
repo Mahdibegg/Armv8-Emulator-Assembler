@@ -39,7 +39,7 @@ addr_t symbol_table_get(symbol_table_t st, const char *label);
 /*
  * Print The symbol_table used for debugging.
  */ 
-void symbol_table_print(symbol_table_t st);
+void symbol_table_print(symbol_table_t st, FILE *out);
 
 /*
  * Frees all memory used by Symbol Table.
