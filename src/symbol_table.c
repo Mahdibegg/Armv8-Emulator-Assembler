@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "symbol_table.h"
 #include "types.h"
