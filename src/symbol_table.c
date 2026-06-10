@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #include "symbol_table.h"
 #include "types.h"
@@ -151,7 +152,19 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
     }
 }
 
-void symbol_table_print(symbol_table_t st) {
-    // Need to change the corresponding function in header file
+void symbol_table_print(symbol_table_t st, FILE *out) {
+    // first check if the out file is valid
+    if (out == NULL){
+        fprintf(stderr, "ERROR: Provided file is invalid");
+        abort();
+    } 
+    // Defensive programming assertion check
+    assert(out != NULL);
+
+    // Iterate through symbol table and print each Pair to the output file
+    for (int i = 0; i < st->size; i++) {
+        fprintf(out, "(%s, 0x%" PRIx32")\n",
+             st->data[i].label, st->data[i].address);
+    }
 }
 
