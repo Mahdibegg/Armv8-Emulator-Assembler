@@ -135,5 +135,19 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
     return false;
 }
 
+addr_t symbol_table_get(symbol_table_t st, const char *label) {
+    // return error if the label is not in the symbol table
+    if (!symbol_table_contains(st, label)) {
+        fprintf(stderr, "ERROR: Symbol Table does not contain Label: %s",
+            label);
+        abort();
+    }
 
+    // iterate through symbol table, find the pair and return the address
+    for (int i = 0; i < st->size; i++) {
+        if (st->data[i].label == label) {
+            return st->data[i].address;
+        }
+    }
+}
 
