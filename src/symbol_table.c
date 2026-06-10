@@ -75,7 +75,7 @@ symbol_table_t symbol_table_create(void) {
  */
 
 static bool resize_needed(symbol_table_t st) {
-    return (st->size + 1 >= st->capacity);
+    return (st->size  >= st->capacity);
 }
 
 static void symbol_table_grow(symbol_table_t st) {
