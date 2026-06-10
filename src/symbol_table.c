@@ -107,23 +107,17 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
     }
     // we want to check for a resize at the start and then we want to add if safe 
     if (resize_needed(st)) {
-        // call grow function and then add 
+        // call grow function
         symbol_table_grow(st);
-        // Add pair  
-        // we want to add on to the end of the array so what we do is add at index size onto the array
-        st->data[st->size].label = label;
-        st->data[st->size].address = address;
-        // update size
-        st->size++;
-        return true;
-    } else {
-        // we can simply add the pair
-        st->data[st->size].label = label;
-        st->data[st->size].address = address;
-        // update size
-        st->size++;
-        return true;
-    }
+    } 
+
+    // we can simply add the pair
+    st->data[st->size].label = label;
+    st->data[st->size].address = address;
+    // update size
+    st->size++;
+    
+    return true;
 }
 
 bool symbol_table_contains(symbol_table_t st, const char *label) {
