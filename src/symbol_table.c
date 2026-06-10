@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "symbol_table.h"
 #include "types.h"
@@ -63,5 +64,31 @@ symbol_table_t symbol_table_create(void) {
     st->capacity = INITIAL_CAPACITY;
 
     return st;
+}
+
+bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
+    // we can call the function to see if the label is already in the symbol table if so we will not add this pair
+    if (symbol_table_contains(st, label)) {
+        return false;
+    }
+    // we want to check for a resize at the start and then we want to add if safe 
+    if (resize_needed(st)) {
+        // call grow function and then add 
+        // CALL GROW
+        // Add pair  
+        // we want to add on to the end of the array so what we do is add at index size onto the array
+        st->data[st->size].label = label;
+        st->data[st->size].address = address;
+        // update size
+        st->size++;
+        return true;
+    } else {
+        // we can simply add the pair
+        st->data[st->size].label = label;
+        st->data[st->size].address = address;
+        // update size
+        st->size++;
+        return true;
+    }
 }
 
