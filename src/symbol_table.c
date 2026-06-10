@@ -128,7 +128,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
 bool symbol_table_contains(symbol_table_t st, const char *label) {
     // We have to iterate through the list until we find it our until we reach the end which is up the size-1 index
     for (int i = 0; i < st->size; i++) {
-        if (st->data[i].label == label) {
+        if (strcmp(st->data[i].label,label) == 0) {
             return true;
         }
     }
@@ -166,5 +166,11 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
         fprintf(out, "(%s, 0x%" PRIx32")\n",
              st->data[i].label, st->data[i].address);
     }
+}
+
+void symbol_table_free(symbol_table_t st) {
+    // to free the symbol table you first need to free data and then free the entire struct 
+    free(st->data);
+    free(st);
 }
 
