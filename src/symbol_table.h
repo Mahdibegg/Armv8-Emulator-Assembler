@@ -13,7 +13,7 @@
  * Internal implementation: Dynamic array of pairs 
  */
 
-typedef symbol_table *symbol_table_t;
+typedef struct symbol_table *symbol_table_t;
 
 /*
  * Create Empty symbol table.
