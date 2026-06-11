@@ -146,7 +146,7 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
         }
     }
     // otherwise throw error
-    fprintf(stderr, "ERROR: Label %s is not in the symbol table", label);
+    fprintf(stderr, "ERROR: Label %s is not in the symbol table\n", label);
     abort();
 }
 
