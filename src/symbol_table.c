@@ -171,7 +171,15 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
 }
 
 void symbol_table_free(symbol_table_t st) {
-    // to free the symbol table you first need to free data and then free the entire struct 
+    // Defensive programming check (Making sure that st exists)
+    assert(st != NULL);
+
+    // to free the symbol table you first need to free each label
+    for (int i=0; i < st->size; i++) {
+        free(st->data[i].label);
+    }
+
+    // Now we can free the data and then the symbol table
     free(st->data);
     free(st);
 }
