@@ -153,7 +153,7 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
 void symbol_table_print(symbol_table_t st, FILE *out) {
     // first check if the out file is valid
     if (out == NULL){
-        fprintf(stderr, "ERROR: Provided file is invalid");
+        fprintf(stderr, "ERROR: Provided file is invalid\n");
         abort();
     } 
     // Defensive programming assertion check
