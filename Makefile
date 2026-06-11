@@ -10,7 +10,6 @@ CFLAGS  ?= -std=c17 -g \
 
 all: assemble emulate
 
-
 ASSEMBLE_OBJS = \
 	src/assemble/assemble.o \
 	src/assemble/symbol_table.o \
@@ -35,12 +34,6 @@ emulate: $(EMULATE_OBJS)
 
 # CLEAN MAKE CONFIG
 
-CLEAN_OBJS = \
-	*.o \
-	assemble \
-	emulate \
-	src/assemble/*.o \
-	src/emulate/*.o \
-	src/shared/*.o
 clean:
-	$(RM) $(CLEAN_OBJS)
+	find src -name '*.o' -delete
+	$(RM) assemble emulate

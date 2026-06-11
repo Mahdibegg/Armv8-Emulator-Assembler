@@ -15,8 +15,8 @@
 
 #ignore junk files from compiling C code
 *.o
-src/emulate/emulate
-src/assemble/assemble
+emulate
+assemble
 
 #ignore junk files from compiling Haskell code
 *.hi
