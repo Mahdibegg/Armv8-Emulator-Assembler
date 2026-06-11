@@ -25,9 +25,9 @@
  * Pair is its own struct 
  */
 struct symbol_table {
-    Pair *data;   // This is a pointer the array of pairs
-    int size;     // Number of pairs in array
-    int capacity; // Maximum number of pairs in array
+    Pair *data;   /* This is a pointer the array of pairs */ 
+    int size;     /* Number of pairs in array */
+    int capacity; /* Maximum number of pairs in array */
 };
 
 /*
@@ -35,33 +35,33 @@ struct symbol_table {
  */
 
 symbol_table_t symbol_table_create(void) {
-    // Allocate memory for the symbol table 
+    /* Allocate memory for the symbol table  */
     symbol_table_t st = malloc(sizeof(struct symbol_table));
 
-    //Check if the allocation was successfull
+    /* Check if the allocation was successfull */
     if (st == NULL) {
-        // Exit program
+        /* Exit program */
         fprintf(stderr, "ERROR: Allocation of memory to symbol table was unsuccessful\n");
         abort();
     }
-    // Defensive programming assertion check
+    /* Defensive programming assertion check */
     assert(st != NULL);
 
-    // now allocate memory for the data
+    /* now allocate memory for the data */
     st->data = malloc(sizeof(Pair) * INITIAL_CAPACITY);
 
-    // check if allocation was successfull
+    /* check if allocation was successfull */
     if (st->data == NULL) {
         fprintf(stderr, "ERROR: Allocation of memory to symbol table data was unsuccessful\n");
-        // Free the memory allocated to Symbol Table then abort
+        /* Free the memory allocated to Symbol Table then abort */
         free(st);
         abort();
     }
 
-    // Defensive programming assertion check
+    /* Defensive programming assertion check */
     assert(st->data != NULL);
 
-    // Initialise the other fields
+    /* Initialise the other fields */
     st->size = 0; 
     st->capacity = INITIAL_CAPACITY;
 
@@ -80,54 +80,56 @@ static bool resize_needed(symbol_table_t st) {
 
 static void symbol_table_grow(symbol_table_t st) {
 
-    // First Get the new capacity
+    /* First Get the new capacity */
     int new_capacity = st->capacity * 2;
 
     Pair *temp_data = realloc(st->data, sizeof(Pair) * new_capacity);
 
-    // Check if reallocation was successful
+    /* Check if reallocation was successful */
     if (temp_data == NULL) {
-        // abort
+        /* abort */ 
         fprintf(stderr, "ERROR: Reallocation of data was unsuccessful\n");
         abort();
     }
-    // Defensive programming assertion check
+    /* Defensive programming assertion check */
     assert(temp_data != NULL);
 
-    // now it is safe to reassign data
+    /* now it is safe to reassign data */
     st->data = temp_data;
     st->capacity = new_capacity;
 }
 
 bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
-    // we can call the function to see if the label is already in the symbol table if so we will not add this pair
+    /* we can call the function to see if the label is already in the symbol table if so we will not add this pair */
     if (symbol_table_contains(st, label)) {
         return false;
     }
-    // we want to check for a resize at the start and then we want to add if safe 
+    /*  we want to check for a resize at the start and then we want to add if safe */ 
     if (resize_needed(st)) {
-        // call grow function
+        /* call grow function */
         symbol_table_grow(st);
     } 
 
-    // we can simply add the pair
-    // we need to copy the string into label instead of assigning it the pointer value 
+    /* 
+     * we can simply add the pair 
+     * we need to copy the string into label instead of assigning it the pointer value 
+     */ 
     st->data[st->size].label = malloc(strlen(label) +1);
     if (st->data[st->size].label == NULL) {
         fprintf(stderr, "ERROR: Allocation of memory for label was unsuccessful\n");
         abort();
     }
-    // if it was successful we can copy the label string into the initialised label pointer now
+    /* if it was successful we can copy the label string into the initialised label pointer now */
     strcpy(st->data[st->size].label, label);
     st->data[st->size].address = address;
-    // update size
+    /* update size */
     st->size++;
     
     return true;
 }
 
 bool symbol_table_contains(symbol_table_t st, const char *label) {
-    // We have to iterate through the list until we find it our until we reach the end which is up the size-1 index
+    /*  We have to iterate through the list until we find the label, or until we reach the end which is up to size-1 index */
     for (int i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label,label) == 0) {
             return true;
@@ -139,27 +141,27 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
 
 addr_t symbol_table_get(symbol_table_t st, const char *label) {
 
-    // iterate through symbol table, find the pair and return the address
+    /* iterate through symbol table, find the pair and return the address */
     for (int i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {
             return st->data[i].address;
         }
     }
-    // otherwise throw error
+    /* otherwise throw error */ 
     fprintf(stderr, "ERROR: Label %s is not in the symbol table\n", label);
     abort();
 }
 
 void symbol_table_print(symbol_table_t st, FILE *out) {
-    // first check if the out file is valid
+    /* first check if the out file is valid */ 
     if (out == NULL){
         fprintf(stderr, "ERROR: Provided file is invalid\n");
         abort();
     } 
-    // Defensive programming assertion check
+    /*  Defensive programming check */
     assert(out != NULL);
 
-    // Iterate through symbol table and print each Pair to the output file
+    /* Iterate through symbol table and print each Pair to the output file */ 
     for (int i = 0; i < st->size; i++) {
         fprintf(out, "(%s, 0x%" PRIx32")\n",
              st->data[i].label, st->data[i].address);
@@ -167,15 +169,15 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
 }
 
 void symbol_table_free(symbol_table_t st) {
-    // Defensive programming check (Making sure that st exists)
+    /*  Defensive programming check (Making sure that st exists) */
     assert(st != NULL);
 
-    // to free the symbol table you first need to free each label
+    /* to free the symbol table you first need to free meory allocated to each label */ 
     for (int i=0; i < st->size; i++) {
         free(st->data[i].label);
     }
 
-    // Now we can free the data and then the symbol table
+    /* Now we can free the memory allocatead to data and then the memory allocated to symbol table */ 
     free(st->data);
     free(st);
 }
