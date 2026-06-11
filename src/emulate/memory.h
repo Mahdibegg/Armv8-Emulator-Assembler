@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "types.h"
+#include "shared/types.h"
 #define MEMORY_SIZE (2 * 1024 * 1024)
 
 // memory package

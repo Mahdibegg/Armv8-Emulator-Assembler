@@ -1,7 +1,7 @@
 #ifndef DECODE_STRUCT_H
 #define DECODE_STRUCT_H
 
-#include "types.h"
+#include "shared/types.h"
 
 // instruction set modelled as enums
 typedef enum {

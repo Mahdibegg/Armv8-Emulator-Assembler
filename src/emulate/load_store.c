@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "load_store.h"
-#include "bit_utils/bit.h"
-#include "registers/registers.h"
-#include "memory/memory.h"
+#include "emulate/load_store.h"
+#include "shared/bit.h"
+#include "emulate/registers.h"
+#include "emulate/memory.h"
 
 /*
  

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "registers.h"
+#include "emulate/registers.h"
 
 void init_gen_registers(gen_regs *registers) {
 

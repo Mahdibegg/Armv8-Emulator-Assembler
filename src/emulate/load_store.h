@@ -1,9 +1,9 @@
 #ifndef LOAD_STORE_H
 #define LOAD_STORE_H
 
-#include "state.h"
-#include "pipeline/decode_struct.h"
-#include "types.h"
+#include "emulate/state.h"
+#include "emulate/decode_struct.h"
+#include "shared/types.h"
 
 // Single data transfer addressing modes and the load literal form
 // single data transfer (bit 31 == 1) resolves to one of the first four,

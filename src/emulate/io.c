@@ -1,6 +1,6 @@
-#include "io.h"
-#include "../types.h"
-#include "../memory/memory.h"
+#include "emulate/io.h"
+#include "shared/types.h"
+#include "emulate/memory.h"
 
 // Helper function for checking file format
 // Used to output error if suffix is not correct

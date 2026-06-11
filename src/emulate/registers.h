@@ -1,7 +1,7 @@
 #ifndef REGISTERS_H
 #define REGISTERS_H
 
-#include "types.h"
+#include "shared/types.h"
 #include <stdbool.h>
 #define REG_NUM 31
 #define ZERO_REGISTER 31

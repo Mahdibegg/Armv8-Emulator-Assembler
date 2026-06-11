@@ -2,13 +2,13 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-#include "pipeline.h"
-#include "memory/memory.h"
-#include "registers/registers.h"
-#include "instruction_types/branch/branch.h"
-#include "instruction_types/data_processing/data_processing.h"
-#include "instruction_types/load_store/load_store.h"
-#include "bit_utils/bit.h"
+#include "emulate/pipeline.h"
+#include "emulate/memory.h"
+#include "emulate/registers.h"
+#include "emulate/branch.h"
+#include "emulate/data_processing.h"
+#include "emulate/load_store.h"
+#include "shared/bit.h"
 
 #define HALT_INSTR 0x8a000000
 

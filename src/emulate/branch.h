@@ -1,9 +1,9 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
-#include "state.h"
-#include "pipeline/decode_struct.h"
-#include "types.h"
+#include "emulate/state.h"
+#include "emulate/decode_struct.h"
+#include "shared/types.h"
 #include <stdint.h>
 
 // Unconditional Branch: b

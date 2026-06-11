@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "data_processing.h"
-#include "bit_utils/bit.h"
-#include "../../registers/registers.h"
+#include "emulate/data_processing.h"
+#include "shared/bit.h"
+#include "emulate/registers.h"
 
 // immediate instruction field cases (OPI)
 #define ARITHMETIC_OPI 0x2

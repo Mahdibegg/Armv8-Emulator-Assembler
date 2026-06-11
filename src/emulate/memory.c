@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-#include "memory.h"
+#include "emulate/memory.h"
 
 // type for separating bytes of a word
 typedef struct {

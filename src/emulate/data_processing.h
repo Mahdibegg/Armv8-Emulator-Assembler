@@ -1,9 +1,9 @@
 #ifndef DATA_PROCESSING_H
 #define DATA_PROCESSING_H
 
-#include "state.h"
-#include "pipeline/decode_struct.h"
-#include "types.h"
+#include "emulate/state.h"
+#include "emulate/decode_struct.h"
+#include "shared/types.h"
 
 // Immediate instruction sub types (arithmetic/wide move)
 typedef enum {

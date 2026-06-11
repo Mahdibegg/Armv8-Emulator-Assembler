@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../state.h"
+#include "emulate/state.h"
 
 // Argument checking + validating correct file extensions
 void validate_args(int argc, char **argv, char **input, char **output);

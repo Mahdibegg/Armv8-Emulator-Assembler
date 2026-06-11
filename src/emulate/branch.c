@@ -1,6 +1,6 @@
-#include "branch.h"
-#include "bit_utils/bit.h"
-#include "registers/registers.h"
+#include "emulate/branch.h"
+#include "shared/bit.h"
+#include "emulate/registers.h"
 
 #include <stdbool.h>
 #include <stdio.h>
