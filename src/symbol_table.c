@@ -87,9 +87,8 @@ static void symbol_table_grow(symbol_table_t st) {
 
     // Check if reallocation was successful
     if (temp_data == NULL) {
-        // we free the original symbol Table
+        // abort
         fprintf(stderr, "ERROR: Reallocation of data was unsuccessful");
-        free(st);
         abort();
     }
     // Defensive programming assertion check
@@ -139,12 +138,6 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
 }
 
 addr_t symbol_table_get(symbol_table_t st, const char *label) {
-    // return error if the label is not in the symbol table
-    if (!symbol_table_contains(st, label)) {
-        fprintf(stderr, "ERROR: Symbol Table does not contain Label: %s",
-            label);
-        abort();
-    }
 
     // iterate through symbol table, find the pair and return the address
     for (int i = 0; i < st->size; i++) {
@@ -152,6 +145,9 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
             return st->data[i].address;
         }
     }
+    // otherwise throw error
+    fprintf(stderr, "ERROR: Label %s is not in the symbol table", label);
+    abort();
 }
 
 void symbol_table_print(symbol_table_t st, FILE *out) {
