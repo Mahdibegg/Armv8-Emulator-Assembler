@@ -88,7 +88,7 @@ static void symbol_table_grow(symbol_table_t st) {
     // Check if reallocation was successful
     if (temp_data == NULL) {
         // abort
-        fprintf(stderr, "ERROR: Reallocation of data was unsuccessful");
+        fprintf(stderr, "ERROR: Reallocation of data was unsuccessful\n");
         abort();
     }
     // Defensive programming assertion check
