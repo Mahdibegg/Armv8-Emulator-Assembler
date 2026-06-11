@@ -41,7 +41,7 @@ symbol_table_t symbol_table_create(void) {
     //Check if the allocation was successfull
     if (st == NULL) {
         // Exit program
-        fprintf(stderr, "ERROR: Allocation of memory to symbol table was unsuccessful");
+        fprintf(stderr, "ERROR: Allocation of memory to symbol table was unsuccessful\n");
         abort();
     }
     // Defensive programming assertion check
@@ -52,7 +52,7 @@ symbol_table_t symbol_table_create(void) {
 
     // check if allocation was successfull
     if (st->data == NULL) {
-        fprintf(stderr, "ERROR: Allocation of memory to symbol table data was unsuccessful");
+        fprintf(stderr, "ERROR: Allocation of memory to symbol table data was unsuccessful\n");
         // Free the memory allocated to Symbol Table then abort
         free(st);
         abort();
