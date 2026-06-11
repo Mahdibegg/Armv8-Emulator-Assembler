@@ -114,7 +114,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
      * we can simply add the pair 
      * we need to copy the string into label instead of assigning it the pointer value 
      */ 
-    st->data[st->size].label = malloc(strlen(label) +1);
+    st->data[st->size].label = malloc(strlen(label) + 1);
     if (st->data[st->size].label == NULL) {
         fprintf(stderr, "ERROR: Allocation of memory for label was unsuccessful\n");
         abort();
@@ -131,7 +131,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
 bool symbol_table_contains(symbol_table_t st, const char *label) {
     /*  We have to iterate through the list until we find the label, or until we reach the end which is up to size-1 index */
     for (int i = 0; i < st->size; i++) {
-        if (strcmp(st->data[i].label,label) == 0) {
+        if (strcmp(st->data[i].label, label) == 0) {
             return true;
         }
     }
@@ -154,7 +154,7 @@ addr_t symbol_table_get(symbol_table_t st, const char *label) {
 
 void symbol_table_print(symbol_table_t st, FILE *out) {
     /* first check if the out file is valid */ 
-    if (out == NULL){
+    if (out == NULL) {
         fprintf(stderr, "ERROR: Provided file is invalid\n");
         abort();
     } 
