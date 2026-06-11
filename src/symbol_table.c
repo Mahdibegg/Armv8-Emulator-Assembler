@@ -114,7 +114,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
     // we need to copy the string into label instead of assigning it the pointer value 
     st->data[st->size].label = malloc(strlen(label) +1);
     if (st->data[st->size].label == NULL) {
-        fprintf(stderr, "ERROR: Allocation of memory for label was unsuccessful");
+        fprintf(stderr, "ERROR: Allocation of memory for label was unsuccessful\n");
         abort();
     }
     // if it was successful we can copy the label string into the initialised label pointer now
