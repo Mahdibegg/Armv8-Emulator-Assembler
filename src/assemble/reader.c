@@ -5,20 +5,29 @@
 
 #include "reader.h"
 
-void read_line(FILE *f, char *buffer, size_t size) {
+/*
+ * Trims leading and trailing whitespace from a line.
+ *
+ * str: string to be modified in place
+ */
+static void trim_whitespace(char *str) {
 
-    assert(f != NULL);
-    assert(buffer != NULL);
+    char *start = str;
 
-    if (fgets(buffer, size, f) == NULL) {
-        abort();
+    while (*start == ' ' || *start == '\t') {
+        start++;
     }
 
-    /*
-     * Remove newline character if present.
-     */
-    buffer[strcspn(buffer, "\n")] = '\0';
+    memmove(str, start, strlen(start) + 1);
+
+    int len = strlen(str);
+
+    while (len > 0 && (str[len - 1] == ' ' || str[len - 1] == '\t')) {
+        str[len - 1] = '\0';
+        len--;
+    }
 }
+
 
 /*
  * Checks if a line contains only whitespace.
@@ -36,4 +45,19 @@ static bool is_empty_line(const char *line) {
     }
 
     return true;
+}
+
+void read_line(FILE *f, char *buffer, size_t size) {
+
+    assert(f != NULL);
+    assert(buffer != NULL);
+
+    if (fgets(buffer, size, f) == NULL) {
+        abort();
+    }
+
+    /*
+     * Remove newline character if present.
+     */
+    buffer[strcspn(buffer, "\n")] = '\0';
 }
