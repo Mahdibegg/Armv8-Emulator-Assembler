@@ -8,11 +8,10 @@
 
 /*
  * Symbol Table ADT.
-
+ *
  * Stores label address pairs generated from the first pass of he assembler 
  * Internal implementation: Dynamic array of pairs 
  */
-
 typedef struct symbol_table *symbol_table_t;
 
 /*
