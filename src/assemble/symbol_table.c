@@ -14,10 +14,10 @@
  * Pair consists of label and address
  * label is string and address is addr_t
  */
- typedef struct {
+typedef struct {
     char *label;
     addr_t address;
- } Pair;
+} Pair;
 
 /*
  * ADT: Symbol Table (Implemented as Dynamic array of pairs)
