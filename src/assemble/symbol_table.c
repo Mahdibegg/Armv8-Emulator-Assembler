@@ -8,7 +8,7 @@
 #include "assemble/symbol_table.h"
 #include "shared/types.h"
 
-#define INITIAL_CAPACITY 2
+#define INITIAL_CAPACITY 16U
 
 /*
  * Pair consists of label and address
@@ -26,8 +26,8 @@
  */
 struct symbol_table {
     Pair *data;   /* This is a pointer the array of pairs */ 
-    int size;     /* Number of pairs in array */
-    int capacity; /* Maximum number of pairs in array */
+    size_t size;     /* Number of pairs in array */
+    size_t capacity; /* Maximum number of pairs in array */
 };
 
 /*
@@ -82,7 +82,7 @@ static bool resize_needed(symbol_table_t st) {
  */
 static void symbol_table_grow(symbol_table_t st) {
     /* First Get the new capacity */
-    int new_capacity = st->capacity * 2;
+    size_t new_capacity = st->capacity * 2;
 
     Pair *temp_data = realloc(st->data, sizeof(Pair) * new_capacity);
 
@@ -129,7 +129,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
 
 bool symbol_table_contains(symbol_table_t st, const char *label) {
     /*  We have to iterate through the list until we find the label, or until we reach the end which is up to size-1 index */
-    for (int i = 0; i < st->size; i++) {
+    for (size_t i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {
             return true;
         }
@@ -140,7 +140,7 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
 
 addr_t symbol_table_get(symbol_table_t st, const char *label) {
     /* iterate through symbol table, find the pair and return the address */
-    for (int i = 0; i < st->size; i++) {
+    for (size_t i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {
             return st->data[i].address;
         }
@@ -158,7 +158,7 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
     }
 
     /* Iterate through symbol table and print each Pair to the output file */ 
-    for (int i = 0; i < st->size; i++) {
+    for (size_t i = 0; i < st->size; i++) {
         fprintf(out, "(%s, 0x%" PRIx32 ")\n",
              st->data[i].label, st->data[i].address);
     }
@@ -172,7 +172,7 @@ void symbol_table_free(symbol_table_t st) {
     }
 
     /* to free the symbol table you first need to free meory allocated to each label */ 
-    for (int i=0; i < st->size; i++) {
+    for (size_t i=0; i < st->size; i++) {
         free(st->data[i].label);
     }
 
