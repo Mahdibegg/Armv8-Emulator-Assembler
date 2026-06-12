@@ -13,6 +13,7 @@ all: assemble emulate
 ASSEMBLE_OBJS = \
 	src/assemble/assemble.o \
 	src/assemble/symbol_table.o \
+	src/assemble/reader.o \
 	src/shared/bit.o
 
 assemble: $(ASSEMBLE_OBJS)
