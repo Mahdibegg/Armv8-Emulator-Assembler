@@ -1,36 +1,5 @@
-Creating your own unit testing
+ARMV8 C PROJECT 
+   ~ By group 6
 
-UNIT TESTS SHOULD NOT BE PRESENT IN THE MAIN BRANCH, in your own branch they can stay (for progress)
-Make your own directory for unit testing, the best place is probably within include_emulate/ (as in dont go too far down from here)
-Then just follow the similar format in Makefile as the example test for test_register GUIDE BELOW
-Example (if you read the Makefile you will see this)
-
-TEST_REGISTER_OBJS = include_emulate/memory_registers_tests/test_registers.o \
-        include_emulate/registers/registers.o
-
-test_registers: $(TEST_REGISTER_OBJS)
-        $(CC) $(CFLAGS) -o test_registers $(TEST_REGISTER_OBJS)
-
-
-So when you run this on command line you run
-make test_registers
-./test_registers
-(OUTPUT WILL SHOW)
-
-
-GUIDE
--------------------------------
-So basically in the example above the OBJS will involve the object files of the paths of 1. the test file and 2.the files that you #include in your testing file (thats wordy but should make sense)
-MAKE SURE to separate with a backslash before adding more then write the rest of your #include paths (so each path is separated with \)
-Then replace anywhere with test_registers which your test file name (the .c file) and just copy everything else like this
-
-X_OBJS = test_path.o \
-	include1.o \
-	include2.o ...
-
-x: $(X_OBJS)
-	$(CC) $(CFLAGS) -o x $(X_OBJS)
-
-
-IF YOU NEED HELP LET ME KNOW YOU'LL GET THE HANG OF IT DONT WORRY (MAHDI)
-and one more thing, if this is confusing you please dont do something random to the Makefile just let me know :)
+Part 1 - Emulator for AArch64 instructions
+Part 2 - Assembler for AArch64 assembly
