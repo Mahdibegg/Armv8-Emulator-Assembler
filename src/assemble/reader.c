@@ -60,4 +60,16 @@ void read_line(FILE *f, char *buffer, size_t size) {
      * Remove newline character if present.
      */
     buffer[strcspn(buffer, "\n")] = '\0';
+
+    /*
+     * Normalise whitespace.
+     */
+    trim_whitespace(buffer);
+
+    /*
+     * Skip empty lines by forcing empty string.
+     */
+    if (is_empty_line(buffer)) {
+        buffer[0] = '\0';
+    }
 }
