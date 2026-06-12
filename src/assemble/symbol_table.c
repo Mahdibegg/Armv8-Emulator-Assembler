@@ -44,8 +44,6 @@ symbol_table_t symbol_table_create(void) {
         fprintf(stderr, "ERROR: Allocation of memory to symbol table was unsuccessful\n");
         abort();
     }
-    /* Defensive programming assertion check */
-    assert(st != NULL);
 
     /* Now allocate memory for the data */
     st->data = malloc(sizeof(Pair) * INITIAL_CAPACITY);
@@ -94,8 +92,6 @@ static void symbol_table_grow(symbol_table_t st) {
         fprintf(stderr, "ERROR: Reallocation of data was unsuccessful\n");
         abort();
     }
-    /* Defensive programming assertion check */
-    assert(temp_data != NULL);
 
     /* now it is safe to reassign data */
     st->data = temp_data;
@@ -159,9 +155,7 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
     if (out == NULL) {
         fprintf(stderr, "ERROR: Provided file is invalid\n");
         abort();
-    } 
-    /*  Defensive programming check */
-    assert(out != NULL);
+    }
 
     /* Iterate through symbol table and print each Pair to the output file */ 
     for (int i = 0; i < st->size; i++) {
@@ -172,7 +166,10 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
 
 void symbol_table_free(symbol_table_t st) {
     /*  Defensive programming check (Making sure that st exists) */
-    assert(st != NULL);
+    if (st == NULL) {
+        fprintf(stderr, "ERROR: symbol table does not exist (in an attempt to free symbol table)\n");
+        abort();
+    }
 
     /* to free the symbol table you first need to free meory allocated to each label */ 
     for (int i=0; i < st->size; i++) {
