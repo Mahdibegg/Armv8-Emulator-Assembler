@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#include "reader.h"
+#include "assemble/reader.h"
 
 /*
  * Trims leading and trailing whitespace from a line.
