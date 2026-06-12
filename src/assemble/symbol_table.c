@@ -15,7 +15,7 @@
  * label is string and address is addr_t
  */
 typedef struct {
-    char *label;
+    label_t label;
     addr_t address;
 } Pair;
 
