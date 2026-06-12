@@ -39,8 +39,9 @@ typedef int32_t sword_t;
 typedef int64_t sdword_t;
 
 /*
- * Types shared for label
+ * Types shared for tokens
  */
-typedef char *label_t;
+typedef char *token_t;
+typedef char **tokens_t;
 
 #endif
