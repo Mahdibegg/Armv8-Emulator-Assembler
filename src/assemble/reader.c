@@ -45,8 +45,15 @@ static bool is_empty_line(const char *line) {
 }
 
 void read_line(FILE *f, char *buffer, size_t size) {
-    assert(f != NULL);
-    assert(buffer != NULL);
+    if (f == NULL) {
+        fprintf(stderr, "ERROR: File pointer is NULL");
+        abort();
+    }
+
+    if (buffer == NULL) {
+        fprintf(stderr, "ERROR: Buffer pointer is NULL");
+        abort();
+    }
 
     if (fgets(buffer, size, f) == NULL) {
         abort();
