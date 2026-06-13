@@ -1,6 +1,8 @@
 #ifndef INSTRUCTION_FIELDS_H
 #define INSTRUCTION_FIELDS_H
 
+#include "types.h"
+
 // Single data transfer addressing modes and the load literal form
 // single data transfer (bit 31 == 1) resolves to one of the first four,
 // load literal (bit 31 == 0) is its own mode and is always a load
