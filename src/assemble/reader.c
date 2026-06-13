@@ -6,12 +6,11 @@
 #include "assemble/reader.h"
 
 /*
- * Trims leading and trailing whitespace from a line.
+ * Trims leading and trailing whitespace from a line
  *
  * str: string to be modified in place
  */
 static void trim_whitespace(char *str) {
-
     char *start = str;
 
     while (*start == ' ' || *start == '\t') {
@@ -28,16 +27,14 @@ static void trim_whitespace(char *str) {
     }
 }
 
-
 /*
- * Checks if a line contains only whitespace.
+ * Checks if a line contains only whitespace
  *
  * line: input string to check
  *
- * Returns true if the line is empty or whitespace only.
+ * Returns true if the line is empty or whitespace only
  */
 static bool is_empty_line(const char *line) {
-
     for (int i = 0; line[i] != '\0'; i++) {
         if (line[i] != ' ' && line[i] != '\t') {
             return false;
@@ -48,7 +45,6 @@ static bool is_empty_line(const char *line) {
 }
 
 void read_line(FILE *f, char *buffer, size_t size) {
-
     assert(f != NULL);
     assert(buffer != NULL);
 
@@ -56,19 +52,13 @@ void read_line(FILE *f, char *buffer, size_t size) {
         abort();
     }
 
-    /*
-     * Remove newline character if present.
-     */
+    /* Remove newline character if present */
     buffer[strcspn(buffer, "\n")] = '\0';
 
-    /*
-     * Normalise whitespace.
-     */
+    /* Normalise whitespace */
     trim_whitespace(buffer);
 
-    /*
-     * Skip empty lines by forcing empty string.
-     */
+    /* Skip empty lines by forcing empty string */
     if (is_empty_line(buffer)) {
         buffer[0] = '\0';
     }
