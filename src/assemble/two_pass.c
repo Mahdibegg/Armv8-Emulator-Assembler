@@ -44,6 +44,14 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
 
         uint32_t word = 0;
 
+        /*
+         * DIRECTIVE:
+         * Stub for now, TODO 
+         */
+        if (tokens->token_type == DIRECTIVE) {
+            word = 0;
+        }
+
         line_number++;
     }
 
