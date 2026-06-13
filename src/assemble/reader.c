@@ -11,6 +11,8 @@
  * str: string to be modified in place
  */
 static void trim_whitespace(char *str) {
+    assert(str != NULL);
+
     char *start = str;
 
     while (*start == ' ' || *start == '\t') {
@@ -35,6 +37,8 @@ static void trim_whitespace(char *str) {
  * Returns true if the line is empty or whitespace only
  */
 static bool is_empty_line(const char *line) {
+    assert(line != NULL);
+
     for (int i = 0; line[i] != '\0'; i++) {
         if (line[i] != ' ' && line[i] != '\t') {
             return false;
