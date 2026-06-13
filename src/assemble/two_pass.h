@@ -4,6 +4,7 @@
 #include "shared/types.h"
 #include "tokenizer.h"
 #include "assemble/symbol_table.h"
+#include "assemble/reader.h"
 
 /*
  * STUB - two_pass function
