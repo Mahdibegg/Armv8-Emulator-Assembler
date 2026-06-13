@@ -1,7 +1,10 @@
-#include "two_pass.h"
-#include "stdio.h"
-
 #include "assemble/two_pass.h"
+#include "shared/types.h"
+#include "tokenizer.h"
+#include "assemble/symbol_table.h"
+#include "assemble/reader.h"
+#include "assemble/binary_writer.h"
+#include "assemble/encoder.h"
 
 // Fill in 
 // static first_pass()
