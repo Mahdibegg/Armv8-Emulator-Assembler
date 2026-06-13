@@ -19,7 +19,7 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
      * read_line returns false when EOF is reached
      */
     while (read_line(in, buffer, sizeof(buffer))) {
-        
+
         /*
          * Skip empty lines
          * read_line normalises empty lines to ""
@@ -27,6 +27,12 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
         if (buffer[0] == '\0') {
             continue;
         }
+
+        /* Clear previous token data */
+        clear_tokenized_buffer(tokens);
+
+        /* Tokenise current line */
+        tokenized_buffer(tokens, buffer, line_number);
 
         line_number++;
     }
