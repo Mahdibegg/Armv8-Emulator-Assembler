@@ -53,4 +53,9 @@ typedef struct {
     int64_t offset;
 } cond_branch_t;
 
+// Register Branch: br
+typedef struct {
+    unsigned xn;
+} reg_branch_t;
+
 #endif
