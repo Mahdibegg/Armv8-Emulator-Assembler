@@ -17,26 +17,33 @@ typedef enum {INSTRUCTION, DIRECTIVE, LABEL} tokenized_type_t;
  * Label is the token that belongs to a LABEL type
  * Opcode belongs to DIRECTIVE and INSTRUCTION token_types
  * Operands belongs to the INSTRUCTION token_types, which is a list of operands the instruction takes
- *
- * Meta deta section
- * 
  * Operand_count keeps a track of number of operands the instruction has
  * Line_number keeps a track of line number, so error handling for invalid syntax in further passing becomes easier
  */
 typedef struct {
-    /* Token type  */
     tokenized_type_t token_type;
-    
-    /* LABEL */
-    token_t label;
-
-    /* INSTRUCTION */
-    token_t opcode; /* ONLY FIELD FOR DIRECTIVE */
-    tokens_t operands;
-
-    /* META DATA */
-    size_t operand_count;
     size_t line_number;
+
+    union {
+        /* LABEL */
+        struct {
+            token_t label;
+        } label_data;
+
+        /* DIRECTIVE */
+        struct {
+            token_t opcode;
+        } directive_data;
+
+        /* INSTRUCTION */
+        struct {
+            token_t opcode;
+            tokens_t operands;
+            size_t operand_count;
+        } instruction_data;
+
+    } data;
+
 } tokenized_line_t;
 
 /*
