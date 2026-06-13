@@ -52,6 +52,20 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
             word = 0;
         }
 
+        /*
+         * INSTRUCTION:
+         * Stub for now, TODO
+         */
+        if (tokens->token_type == INSTRUCTION) {
+            word = 0;
+        }
+
+        /* Write 32-bit word to output */
+        write_word(out, word);
+
+        /* magic number to change*/
+        address += 4;
+
         line_number++;
     }
 
