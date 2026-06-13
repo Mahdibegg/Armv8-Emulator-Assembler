@@ -1,4 +1,7 @@
 #include "two_pass.h"
+#include "stdio.h"
+
+#include "assemble/two_pass.h"
 
 // Fill in 
 // static first_pass()
