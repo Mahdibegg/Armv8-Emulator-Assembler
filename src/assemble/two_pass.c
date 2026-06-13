@@ -19,6 +19,15 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
      * read_line returns false when EOF is reached
      */
     while (read_line(in, buffer, sizeof(buffer))) {
+        
+        /*
+         * Skip empty lines
+         * read_line normalises empty lines to ""
+         */
+        if (buffer[0] == '\0') {
+            continue;
+        }
+
         line_number++;
     }
 
