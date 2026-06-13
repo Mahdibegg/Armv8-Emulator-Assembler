@@ -5,6 +5,8 @@
 #include "tokenizer.h"
 #include "assemble/symbol_table.h"
 #include "assemble/reader.h"
+#include "assemble/binary_writer.h"
+#include "assemble/encoder.h"
 
 /*
  * STUB - two_pass function
