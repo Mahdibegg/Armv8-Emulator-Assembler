@@ -1,7 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <stdbool.h>
 
 #include "assemble/reader.h"
 
@@ -48,7 +47,7 @@ static bool is_empty_line(const char *line) {
     return true;
 }
 
-void read_line(FILE *f, char *buffer, size_t size) {
+bool read_line(FILE *f, char *buffer, size_t size) {
     if (f == NULL) {
         fprintf(stderr, "ERROR: File pointer is NULL");
         abort();
@@ -62,7 +61,7 @@ void read_line(FILE *f, char *buffer, size_t size) {
     if (fgets(buffer, size, f) == NULL) {
         if (feof(f)){
             buffer[0] = '\0';
-            return;
+            return false;
         }
         fprintf(stderr, "ERROR: File could not be read");
         abort();
@@ -78,4 +77,6 @@ void read_line(FILE *f, char *buffer, size_t size) {
     if (is_empty_line(buffer)) {
         buffer[0] = '\0';
     }
+
+    return true;
 }

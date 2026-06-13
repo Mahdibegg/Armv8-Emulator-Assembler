@@ -2,6 +2,7 @@
 #define READER_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 /*
  * Reads a single line from the input file
@@ -13,6 +14,6 @@
  * Assert the file and buffer is valid,
  * Abort if reading from the file fails
  */
-void read_line(FILE *f, char *buffer, size_t size);
+bool read_line(FILE *f, char *buffer, size_t size);
 
 #endif
