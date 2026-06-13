@@ -42,4 +42,9 @@ typedef struct {
     word_t simm19;
 } ls_instr_fields_t;
 
+// Unconditional Branch: b
+typedef struct {
+    int64_t offset;
+} uncond_branch_t;
+
 #endif
