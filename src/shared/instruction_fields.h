@@ -47,4 +47,10 @@ typedef struct {
     int64_t offset;
 } uncond_branch_t;
 
+// Conditional Branch: b.cond
+typedef struct {
+    unsigned cond;
+    int64_t offset;
+} cond_branch_t;
+
 #endif
