@@ -56,6 +56,11 @@ void read_line(FILE *f, char *buffer, size_t size) {
     }
 
     if (fgets(buffer, size, f) == NULL) {
+        if (feof(f)){
+            buffer[0] = '\0';
+            return;
+        }
+        fprintf(stderr, "ERROR: File could not be read");
         abort();
     }
 
