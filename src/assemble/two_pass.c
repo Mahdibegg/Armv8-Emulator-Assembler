@@ -34,6 +34,16 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
         /* Tokenise current line */
         tokenized_buffer(tokens, buffer, line_number);
 
+        /*
+         * LABEL:
+         * Skip labels in second pass
+         */
+        if (tokens->token_type == LABEL) {
+            continue;
+        }
+
+        uint32_t word = 0;
+
         line_number++;
     }
 
