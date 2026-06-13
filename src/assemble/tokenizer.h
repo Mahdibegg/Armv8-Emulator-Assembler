@@ -39,4 +39,19 @@ typedef struct {
     size_t line_number;
 } tokenized_line_t;
 
+/*
+ * Returns a pointer reference to a malloc()ed tokenized_line_t struct
+ *
+ * char *buffer - takes the buffer storing each line from the file via read_line output
+ * line_number - stores this as meta data within tokenized_line_t for future error messages during parsing
+ */
+tokenized_line_t *tokenize(char *buffer, size_t line_number);
+
+/*
+ * Free memory allocated by tokenize() for the tokenized_line_t struct
+ *
+ * tokens_ptr - pointer reference to the tokenized_line_t struct created by tokenize()
+ */
+void free_tokenized_line(tokenized_line_t *tokens_ptr);
+
 #endif
