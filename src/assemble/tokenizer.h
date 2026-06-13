@@ -55,7 +55,7 @@ tokenized_line_t *init_tokenized_line(void);
  *
  * tokenized_line_buffer: reference to the tokenized line buffer to clear per line you write
  */
-void clear_tokenized_line(tokenized_line_t *tokenized_line_buffer);
+void clear_tokenized_line(tokenized_line_t *line);
 
 /*
  * Returns a pointer reference to a malloc()ed tokenized_line_t struct
@@ -64,13 +64,13 @@ void clear_tokenized_line(tokenized_line_t *tokenized_line_buffer);
  * char *buffer: takes the buffer storing each line from the file via read_line output
  * line_number: stores this as meta data within tokenized_line_t for future error messages during parsing
  */
-void tokenize_line(tokenized_line_t *tokenized_line_buffer, char *buffer, size_t line_number);
+void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number);
 
 /*
  * Free memory allocated by tokenize() for the tokenized_line_t struct
  *
  * tokens_ptr: pointer reference to the tokenized_line_t struct created by tokenize()
  */
-void free_tokenized_line(tokenized_line_t *tokens_ptr);
+void free_tokenized_line(tokenized_line_t *line);
 
 #endif
