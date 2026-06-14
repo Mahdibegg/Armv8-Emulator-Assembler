@@ -6,8 +6,9 @@
 #include "assemble/binary_writer.h"
 #include "assemble/encoder.h"
 
-// Fill in 
-// static first_pass()
+symbol_table_t first_pass(FILE *input) {
+    return NULL;
+}
 
 static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
     /* magic number to change */
@@ -48,6 +49,3 @@ static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
 
     free_tokenized_line(tokens);
 }
-
-// Create public function 
-// two_pass
