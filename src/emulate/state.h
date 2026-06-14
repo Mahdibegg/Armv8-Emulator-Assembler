@@ -6,8 +6,10 @@
 #include "emulate/memory.h"
 #include "emulate/registers.h"
 
-// struct contains all data about the machine
-// memory, all registers, halt value
+/*
+ * struct contains all data about the machine
+ * memory, all registers, halt value
+ */
 typedef struct {
     memory_t memory;
     gen_regs general_registers;
