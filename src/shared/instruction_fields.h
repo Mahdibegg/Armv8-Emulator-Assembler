@@ -1,0 +1,132 @@
+#ifndef INSTRUCTION_FIELDS_H
+#define INSTRUCTION_FIELDS_H
+
+#include "types.h"
+
+/*
+ * Single data transfer addressing modes and the load literal form
+ * single data transfer (bit 31 == 1) resolves to one of the first four,
+ * load literal (bit 31 == 0) is its own mode and is always a load
+ */
+typedef enum {
+    LS_UNSIGNED_OFFSET,
+    LS_PRE_INDEX,
+    LS_POST_INDEX,
+    LS_REGISTER_OFFSET,
+    LS_LOAD_LITERAL
+} load_store_type_t;
+
+/*
+ * Load/store instruction fields as a struct
+ * Should be returned by the load/store decoder
+*/
+typedef struct {
+    /* addressing mode (selects which fields below are valid) */
+    load_store_type_t type;
+
+    /* general format */
+    bit_t sf;       /* 0 -> 32-bit Wt (4 bytes), 1 -> 64-bit Xt (8 bytes) */
+    bit_t L;        /* 1 -> load, 0 -> store (load literal is always a load) */
+    byte_t rt;      /* target register */
+
+    /* single data transfer base register (always a 64-bit X-register) */
+    byte_t xn;
+
+    /* unsigned offset operand */
+    word_t imm12;
+
+    /* pre/post index operand (raw 9 bits, sign-extended at use) */
+    word_t simm9;
+
+    /* register offset operand (always a 64-bit X-register) */
+    byte_t xm;
+
+    /* load literal operand (raw 19 bits, sign-extended at use) */
+    word_t simm19;
+} ls_instr_fields_t;
+
+/* Unconditional Branch: b */
+typedef struct {
+    int64_t offset;
+} uncond_branch_t;
+
+/* Conditional Branch: b.cond */
+typedef struct {
+    unsigned cond;
+    int64_t offset;
+} cond_branch_t;
+
+/* Register Branch: br */
+typedef struct {
+    unsigned xn;
+} reg_branch_t;
+
+/* Immediate instruction sub types (arithmetic/wide move) */
+typedef enum {
+    IMM_ARITHMETIC,
+    IMM_WIDE_MOVE
+} immediate_type_t;
+
+/*
+ * Immediate DP instruction fields as struct
+ * Should be returned by an immediate_instruction decoder
+ */
+typedef struct {
+    /* Immediate instruction type (arithmetic/wide move) */
+    immediate_type_t type;
+
+    /* General immediate instruction format */
+    bit_t sf;
+    byte_t opc;
+    byte_t opi;
+    byte_t rd;
+
+    /* Arithmetic operand format */
+    bit_t sh;
+    word_t imm12;
+    byte_t rn;
+
+    /* Wide Move operand format */
+    byte_t hw;
+    word_t imm16;
+} imm_instr_fields_t;
+
+/* Register instruction sub types (arithmetic/logic/multiply) */
+typedef enum {
+    REG_ARITHMETIC,
+    REG_LOGIC,
+    REG_MULTIPLY
+} register_type_t;
+
+/*
+ * Register DP instruction fields as struct
+ * Should be returned by a register_instruction decoder
+ */
+typedef struct {
+    /* Register instruction type (arithmetic/logic/multiply) */
+    register_type_t type;
+
+    /* General register instruction format */
+    bit_t sf;
+    byte_t opc;
+    bit_t M;
+    byte_t opr;
+    byte_t rm;
+    byte_t operand;
+    byte_t rn;
+    byte_t rd;
+
+    /* Arithmetic or logic shift (true/false) */
+    bit_t opr_MSB;
+    bit_t opr_LSB;
+    byte_t shift;
+
+    /* Logical shift */
+    bit_t N;
+
+    /* Multiply */
+    bit_t x;
+    byte_t ra;
+} reg_instr_fields_t;
+
+#endif
