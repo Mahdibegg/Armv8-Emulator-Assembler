@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "assemble/tokenizer.h"
 #include "shared/types.h"
@@ -73,14 +75,45 @@ void clear_tokenized_line(tokenized_line_t *line) {
     line->token_type = EMPTY;
 }
 
-
 void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
     /*
-     * Read raw line from buffer and then check if successful ( use line number for error message )
+     * Nul pointer check on buffer and silent return (since nothing to tokenize)
      * Check first word and assign token type accordingly 
      * Then assign the fields of relevent struct within union by splitting string into opcode and operands
      * ":" at end of line indidcates label, "." indicates directive, otherwise instruction
      */
+
+    if (buffer == NULL) {
+        return;
+    }
+    
+    char *colon_ptr = strchr(buffer, ':');
+
+    if (buffer[0] == '\0') {
+        line->token_type = EMPTY;
+        line->line_number = line_number;
+        return;
+    } else if (buffer[0] == '.') {
+        line->token_type = DIRECTIVE;
+        line->line_number = line_number;
+
+        /* Token = .int*/
+        token_t token = strtok(buffer, " ");
+        token = strtok(NULL, " ");
+
+        if (token == NULL) {
+            fprintf(stderr, "ERROR: Invalid directive line");
+            abort();
+        }
+        line->data.directive_data.value = malloc(strlen(token)+1);
+
+        if (line->data.directive_data.value == NULL) {
+            fprintf(stderr, "ERROR: Could not allocate directive value\n");
+            abort();
+        }
+        strcpy(line->data.directive_data.value, token);
+        return;
+    }
 }
 
 void free_tokenized_line(tokenized_line_t *line) {
