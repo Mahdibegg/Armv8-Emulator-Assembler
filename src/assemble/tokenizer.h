@@ -34,7 +34,7 @@ typedef struct {
 
         /* DIRECTIVE */
         struct {
-            token_t opcode;
+            token_t value;
         } directive_data;
 
         /* INSTRUCTION */

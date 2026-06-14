@@ -35,7 +35,6 @@ void clear_tokenized_line(tokenized_line_t *line) {
         abort();
     }
 
-
     /*
      * Need to Free the data according to the token type
      */
@@ -47,7 +46,7 @@ void clear_tokenized_line(tokenized_line_t *line) {
         
         case DIRECTIVE:
             /* Free opcode */
-            free(line->data.directive_data.opcode);
+            free(line->data.directive_data.value);
             break;
 
         case INSTRUCTION:
@@ -74,6 +73,15 @@ void clear_tokenized_line(tokenized_line_t *line) {
     line->token_type = EMPTY;
 }
 
+
+void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
+    /*
+     * Read raw line from buffer and then check if successful ( use line number for error message )
+     * Check first word and assign token type accordingly 
+     * Then assign the fields of relevent struct within union
+     */
+}
+
 void free_tokenized_line(tokenized_line_t *line) {
     /* No error since this pointer does not reference any memory */
     if (line == NULL) {
@@ -93,7 +101,7 @@ void free_tokenized_line(tokenized_line_t *line) {
             break;
 
         case DIRECTIVE:
-            free(line->data.directive_data.opcode);
+            free(line->data.directive_data.value);
             break;
 
         case INSTRUCTION:
