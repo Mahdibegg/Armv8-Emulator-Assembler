@@ -9,7 +9,7 @@
 // Fill in 
 // static first_pass()
 
-static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
+static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
     /* magic number to change */
     char buffer[256];
     size_t line_number = 0;
@@ -21,7 +21,7 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
      * Loop until EOF
      * read_line returns false when EOF is reached
      */
-    while (read_line(in, buffer, sizeof(buffer))) {
+    while (read_line(input, buffer, sizeof(buffer))) {
 
         /*
          * Skip empty lines
