@@ -15,7 +15,11 @@
  * input: File input that will be read, tokenized and then build the symbol table
  */
 static symbol_table_t first_pass(const FILE *input) {
-    return NULL;
+    /* Initialise line number, current address and line buffer, symbol table and tokenized line buffer
+     * WHILE Loop with readline function to read each line 
+     * For each line, tokenize line, check token type and update the current address appropriately or add to symbol table if it is a label
+     * Return Symbol Table
+     */
 }
 
 /*
