@@ -79,7 +79,7 @@ void clear_tokenized_line(tokenized_line_t *line) {
 
 void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
     /*
-     * Nul pointer check on buffer and silent return (since nothing to tokenize)
+     * Null pointer check on buffer and silent return (since nothing to tokenize)
      * Check first word and assign token type accordingly 
      * Then assign the fields of relevent struct within union by splitting string into opcode and operands
      * ":" at end of line indidcates label, "." indicates directive, otherwise instruction
@@ -92,21 +92,29 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
     char *colon_ptr = strchr(buffer, ':');
 
     if (buffer[0] == '\0') {
+        /* This check for empty line */
+
         line->token_type = EMPTY;
         line->line_number = line_number;
         return;
     } else if (buffer[0] == '.') {
+        /* Check for directive */
+
         line->token_type = DIRECTIVE;
         line->line_number = line_number;
 
-        /* Token = .int*/
+        
         token_t token = strtok(buffer, " ");
+        /* Token = .int, as this is the first word in the string */
+
+        /* Token = next word in line which is the value */
         token = strtok(NULL, " ");
 
         if (token == NULL) {
-            fprintf(stderr, "ERROR: Invalid directive one line: %zu", line_number);
+            fprintf(stderr, "ERROR: Invalid directive on line: %zu\n", line_number);
             abort();
         }
+        /* Allocate memory to value field */
         line->data.directive_data.value = malloc(strlen(token)+1);
 
         if (line->data.directive_data.value == NULL) {
@@ -116,13 +124,15 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         strcpy(line->data.directive_data.value, token);
         return;
     } else if (colon_ptr != NULL) {
+        /* Check for label in line */
 
         line->token_type = LABEL;
         line->line_number = line_number;
 
+        /* Replace : with \0 to end the line so the buffer is now just label name */
         *colon_ptr = '\0';
-        // so buffer is now just the label name
-
+        
+        /* Allocate memory to label */
         line->data.label_data.label = malloc(strlen(buffer) +  1);
         if (line->data.label_data.label == NULL) {
             fprintf(stderr, "Could not allocate label");
@@ -132,20 +142,21 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         strcpy(line->data.label_data.label, buffer);
         return;
     } else {
-        // the line is an instruction 
-        // so first call of strtok gets the opcode 
-        // every call after that until null is reached is an operand, at each iteration update the operand count 
+        /* Line is not directive, empty or label, so must be an instruction */
 
         line->token_type = INSTRUCTION;
         line->line_number = line_number;
         line->data.instruction_data.operand_count = 0;
 
+
+        /* Allocate memory to the operands array */
         line->data.instruction_data.operands = malloc(sizeof(token_t) * MAX_OPERANDS);
         if (line->data.instruction_data.operands == NULL) {
             fprintf(stderr, "Could not allocate operands");
             abort();
         }
 
+        /* First token/word is going to be opcode */
         token_t opcode = strtok(buffer, " ");
         if (opcode == NULL) {
             fprintf(stderr, "ERROR: Invalid instruction type on line number: %zu", line_number);
@@ -160,10 +171,12 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         }
         strcpy(line->data.instruction_data.opcode, opcode);
 
+        /* Next token is first operand */
         token_t token = strtok(NULL, ", ");
         while (token != NULL) {
 
             line->data.instruction_data.operands[line->data.instruction_data.operand_count] = malloc(strlen(token) +1);
+            
             if (line->data.instruction_data.operands[line->data.instruction_data.operand_count] == NULL) {
                 fprintf(stderr, "Could not allocate operand");
                 abort();
