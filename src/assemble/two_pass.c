@@ -7,6 +7,7 @@
 #include "assemble/encoder.h"
 
 #define MAX_LINE_LENGTH 256
+#define NEXT_INSTRUCTION 4
 
 /*
  * First_pass function runs the first pass of a two pass
@@ -38,25 +39,20 @@ static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
      */
     while (read_line(input, buffer, sizeof(buffer))) {
 
-        /*
-         * Skip empty lines
-         * read_line normalises empty lines to ""
-         */
+        /* Empty line set buffer to empty and go to next loop*/
         if (buffer[0] == '\0') {
             continue;
         }
 
-        /* Clear previous token data */
+        /* Clear previous token data in buffer called tokens*/
         clear_tokenized_line(tokens);
 
-        /* Tokenise current line */
         tokenize_line(tokens, buffer, line_number);
 
         /* Write 32-bit word to output */
-        // write_word(out, );
 
         /* Magic number to change*/
-        address += 4;
+        address += NEXT_INSTRUCTION;
 
         line_number++;
     }
