@@ -159,6 +159,7 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
             strcpy(line->data.instruction_data.operands[line->data.instruction_data.operand_count], token);
             
             line->data.instruction_data.operand_count++;
+            strtok(NULL, ", ");
         }
 
         return;
