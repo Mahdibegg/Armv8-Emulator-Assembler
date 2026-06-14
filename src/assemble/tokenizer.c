@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "assemble/tokenizer.h"
 #include "shared/types.h"
 
