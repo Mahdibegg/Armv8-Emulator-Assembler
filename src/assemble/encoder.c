@@ -1,5 +1,25 @@
 #include "encoder.h"
 #include "shared/instruction_fields.h"
+#include "shared/decode.h"
+
+/*
+ * This struct allows field building helper functions to generalise the instruction field return type
+ *
+ * instr_type is an enum from a shared header file (decode) which determine the instruction type
+ * fields union consists of only one type of instruction fields at a time
+ */
+typedef struct {
+    instr_type_t instr_type;
+
+    union {
+        imm_instr_fields_t imm_instr;
+        reg_instr_fields_t reg_instr;
+        reg_branch_t reg_branch;
+        cond_branch_t cond_branch;
+        uncond_branch_t uncond_branch;
+        ls_instr_fields_t ls_instr;
+    } fields;
+} instruction_field_t;
 
 /*
  * Assemble_directive will assemble the directive token type
