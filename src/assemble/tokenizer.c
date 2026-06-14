@@ -10,16 +10,20 @@ tokenized_line_t *init_tokenized_line(void) {
     line = malloc(sizeof(tokenized_line_t));
 
     if (line == NULL) {
-        fprintf("ERROR: could not allocate tokenized line\n");
+        fprintf(stderr, "ERROR: could not allocate tokenized line\n");
         abort();
     }
 
     /*
      * Initialise fields 
      * Set line number to 0
-     * Set Token type to NULL
+     * Set Token type to EMPTY
      */
-    
+
+    line->line_number = 0;
+    line->token_type = EMPTY;
+
+    return line;
 }
 
 void free_tokenized_line(tokenized_line_t *line) {
