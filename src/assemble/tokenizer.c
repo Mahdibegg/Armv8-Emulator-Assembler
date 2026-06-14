@@ -5,7 +5,7 @@
 #include "assemble/tokenizer.h"
 #include "shared/types.h"
 
-#define MAX_OPERANDS 4
+#define MAX_OPERANDS 7
 
 tokenized_line_t *init_tokenized_line(void) {
 
@@ -104,7 +104,7 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         token = strtok(NULL, " ");
 
         if (token == NULL) {
-            fprintf(stderr, "ERROR: Invalid directive line");
+            fprintf(stderr, "ERROR: Invalid directive one line: %zu", line_number);
             abort();
         }
         line->data.directive_data.value = malloc(strlen(token)+1);
@@ -147,6 +147,11 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         }
 
         token_t opcode = strtok(buffer, " ");
+        if (opcode == NULL) {
+            fprintf(stderr, "ERROR: Invalid instruction type on line number: %zu", line_number);
+            abort();
+        }
+        
 
         line->data.instruction_data.opcode = malloc(strlen(opcode) +1);
         if (line->data.instruction_data.opcode == NULL) {
