@@ -5,7 +5,7 @@
  * This enum is for distinguishing the token type
  * Useful for later on when filling in separate tokens based on the type
  */
-typedef enum {INSTRUCTION, DIRECTIVE, LABEL} tokenized_type_t;
+typedef enum {INSTRUCTION, DIRECTIVE, LABEL, EMPTY} tokenized_type_t;
 
 /* 
  * Tokenized_instr_t is a struct that sums up all the tokens and has a token type
