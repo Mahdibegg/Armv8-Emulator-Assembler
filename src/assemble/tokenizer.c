@@ -129,6 +129,39 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         
         strcpy(line->data.label_data.label, buffer);
         return;
+    } else {
+        // the line is an instruction 
+        // so first call of strtok gets the opcode 
+        // every call after that until null is reached is an operand, at each iteration update the operand count 
+
+        line->token_type = INSTRUCTION;
+        line->line_number = line_number;
+        line->data.instruction_data.operand_count = 0;
+
+        token_t opcode = strtok(buffer, " ");
+
+        line->data.instruction_data.opcode = malloc(strlen(opcode) +1);
+        if (line->data.instruction_data.opcode == NULL) {
+            fprintf(stderr, "Could not allocate opcode for instruction");
+            abort();
+        }
+        strcpy(line->data.instruction_data.opcode, opcode);
+
+        token_t token = strtok(NULL, ", ");
+        while (token != NULL) {
+
+            line->data.instruction_data.operands[line->data.instruction_data.operand_count] = malloc(strlen(token) +1);
+            if (line->data.instruction_data.operands[line->data.instruction_data.operand_count] == NULL) {
+                fprintf(stderr, "Could not allocate operand");
+                abort();
+            }
+
+            strcpy(line->data.instruction_data.operands[line->data.instruction_data.operand_count], token);
+            
+            line->data.instruction_data.operand_count++;
+        }
+
+        return;
     }
 }
 
