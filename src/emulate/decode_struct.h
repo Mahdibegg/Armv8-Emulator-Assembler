@@ -3,7 +3,7 @@
 
 #include "shared/types.h"
 
-// instruction set modelled as enums
+/* Instruction set modelled as enums */
 typedef enum {
     INSTR_HALT,
     INSTR_DP_IMM,
@@ -13,14 +13,14 @@ typedef enum {
     INSTR_UNKNOWN
 } instr_type_t;
 
-// struct for decoding phase results
+/* Struct for decoding phase results */
 typedef struct {
     word_t instr;
     instr_type_t type;
 } decoded_instr_t;
 
-// struct for execute function next state decision
-typedef enum { 
+/* Struct for execute function next state decision */
+typedef enum {
     EXEC_NEXT,
     EXEC_BRANCH,
     EXEC_HALT
