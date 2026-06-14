@@ -15,7 +15,7 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
     size_t line_number = 0;
     addr_t address = 0;
 
-    tokenized_line_t *tokens = init_tokenized_buffer();
+    tokenized_line_t *tokens = init_tokenized_line();
 
     /*
      * Loop until EOF
@@ -32,10 +32,10 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
         }
 
         /* Clear previous token data */
-        clear_tokenized_buffer(tokens);
+        clear_tokenized_line(tokens);
 
         /* Tokenise current line */
-        tokenized_buffer(tokens, buffer, line_number);
+        tokenize_line(tokens, buffer, line_number);
 
         /* Write 32-bit word to output */
         // write_word(out, );
@@ -46,7 +46,7 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
         line_number++;
     }
 
-    free_tokenized_buffer(tokens);
+    free_tokenized_line(tokens);
 }
 
 // Create public function 
