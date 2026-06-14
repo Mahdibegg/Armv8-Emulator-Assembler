@@ -20,6 +20,16 @@ static symbol_table_t first_pass(const FILE *input) {
      * For each line, tokenize line, check token type and update the current address appropriately or add to symbol table if it is a label
      * Return Symbol Table
      */
+
+     size_t line_number = 0;
+
+     addr_t current_addr = 0;
+
+     char *raw_line;
+
+     tokenized_line_t tokenized_line;
+
+     symbol_table_t st;
 }
 
 /*
