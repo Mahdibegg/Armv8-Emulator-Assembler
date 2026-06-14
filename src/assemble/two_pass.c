@@ -15,21 +15,32 @@
  * input: File input that will be read, tokenized and then build the symbol table
  */
 static symbol_table_t first_pass(const FILE *input) {
-    /* Initialise line number, current address and line buffer, symbol table and tokenized line buffer
+    /*
+     * Check if Input file is null 
+     * Initialise line number, current address and line buffer, symbol table and tokenized line buffer
      * WHILE Loop with readline function to read each line 
      * For each line, tokenize line, check token type and update the current address appropriately or add to symbol table if it is a label
      * Return Symbol Table
      */
 
-     size_t line_number = 0;
+    
+    if (input == NULL) {
+        fprintf(stderr, "ERROR: Input file could not be opened");
+        abort();
+    }
+    
+     
+    size_t line_number = 0;
 
-     addr_t current_addr = 0;
+    addr_t current_addr = 0;
 
-     char *raw_line;
+    char *raw_line;
 
-     tokenized_line_t tokenized_line;
+    tokenized_line_t *tokenized_line = init_tokenized_line();
 
-     symbol_table_t st;
+    symbol_table_t st;
+
+     
 }
 
 /*
