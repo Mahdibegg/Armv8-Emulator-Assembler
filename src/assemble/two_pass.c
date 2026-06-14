@@ -37,36 +37,10 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
         /* Tokenise current line */
         tokenized_buffer(tokens, buffer, line_number);
 
-        /*
-         * LABEL:
-         * Skip labels in second pass
-         */
-        if (tokens->token_type == LABEL) {
-            continue;
-        }
-
-        uint32_t word = 0;
-
-        /*
-         * DIRECTIVE:
-         * Stub for now, TODO 
-         */
-        if (tokens->token_type == DIRECTIVE) {
-            word = 0;
-        }
-
-        /*
-         * INSTRUCTION:
-         * Stub for now, TODO
-         */
-        if (tokens->token_type == INSTRUCTION) {
-            word = 0;
-        }
-
         /* Write 32-bit word to output */
-        write_word(out, word);
+        // write_word(out, );
 
-        /* magic number to change*/
+        /* Magic number to change*/
         address += 4;
 
         line_number++;
