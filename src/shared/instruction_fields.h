@@ -58,4 +58,33 @@ typedef struct {
     unsigned xn;
 } reg_branch_t;
 
+// Immediate instruction sub types (arithmetic/wide move)
+typedef enum {
+    IMM_ARITHMETIC,
+    IMM_WIDE_MOVE
+} immediate_type_t;
+
+// Immediate DP instruction fields as struct 
+// Should be returned by an immediate_instruction decoder
+typedef struct {
+
+    // Immediate instruction type (arithmetic/wide move)
+    immediate_type_t type;
+
+    // General immediate instruction format
+    bit_t sf;
+    byte_t opc;
+    byte_t opi;
+    byte_t rd;
+
+    // Arithmetic operand format
+    bit_t sh;
+    word_t imm12;
+    byte_t rn;
+
+    // Wide Move operand format
+    byte_t hw;
+    word_t imm16;
+} imm_instr_fields_t;
+
 #endif
