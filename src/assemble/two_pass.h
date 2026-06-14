@@ -1,9 +1,11 @@
 #ifndef TWO_PASS_H
 #define TWO_PASS_H
 
+#include "symbol_table.h"
+
 /*
  * STUB - two_pass function
  */
-// two_pass()
+static void second_pass(FILE *input, FILE *output, symbol_table_t st);
 
 #endif
