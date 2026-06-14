@@ -175,6 +175,11 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         token_t token = strtok(NULL, ", ");
         while (token != NULL) {
 
+            if (line->data.instruction_data.operand_count >= MAX_OPERANDS) {
+                fprintf(stderr, "ERROR: Too many operands on line: %zu", line_number);
+                abort();
+            }
+
             line->data.instruction_data.operands[line->data.instruction_data.operand_count] = malloc(strlen(token) +1);
 
             if (line->data.instruction_data.operands[line->data.instruction_data.operand_count] == NULL) {
