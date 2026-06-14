@@ -6,6 +6,8 @@
 #include "shared/types.h"
 
 /*
+ * Returns word to be written to .bin file
+ *
  * Encode function abstracts multiple things, further parse to give numerical meaning to each operand/opcode
  * Then identify the right instruction type, in order to use the right instruction field (so correct fields "encoded")
  * Then assemble the encoded fields into a single word type that is returned
