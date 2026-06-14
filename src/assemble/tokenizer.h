@@ -1,6 +1,8 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 
+#include "shared/types.h"
+
 /*
  * This enum is for distinguishing the token type
  * Useful for later on when filling in separate tokens based on the type
