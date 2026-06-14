@@ -1,6 +1,8 @@
 #ifndef TWO_PASS_H
 #define TWO_PASS_H
 
+#include <stdio.h>
+
 #include "symbol_table.h"
 
 /*
