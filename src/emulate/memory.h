@@ -4,26 +4,37 @@
 #include "shared/types.h"
 #define MEMORY_SIZE (2 * 1024 * 1024)
 
-// memory package
+/* Memory package */
 typedef struct {
     byte_t memory[MEMORY_SIZE];
 } memory_t;
 
-// REQUIRED functions to be implemented in memory.c
+/* Required functions to be implemented in memory.c */
 
-// initialise all bytes in memory to 0
+/*
+ * Initialise all bytes in memory to 0
+ * zeroes the entire memory array
+ */
 void init_memory(memory_t *memory);
 
-// read/write a word (32 bits), read returns 32 bit (word_t)
+/*
+ * Read/write a word (32 bits), read returns 32 bit (word_t)
+ * read_word returns the word stored at address
+ * write_word stores value at address
+ */
 word_t read_word(const memory_t *memory, addr_t address);
 void write_word(memory_t *memory, addr_t address, word_t value);
 
-// read_double_word reads a 64-bit value as two little-endian words:
-// the low word at address, the high word at address + 4
+/*
+ * Read a 64-bit value as two little-endian words
+ * the low word at address, the high word at address + 4
+ */
 dword_t read_double_word(const memory_t *memory, addr_t address);
 
-// write_double_word writes a 64-bit value as two little-endian words:
-// the low word at address, the high word at address + 4
+/*
+ * Write a 64-bit value as two little-endian words
+ * the low word at address, the high word at address + 4
+ */
 void write_double_word(memory_t *memory, addr_t address, dword_t value);
 
 #endif
