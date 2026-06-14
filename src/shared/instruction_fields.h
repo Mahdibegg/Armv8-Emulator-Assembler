@@ -87,4 +87,41 @@ typedef struct {
     word_t imm16;
 } imm_instr_fields_t;
 
+// Register instruction sub types (arithmetic/logic/multiply)
+typedef enum {
+    REG_ARITHMETIC,
+    REG_LOGIC,
+    REG_MULTIPLY
+} register_type_t;
+
+// Register DP instruction fields as struct
+// Should be returned by a register_instruction decoder
+typedef struct {
+
+    // Register instruction type (arithmetic/logic/multiply)
+    register_type_t type;
+
+    // General register instruction format
+    bit_t sf;
+    byte_t opc;
+    bit_t M;
+    byte_t opr;
+    byte_t rm;
+    byte_t operand;
+    byte_t rn;
+    byte_t rd;
+
+    // Arithmetic or logic shift (true/false)
+    bit_t opr_MSB;
+    bit_t opr_LSB;
+    byte_t shift;
+    
+    // Logical shift
+    bit_t N; 
+
+    // Multiply
+    bit_t x;
+    byte_t ra;
+} reg_instr_fields_t;
+
 #endif
