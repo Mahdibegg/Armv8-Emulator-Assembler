@@ -1,11 +1,91 @@
 #include <stdio.h>
 
-#include "tokenizer.h"
-#include "../shared/types.h"
+#include "assemble/tokenizer.h"
+#include "shared/types.h"
 
-void free_tokenized_line(tokenized_line_t *tokens_ptr) {
+tokenized_line_t *init_tokenized_line(void) {
+
+    tokenized_line_t *line;
+
+    line = malloc(sizeof(tokenized_line_t));
+
+    if (line == NULL) {
+        fprintf(stderr, "ERROR: Could not allocate tokenized line\n");
+        abort();
+    }
+
+    /*
+     * Initialise fields 
+     * 
+     * Set line number to 0
+     * Set Token type to EMPTY
+     */
+     
+    line->line_number = 0;
+    line->token_type = EMPTY;
+
+    return line;
+}
+
+void clear_tokenized_line(tokenized_line_t *line) {
+
+    /* First check if line is NULL */
+    if (line = NULL) {
+        fprintf(stderr, "ERROR: Tokenized line is NULL\n");
+        abort();
+    }
+
+    /*
+     * Need to Free the data according to the token type
+     */
+    switch (line->token_type) {
+        case LABEL:
+            /* Free label in label_data struct */
+            free(line->data.label_data.label);
+            break;
+        
+        case DIRECTIVE:
+            /* Free opcode */
+            free(line->data.directive_data.value);
+            break;
+
+        case INSTRUCTION:
+            /* Free array of operands and opcode */
+            free(line->data.instruction_data.opcode);
+
+            for (size_t i = 0; i < line->data.instruction_data.operand_count; i++) {
+                /* Free each operand in the array */
+                free(line->data.instruction_data.operands[i]);
+            }
+
+            free(line->data.instruction_data.operands);
+            break;
+
+        case EMPTY:
+            /* Nothing to free so simply break */
+            break;
+    }
+
+    /*
+     * Initialise fields
+     */
+    line->line_number = 0;
+    line->token_type = EMPTY;
+}
+
+
+void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
+    /*
+     * Read raw line from buffer and then check if successful ( use line number for error message )
+     * Check first word and assign token type accordingly 
+     * Then assign the fields of relevent struct within union by splitting string into opcode and operands
+     * ":" at end of line indidcates label, "." indicates directive, otherwise instruction
+     */
+}
+
+void free_tokenized_line(tokenized_line_t *line) {
     /* No error since this pointer does not reference any memory */
-    if (tokens_ptr == NULL) {
+    if (line == NULL) {
         return;
     }
 
@@ -16,25 +96,25 @@ void free_tokenized_line(tokenized_line_t *tokens_ptr) {
      * Since the .data would not be set for different unions, hence it would be illogical to free unused memory
      */
 
-    switch (tokens_ptr->token_type) {
+    switch (line->token_type) {
         case LABEL:
-            free(tokens_ptr->data.label_data.label);
+            free(line->data.label_data.label);
             break;
 
         case DIRECTIVE:
-            free(tokens_ptr->data.directive_data.opcode);
+            free(line->data.directive_data.value);
             break;
 
         case INSTRUCTION:
-            free(tokens_ptr->data.instruction_data.opcode);
+            free(line->data.instruction_data.opcode);
 
-            for (size_t i = 0; i < tokens_ptr->data.instruction_data.operand_count; i++) {
-                free(tokens_ptr->data.instruction_data.operands[i]);
+            for (size_t i = 0; i < line->data.instruction_data.operand_count; i++) {
+                free(line->data.instruction_data.operands[i]);
             }
 
-            free(tokens_ptr->data.instruction_data.operands);
+            free(line->data.instruction_data.operands);
             break;
     }
     
-    free(tokens_ptr);
+    free(line);
 }
