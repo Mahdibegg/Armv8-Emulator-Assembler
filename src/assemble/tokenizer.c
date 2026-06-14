@@ -113,6 +113,22 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         }
         strcpy(line->data.directive_data.value, token);
         return;
+    } else if (colon_ptr != NULL) {
+
+        line->token_type = LABEL;
+        line->line_number = line_number;
+
+        *colon_ptr = '\0';
+        // so buffer is now just the label name
+
+        line->data.label_data.label = malloc(strlen(buffer) +  1);
+        if (line->data.label_data.label == NULL) {
+            fprintf(stderr, "Could not allocate label");
+            abort();
+        }
+        
+        strcpy(line->data.label_data.label, buffer);
+        return;
     }
 }
 
