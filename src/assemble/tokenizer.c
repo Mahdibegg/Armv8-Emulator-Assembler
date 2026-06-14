@@ -135,7 +135,7 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         /* Allocate memory to label */
         line->data.label_data.label = malloc(strlen(buffer) +  1);
         if (line->data.label_data.label == NULL) {
-            fprintf(stderr, "Could not allocate label");
+            fprintf(stderr, "Could not allocate label\n");
             abort();
         }
         
@@ -152,21 +152,21 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         /* Allocate memory to the operands array */
         line->data.instruction_data.operands = malloc(sizeof(token_t) * MAX_OPERANDS);
         if (line->data.instruction_data.operands == NULL) {
-            fprintf(stderr, "Could not allocate operands");
+            fprintf(stderr, "Could not allocate operands\n");
             abort();
         }
 
         /* First token/word is going to be opcode */
         token_t opcode = strtok(buffer, " ");
         if (opcode == NULL) {
-            fprintf(stderr, "ERROR: Invalid instruction type on line number: %zu", line_number);
+            fprintf(stderr, "ERROR: Invalid instruction type on line number: %zu\n", line_number);
             abort();
         }
         
 
         line->data.instruction_data.opcode = malloc(strlen(opcode) +1);
         if (line->data.instruction_data.opcode == NULL) {
-            fprintf(stderr, "Could not allocate opcode for instruction");
+            fprintf(stderr, "Could not allocate opcode for instruction\n");
             abort();
         }
         strcpy(line->data.instruction_data.opcode, opcode);
@@ -176,9 +176,9 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         while (token != NULL) {
 
             line->data.instruction_data.operands[line->data.instruction_data.operand_count] = malloc(strlen(token) +1);
-            
+
             if (line->data.instruction_data.operands[line->data.instruction_data.operand_count] == NULL) {
-                fprintf(stderr, "Could not allocate operand");
+                fprintf(stderr, "Could not allocate operand\n");
                 abort();
             }
 
