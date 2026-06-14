@@ -104,8 +104,7 @@ static void second_pass(const FILE *input, FILE *output, const symbol_table_t st
     tokenized_line_t *tokens = init_tokenized_line();
 
     /*
-     * Loop until EOF
-     * read_line returns false when EOF is reached
+     * Loop until end of file to which read_line returns false when EOF is reached
      */
     while (read_line(input, buffer, sizeof(buffer))) {
 
@@ -119,7 +118,25 @@ static void second_pass(const FILE *input, FILE *output, const symbol_table_t st
 
         tokenize_line(tokens, buffer, line_number);
 
-        /* Write 32-bit word to output */
+        /* Only allowing directives and instructions to be further parsed and encoded */
+        switch (tokens->token_type) {
+            /* Encode function abstracts encoding process for both directive and instruction tokens */
+            case DIRECTIVE:
+            case INSTRUCTION:
+                word_t encoded_value = encode(st, *tokens);
+                binary_writer(output, encoded_value);
+                break;
+            /* Break LABEL and EMPTY case, continue to next line */
+            case LABEL:
+                break;
+            case EMPTY:
+                break;
+            default:
+                fprintf(stderr, "ERROR: Unknown token type parsed for encoding at %zu\n",
+                    line_number
+                );
+                abort();
+        }
 
         /* Magic number to change*/
         address += NEXT_INSTRUCTION;
