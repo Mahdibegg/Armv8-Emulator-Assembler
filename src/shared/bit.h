@@ -27,7 +27,7 @@ typedef struct {
     byte_t memory[MEMORY_SIZE];
 } memory_t;
 
-// read/write a word (32 bits), read returns 32 bit (word_t)
+// read a word (32 bits), read returns 32 bit (word_t)
 word_t read_word(const memory_t *memory, addr_t address);
 
 // sign extend N bits to 64 bit
