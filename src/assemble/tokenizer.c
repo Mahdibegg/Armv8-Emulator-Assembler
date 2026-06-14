@@ -78,7 +78,8 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
     /*
      * Read raw line from buffer and then check if successful ( use line number for error message )
      * Check first word and assign token type accordingly 
-     * Then assign the fields of relevent struct within union
+     * Then assign the fields of relevent struct within union by splitting string into opcode and operands
+     * ":" at end of line indidcates label, "." indicates directive, otherwise instruction
      */
 }
 
