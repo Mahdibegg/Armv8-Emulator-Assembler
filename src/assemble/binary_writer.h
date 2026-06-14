@@ -7,6 +7,6 @@
 /*
  * STUB - binary_writer function
  */
-void write_word(FILE* f, instr_t word);
+void binary_writer(FILE* f, instr_t word);
 
 #endif

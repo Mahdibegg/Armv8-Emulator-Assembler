@@ -38,7 +38,7 @@ static void second_pass(FILE *in, FILE *out, symbol_table_t symtab) {
         tokenize_line(tokens, buffer, line_number);
 
         /* Write 32-bit word to output */
-        // write_word(out, );
+        // binary_writer(out, );
 
         /* Magic number to change*/
         address += 4;
