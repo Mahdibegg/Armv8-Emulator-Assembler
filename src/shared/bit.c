@@ -53,3 +53,20 @@ bit_t sign_bit_32(word_t word) {
 bit_t sign_bit_64(dword_t dword) {
     return (bit_t) extract_bits(dword, BIT_MSB_POS_64, BIT_MSB_POS_64);
 }
+
+void word_to_bytes_le(word_t word, byte_t bytes[4]) {
+
+    // little endian extraction: least significant byte first
+    for (int i = 0; i < 4; i++) {
+        bytes[i] = (byte_t) ((word >> (i * 8)) & 0xFF);
+    }
+}
+
+word_t bytes_to_word_le(const byte_t bytes[4]) {
+
+    // little endian combine: least significant byte first
+    return (word_t) bytes[0] |
+        (word_t) bytes[1] << 8 |
+        (word_t) bytes[2] << 16 |
+        (word_t) bytes[3] << 24;
+}
