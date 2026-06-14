@@ -6,6 +6,8 @@
 #include "assemble/binary_writer.h"
 #include "assemble/encoder.h"
 
+#define MAX_LINE_LENGTH 256
+
 /*
  * First_pass function runs the first pass of a two pass
  * 
@@ -24,7 +26,7 @@ static symbol_table_t first_pass(FILE *input) {
  */
 static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
     /* magic number to change */
-    char buffer[256];
+    char buffer[MAX_LINE_LENGTH];
     size_t line_number = 0;
     addr_t address = 0;
 
