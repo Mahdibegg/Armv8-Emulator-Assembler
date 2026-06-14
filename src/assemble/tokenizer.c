@@ -5,6 +5,8 @@
 #include "assemble/tokenizer.h"
 #include "shared/types.h"
 
+#define MAX_OPERANDS 4
+
 tokenized_line_t *init_tokenized_line(void) {
 
     tokenized_line_t *line;
@@ -138,6 +140,12 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
         line->line_number = line_number;
         line->data.instruction_data.operand_count = 0;
 
+        line->data.instruction_data.operands = malloc(sizeof(token_t) * MAX_OPERANDS);
+        if (line->data.instruction_data.operands == NULL) {
+            fprintf(stderr, "Could not allocate operands");
+            abort();
+        }
+
         token_t opcode = strtok(buffer, " ");
 
         line->data.instruction_data.opcode = malloc(strlen(opcode) +1);
@@ -159,7 +167,7 @@ void tokenize_line(tokenized_line_t *line, char *buffer, size_t line_number) {
             strcpy(line->data.instruction_data.operands[line->data.instruction_data.operand_count], token);
             
             line->data.instruction_data.operand_count++;
-            strtok(NULL, ", ");
+            token = strtok(NULL, ", ");
         }
 
         return;
