@@ -3,7 +3,7 @@
 
 #include "shared/types.h"
 #include "emulate/state.h"
-#include "emulate/decode_struct.h"
+#include "shared/decode.h"
 
 // fetch instruction only reads (typealias for memory reading)
 word_t fetch_instr(const machine_state_t *state);

@@ -2,7 +2,7 @@
 #define LOAD_STORE_H
 
 #include "emulate/state.h"
-#include "emulate/decode_struct.h"
+#include "shared/decode.h"
 #include "shared/types.h"
 #include "shared/instruction_fields.h"
 
