@@ -7,7 +7,10 @@
 #include "shared/instruction_fields.h"
 #include <stdint.h>
 
-// Used in Pipeline to update the PC value appropriately
+/*
+ * Used in pipeline to update the PC value appropriately
+ * decodes the branch instruction then updates the PC on the machine state
+ */
 exec_result_t execute_branch(machine_state_t *state, decoded_instr_t instr);
 
 #endif
