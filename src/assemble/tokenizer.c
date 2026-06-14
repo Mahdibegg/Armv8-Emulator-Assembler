@@ -3,6 +3,25 @@
 #include "tokenizer.h"
 #include "../shared/types.h"
 
+tokenized_line_t *init_tokenized_line(void) {
+
+    tokenized_line_t *line;
+
+    line = malloc(sizeof(tokenized_line_t));
+
+    if (line == NULL) {
+        fprintf("ERROR: could not allocate tokenized line\n");
+        abort();
+    }
+
+    /*
+     * Initialise fields 
+     * Set line number to 0
+     * Set Token type to NULL
+     */
+    
+}
+
 void free_tokenized_line(tokenized_line_t *line) {
     /* No error since this pointer does not reference any memory */
     if (line == NULL) {
