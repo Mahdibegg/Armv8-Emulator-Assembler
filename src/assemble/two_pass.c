@@ -14,7 +14,7 @@
  * 
  * input: File input that will be read, tokenized and then build the symbol table
  */
-static symbol_table_t first_pass(FILE *input) {
+static symbol_table_t first_pass(const FILE *input) {
     return NULL;
 }
 
@@ -25,7 +25,7 @@ static symbol_table_t first_pass(FILE *input) {
  * output: File output that will be written to, should be a .bin file
  * st: Symbol table pointer that will be used for label lookup
  */
-static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
+static void second_pass(const FILE *input, FILE *output, const symbol_table_t st) {
     /* magic number to change */
     char buffer[MAX_LINE_LENGTH];
     size_t line_number = 0;
@@ -60,6 +60,6 @@ static void second_pass(FILE *input, FILE *output, symbol_table_t st) {
     free_tokenized_line(tokens);
 }
 
-void two_pass(FILE *input, FILE *output, symbol_table_t st) {
+void two_pass(const FILE *input, FILE *output, symbol_table_t st) {
     return NULL;
 }
