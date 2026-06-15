@@ -27,20 +27,9 @@ int main(int argc, char **argv) {
    }
 
    /*Open the input file in read mode and the output file in write mode*/
-   FILE *input = fopen(argv[1], "r");
+   FILE *input = open_file_or_exit(argv[1], "r");
 
-   if (input == NULL) {
-    fprintf(stderr, "ERROR: Failed to open input file in read mode\n");
-    return EXIT_FAILURE;
-   }
-
-   FILE *output = fopen(argv[2], "wb");
-
-   if (output == NULL) {
-    fprintf(stderr, "ERROR: Failed to open output file in write mode\n");
-    fclose(input);
-    return EXIT_FAILURE;
-   }
+   FILE *output = open_file_or_exit(argv[2], "wb");
 
    two_pass(input, output);
 
