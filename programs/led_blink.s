@@ -23,6 +23,16 @@ loop:
     str w1, [x0, #0x1c]         /* GPSET0 */
     movz x3, #0x800, lsl #16
 
+on_delay:
+    subs x3, x3, #1
+    b.ne on_delay
+
     /* Turn LED OFF */
     str w1, [x0, #0x28]         /* GPCLR0 */
     movz x3, #0x800, lsl #16
+
+off_delay:
+    subs x3, x3, #1
+    b.ne off_delay
+
+    b loop
