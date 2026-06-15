@@ -172,9 +172,42 @@ static const opcode_entry_t *lookup_opcode(const char *opcode) {
  * alias_opcode: Stores the alias opcode string, which should be checked using lookup
  */
 typedef struct {
-    const token_t instr_opcode;
     const token_t alias_opcode;
+    const token_t instr_opcode;
 } alias_entry_t;
+
+/*
+ * Alias tuned opcode map table
+ * All aliases map to an instruction opcode that can be found in the lookup table
+ */
+static const alias_entry_t alias_map[] = {
+    {"cmp", "subs"},
+    {"cmn", "adds"},
+    {"neg", "sub"},
+    {"negs", "subs"},
+    {"tst", "ands"},
+    {"mvn", "orn"},
+    {"mov", "orr"},
+    {"mul", "madd"},
+    {"mneg", "msub"},
+
+    {NULL, NULL}
+};
+
+/*
+ * This lookup takes the alias_opcode and finds the corresponding instr_opcode
+ * Returns pointer to matching entry or NULL if not found
+ */
+static const alias_entry_t *lookup_alias(const char *alias_opcode) {
+    /* Function return type and char should both be const, lookup function will not allow changes */
+    for (size_t i = 0; alias_map[i].alias_opcode != NULL; i++) {
+        if (strcmp(alias_opcode, alias_map[i].alias_opcode) == 0) {
+            return &alias_map[i];
+        }
+    }
+
+    return NULL;
+}
 
 /*
  * This struct allows field building helper functions to generalise the instruction field return type
