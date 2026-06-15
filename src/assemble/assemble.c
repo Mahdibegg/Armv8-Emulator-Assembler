@@ -64,9 +64,10 @@ int main(int argc, char **argv) {
 
    if (output == NULL) {
     fprintf(stderr, "ERROR: Failed to open output file in write mode\n");
+    fclose(input);
     return 1;
    }
-   
+
    two_pass(input, output);
 
    fclose(input);
