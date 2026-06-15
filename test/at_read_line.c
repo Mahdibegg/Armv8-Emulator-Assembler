@@ -31,4 +31,8 @@ int main(void) {
     assert(f != NULL);
 
     char buffer[BUFFER_SIZE];
+
+    /* TEST 1 */
+    assert(read_line(f, buffer, BUFFER_SIZE) == true);
+    assert(strcmp(buffer, "hello world") == 0);
 }
