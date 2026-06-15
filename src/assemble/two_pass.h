@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "symbol_table.h"
+#include "assemble/symbol_table.h"
 
 /*
  * Two_pass function runs both the first_pass and the second_pass
