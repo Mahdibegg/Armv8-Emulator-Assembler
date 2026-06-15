@@ -87,7 +87,7 @@
  * binary_encoding: Stores the binary bits of instruction opcode, used for filling in fields in field builder
  */
 typedef struct {
-    const char *opcode;
+    const token_t opcode;
     instr_type_t type;
     byte_t binary_encoding;
 } opcode_entry_t;
