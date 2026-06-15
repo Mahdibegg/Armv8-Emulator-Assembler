@@ -46,7 +46,7 @@ AT_BINARY_WRITER_OBJS = \
     src/shared/bit.o
 
 at_binary_writer: $(AT_BINARY_WRITER_OBJS)
-    $(CC) $(CFLAGS) -o at_binary_writer $(AT_BINARY_WRITER_OBJS)
+	$(CC) $(CFLAGS) -o at_binary_writer $(AT_BINARY_WRITER_OBJS)
 
 TEST_BINS = at_read_line at_binary_writer
 
