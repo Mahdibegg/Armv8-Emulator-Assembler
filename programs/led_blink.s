@@ -20,9 +20,9 @@ _start:
 
 loop:
     /* Turn LED ON */
+    str w1, [x0, #0x1c]         /* GPSET0 */
     mov w1, #(1 << 16)
-    str w1, [x0, #0x1c]
 
     /* Turn LED OFF */
+    str w1, [x0, #0x28]         /* GPCLR0 */
     mov w1, #(1 << 16)
-    str w1, [x0, #0x28]
