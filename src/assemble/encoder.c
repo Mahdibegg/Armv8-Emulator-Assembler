@@ -213,7 +213,7 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
  * fields: Used so that the different sections of the word can be shifted into the correct position
  * opcode: Used to know which branch struct is going to be used by string comparing
  */
-static word_t assemble_fields(instruction_fields_t *fields, const char *opcode) {
+static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t *entry) {
 
     /* 
      * Case checking instruction type and shifting bits into correct position using fixed constants (reduce magic number usage)
@@ -261,7 +261,7 @@ static word_t assemble_fields(instruction_fields_t *fields, const char *opcode) 
         }
 
         case INSTR_BRANCH: {
-            if (strcmp(opcode, "b") == 0) {
+            if (strcmp(entry->opcode, "b") == 0) {
                 uncond_branch_t f = fields->fields.uncond_branch;
 
                 word_t instr = 0;
@@ -271,19 +271,13 @@ static word_t assemble_fields(instruction_fields_t *fields, const char *opcode) 
                 return instr;
             }
 
-            if (strcmp(opcode, "br") == 0) {
+            if (strcmp(entry->opcode, "br") == 0) {
                 reg_branch_t f = fields->fields.reg_branch;
 
                 word_t instr = BR_REG_FIXED;
                 instr |= ((word_t) f.xn & FIVE_BIT_MASK) << BR_REG_XN_SHIFT;
 
                 return instr;
-            }
-
-            const opcode_entry_t *entry = lookup_opcode(opcode);
-
-            if (entry == NULL) {
-                return 0;
             }
 
             cond_branch_t f = fields->fields.cond_branch;
@@ -397,7 +391,7 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             instruction_fields_t *fields = build_fields(st, tokens, entry);
         
             /* Assemble the bits from field_builder */
-            encoded_value = assemble_fields(fields, entry->opcode);
+            encoded_value = assemble_fields(fields, entry);
 
             /* Take build field result to re-assign encoded_value using an instruction_assembler */
             break;
