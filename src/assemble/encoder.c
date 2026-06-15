@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "encoder.h"
+#include "assemble/encoder.h"
 #include "shared/instruction_fields.h"
 #include "shared/decode.h"
 
