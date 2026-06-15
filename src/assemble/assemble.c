@@ -3,20 +3,20 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <assemble/assemble.h>
+#include "assemble/assemble.h"
 
 static bool file_type_check( char *input_file,  char *output_file) {
   /*
-   * Use strchrr to get pointer to the last '.' character
-   * Check if '.' is even in the file name by checking if strchr returned a null pointer 
+   * Use strrchr to get pointer to the last '.' character
+   * Check if '.' is even in the file name by checking if strrchr returned a null pointer 
    * Then check if this matches ".s" for the input
    * And if this matches ".bin" for the output file
    * Return true or false accordingly
    */
 
-  const char *input_dot = strchrr(input_file, '.');
+  const char *input_dot = strrchr(input_file, '.');
 
-  const char *outupt_dot = strchrr(output_file, '.');
+  const char *outupt_dot = strrchr(output_file, '.');
 
   if (input_dot == NULL || outupt_dot == NULL) {
     return false;
@@ -55,8 +55,18 @@ int main(int argc, char **argv) {
    /*Open the input file in read mode and the output file in write mode*/
    FILE *input = fopen(argv[1], "r");
 
+   if (input == NULL) {
+    fprintf(stderr, "ERROR: Failed to open input file in read mode\n");
+    return 1;
+   }
+
    FILE *output = fopen(argv[2], "wb");
 
+   if (output == NULL) {
+    fprintf(stderr, "ERROR: Failed to open output file in write mode\n");
+    return 1;
+   }
+   
    two_pass(input, output);
 
    fclose(input);
