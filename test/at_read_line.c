@@ -40,7 +40,11 @@ int main(void) {
     assert(read_line(f, buffer, BUFFER_SIZE) == true);
     assert(strcmp(buffer, "foo bar") == 0);
 
-        /* TEST 3 */
+    /* TEST 3 */
     assert(read_line(f, buffer, BUFFER_SIZE) == true);
     assert(strcmp(buffer, "baz") == 0);
+
+    /* TEST 4: whitespace-only line -> should become empty string */
+    assert(read_line(f, buffer, BUFFER_SIZE) == true);
+    assert(strcmp(buffer, "") == 0);
 }
