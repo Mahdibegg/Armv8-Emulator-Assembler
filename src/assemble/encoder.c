@@ -131,7 +131,7 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
         case INSTR_BRANCH:
         case INSTR_LOAD_STORE:
         case INSTR_HALT:
-            field_block->fields.halt_instr = entry->binary_encoding;
+            /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
             break;
     }
 
@@ -139,15 +139,22 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
 };
 
 /*
- * This is a function that builds a field for any instruction type
+ * This is a function that assembles a word from a general field struct
  * 
- * st: Symbol table used for lookup (only for the branching case)
- * tokens: Used so that numerical translation from operands/opcodes can be applied
- * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
+ * fields: Used so that the different sections of the word can be shifted into the correct position
+ * opcode: Used to know which branch struct is going to be used by string comparing
  */
 static word_t assemble_fields(instruction_fields_t *fields) {
-    // TODO -------- 
-    return 0;
+    switch (fields->instr_type) {
+        // TODO ALL CASES ------------
+        case INSTR_DP_IMM:
+        case INSTR_DP_REG:
+        case INSTR_BRANCH:
+        case INSTR_LOAD_STORE:
+        case INSTR_HALT:
+            /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
+            break;
+    }
 }
 
 /*
