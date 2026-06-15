@@ -161,5 +161,19 @@ static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
 }
 
 void two_pass(FILE *input, FILE *output) {
-    return NULL;
+    /*
+     * Initialises the symbol table
+     * Runs the first pass by passing the symbol table and the input file reference
+     * Rewinds the file pointer to point to the first line in the file
+     * Runs the second pass by passing a read only reference to the symbol table, the input file reference and the output file reference
+     * Frees the memory allocated by the symbol table
+     */
+
+    symbol_table_t *st = first_pass(input);
+
+    rewind(input);
+
+    second_pass(input, output, st);
+
+    symbol_table_free(st);
 }
