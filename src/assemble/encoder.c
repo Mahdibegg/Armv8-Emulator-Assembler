@@ -108,7 +108,7 @@ typedef struct {
  * tokens: Used so that numerical translation from operands/opcodes can be applied
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
-static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t tokens, opcode_entry_t *instr_type) {
+static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t tokens, opcode_entry_t *entry) {
     /* Initialising the struct */
     instruction_fields_t *field_block = malloc(sizeof(instruction_fields_t));
 
@@ -119,15 +119,15 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
         abort();
     }
 
-    field_block->instr_type = instr_type->type;
+    field_block->instr_type = entry->type;
 
-    switch (instr_type->type) {
+    switch (entry->type) {
         case INSTR_DP_IMM:
         case INSTR_DP_REG:
         case INSTR_BRANCH:
         case INSTR_LOAD_STORE:
         case INSTR_HALT:
-            field_block->fields.halt_instr = instr_type->binary_encoding;
+            field_block->fields.halt_instr = entry->binary_encoding;
             break;
     }
 
@@ -161,10 +161,10 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             /* Alias handling function */
 
             /* Identify instruction type before selecting correct struct to fill fields in */
-            opcode_entry_t *instr_type = lookup_opcode(tokens.data.instruction_data.opcode);
+            opcode_entry_t *entry = lookup_opcode(tokens.data.instruction_data.opcode);
 
             /* No instruction found, must quit program */
-            if (instr_type->type == NULL) {
+            if (entry->type == NULL) {
                 fprintf(stderr, "ERROR: Unknown opcode '%s' on line %zu\n",
                     tokens.data.instruction_data.opcode, 
                     tokens.line_number
@@ -173,7 +173,7 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             }
 
             /* Build field for correct struct */
-            instruction_fields_t *fields = build_fields(st, tokens, instr_type);
+            instruction_fields_t *fields = build_fields(st, tokens, entry);
         
             /* Assemble the bits from field_builder */
 
