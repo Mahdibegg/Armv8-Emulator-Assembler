@@ -2,7 +2,7 @@
 #define ENCODER_H
 
 #include "symbol_table.h"
-#include "tokenizer.h"
+#include "assemble/assemble.h"
 #include "shared/types.h"
 
 /*
