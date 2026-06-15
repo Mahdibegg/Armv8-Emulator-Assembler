@@ -15,6 +15,9 @@ _start:
     /* Store back to GPFSEL1 */
     str w1, [x0, #0x04]
 
+    /* pin-16 mask for both GPSET0 and GPCLR0 (bit 16) - never changes */
+    movz w1, #0x1, lsl #16      /* 1 << 16 */
+
 loop:
     /* Turn LED ON */
     mov w1, #(1 << 16)
