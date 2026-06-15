@@ -20,3 +20,11 @@ static void create_test_file(const char *filename) {
 
     fclose(f);
 }
+
+int main(void) {
+    const char *filename = "test_input.txt";
+    create_test_file(filename);
+
+    FILE *f = fopen(filename, "r");
+    assert(f != NULL);
+}
