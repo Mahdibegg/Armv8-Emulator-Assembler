@@ -17,6 +17,11 @@ static bool file_type_check( char *input_file,  char *output_file) {
   const char *input_dot = strchr(input_file, '.');
 
   const char *outupt_dot = strchr(output_file, '.');
+
+  /*
+   * Use strcmp() to check if ".s" is in input file name
+   * Use strcmp() to chekc if ".bin" is in output file name
+   */
 }
 
 int main(int argc, char **argv) {
