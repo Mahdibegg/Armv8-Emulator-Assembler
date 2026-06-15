@@ -13,6 +13,10 @@ static bool file_type_check( char *input_file,  char *output_file) {
    * And if this matches ".bin" for the output file
    * Return true or false accordingly
    */
+
+  const char *input_dot = strchr(input_file, '.');
+
+  const char *outupt_dot = strchr(output_file, '.');
 }
 
 int main(int argc, char **argv) {
