@@ -4,29 +4,7 @@
 #include <string.h>
 
 #include "assemble/assemble.h"
-
-  /*
-   * Use strrchr to get pointer to the last '.' character
-   * Check if '.' is even in the file name by checking if strrchr returned a null pointer 
-   * Then check if this matches ".s" for the input
-   * And if this matches ".bin" for the output file
-   * Return true or false accordingly
-   */
-static bool file_type_check( const char *input_file,  const char *output_file) {
-  const char *input_dot = strrchr(input_file, '.');
-
-  const char *output_dot = strrchr(output_file, '.');
-
-  if (input_dot == NULL || output_dot == NULL) {
-    return false;
-  }
-
-  /*
-   * Use strcmp() to check if ".s" is in input file name
-   * Use strcmp() to chekc if ".bin" is in output file name
-   */
-  return ((strcmp(input_dot, ".s") == 0) && (strcmp(output_dot, ".bin") == 0));
-}
+#include "shared/file_utils.h"
 
 int main(int argc, char **argv) {
   /*
@@ -43,7 +21,7 @@ int main(int argc, char **argv) {
    }
 
    /* Check if the first input is a .s file and the second input is a .bin file*/
-   if (!file_type_check(argv[1], argv[2])) {
+   if (!has_extension(argv[1], ".s") && !has_extension(argv[2], ".bin")) {
     fprintf(stderr, "ERROR: Invalid file types for input/output\n");
     return EXIT_FAILURE;
    }
