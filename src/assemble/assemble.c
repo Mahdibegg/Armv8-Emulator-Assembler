@@ -48,6 +48,10 @@ int main(int argc, char **argv) {
     return 0;
    }
 
-   
+   two_pass(argv[1], argv[2]);
+
+   fclose(argv[1]);
+   fclose(argv[2]);
+  
   return EXIT_SUCCESS;
 }
