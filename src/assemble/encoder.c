@@ -4,8 +4,16 @@
 #include "shared/instruction_fields.h"
 #include "shared/decode.h"
 
-/* This struct stores data similar to a record */
-typedef struct {
+/* 
+ * 
+ * This struct stores data similar to a record
+ * 
+ * opcode: Stores the opcode string, which should be checked using lookup
+ * type: Stores instruction type, needed for identifying instruction type for field builder
+ * binary_encoding: Stores the binary bits of instruction opcode, used for filling in fields in field builder
+ */
+
+ typedef struct {
     const char *opcode;
     instr_type_t type;
     byte_t binary_encoding;
@@ -157,8 +165,9 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             encoded_value = assemble_directive(tokens);
             break;
         case INSTRUCTION:
-            // - TODO -------------
+            
             /* Alias handling function */
+            // TODO --------
 
             /* Identify instruction type before selecting correct struct to fill fields in */
             opcode_entry_t *entry = lookup_opcode(tokens.data.instruction_data.opcode);
@@ -176,6 +185,7 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             instruction_fields_t *fields = build_fields(st, tokens, entry);
         
             /* Assemble the bits from field_builder */
+            // TODO ----------
 
             /* Take build field result to re-assign encoded_value using an instruction_assembler */
             break;
