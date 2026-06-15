@@ -161,10 +161,13 @@ static const opcode_entry_t opcode_map[] = {
  * Looks up for opcode in opcode_map
  * Returns pointer to matching entry or NULL if not found
  */
-static const opcode_entry_t *lookup_opcode(const char *opcode) {
+static const opcode_entry_t *lookup_opcode(const char *opcode, const char *last_operand) {
     /* Function return type and char should both be const, lookup function will not allow changes */
     for (size_t i = 0; opcode_map[i].opcode != NULL; i++) {
         if (strcmp(opcode, opcode_map[i].opcode) == 0) {
+            if (last_operand[0] != '#' && opcode_map[i].type == INSTR_DP_IMM) {
+                continue;
+            }
             return &opcode_map[i];
         }
     }
@@ -564,7 +567,6 @@ word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
             encoded_value = assemble_directive(tokens);
             break;
         case INSTRUCTION:
-
             /*
              * Alias handling before opcode lookup (will update tokens buffer)
              * Tokens is NOT const only for alias_handler
@@ -572,7 +574,8 @@ word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
             alias_handler(tokens);
 
             /* Identify instruction type before selecting correct struct to fill fields in */
-            const opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode);
+            char *last_operand = tokens->data.instruction_data.operands[tokens->data.instruction_data.operand_count -1];
+            const opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode, last_operand);
 
             /* No instruction found, must quit program */
             if (entry == NULL) {
