@@ -19,3 +19,7 @@ loop:
     /* Turn LED ON */
     mov w1, #(1 << 16)
     str w1, [x0, #0x1c]
+
+    /* Turn LED OFF */
+    mov w1, #(1 << 16)
+    str w1, [x0, #0x28]
