@@ -10,8 +10,6 @@
 #include "emulate/load_store.h"
 #include "shared/bit.h"
 
-#define HALT_INSTR 0x8a000000
-
 #define OP0_HIGH 28
 #define OP0_LOW  25
 
