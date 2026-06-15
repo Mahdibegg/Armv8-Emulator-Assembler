@@ -49,11 +49,11 @@ int main(int argc, char **argv) {
    }
 
    /*Open the input file in read mode and the output file in write mode*/
-   fopen(argv[1], "r");
+   FILE *input = fopen(argv[1], "r");
 
-   fopen(argv[2], "wb");
+   FILE *output = fopen(argv[2], "wb");
 
-   two_pass(argv[1], argv[2]);
+   two_pass(input, output);
 
    fclose(argv[1]);
    fclose(argv[2]);
