@@ -5,7 +5,6 @@
 
 #include "assemble/assemble.h"
 
-static bool file_type_check( const char *input_file,  const char *output_file) {
   /*
    * Use strrchr to get pointer to the last '.' character
    * Check if '.' is even in the file name by checking if strrchr returned a null pointer 
@@ -13,7 +12,7 @@ static bool file_type_check( const char *input_file,  const char *output_file) {
    * And if this matches ".bin" for the output file
    * Return true or false accordingly
    */
-
+static bool file_type_check( const char *input_file,  const char *output_file) {
   const char *input_dot = strrchr(input_file, '.');
 
   const char *output_dot = strrchr(output_file, '.');
@@ -26,12 +25,10 @@ static bool file_type_check( const char *input_file,  const char *output_file) {
    * Use strcmp() to check if ".s" is in input file name
    * Use strcmp() to chekc if ".bin" is in output file name
    */
-
   return ((strcmp(input_dot, ".s") == 0) && (strcmp(output_dot, ".bin") == 0));
 }
 
 int main(int argc, char **argv) {
-
   /*
    * First argument - Input file (.s)
    * Second argument - Output file (.bin)
@@ -40,7 +37,6 @@ int main(int argc, char **argv) {
    * Then close files 
    * Return success or failure
    */
-
    if (argc != 3) {
     fprintf(stderr, "ERROR: Invalid number of arguments\n");
     return EXIT_FAILURE;
