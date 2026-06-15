@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <assemble/assemble.h>
 
@@ -10,6 +11,7 @@ static bool file_type_check( char *input_file,  char *output_file) {
    * Check if '.' is even in the file name by checking if strchr returned a null pointer 
    * Then check if this matches ".s" for the input
    * And if this matches ".bin" for the output file
+   * Return true or false accordingly
    */
 }
 
