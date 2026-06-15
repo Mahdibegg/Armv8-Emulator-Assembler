@@ -6,6 +6,8 @@
 
 #include "assemble/reader.h"
 
+#define BUFFER_SIZE 256
+
 /* Helper function to write a temporary test file */
 static void create_test_file(const char *filename) {
     FILE *f = fopen(filename, "w");
@@ -27,4 +29,6 @@ int main(void) {
 
     FILE *f = fopen(filename, "r");
     assert(f != NULL);
+
+    char buffer[BUFFER_SIZE];
 }
