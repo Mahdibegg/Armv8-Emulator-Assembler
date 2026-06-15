@@ -43,13 +43,13 @@ int main(int argc, char **argv) {
 
    if (argc != 3) {
     fprintf(stderr, "ERROR: Invalid number of arguments\n");
-    return 1;
+    return EXIT_FAILURE;
    }
 
    /* Check if the first input is a .s file and the second input is a .bin file*/
    if (!file_type_check(argv[1], argv[2])) {
     fprintf(stderr, "ERROR: Invalid file types for input/output\n");
-    return 1;
+    return EXIT_FAILURE;
    }
 
    /*Open the input file in read mode and the output file in write mode*/
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
    if (input == NULL) {
     fprintf(stderr, "ERROR: Failed to open input file in read mode\n");
-    return 1;
+    return EXIT_FAILURE;
    }
 
    FILE *output = fopen(argv[2], "wb");
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
    if (output == NULL) {
     fprintf(stderr, "ERROR: Failed to open output file in write mode\n");
     fclose(input);
-    return 1;
+    return EXIT_FAILURE;
    }
 
    two_pass(input, output);
@@ -74,5 +74,5 @@ int main(int argc, char **argv) {
    fclose(output);
 
    /*Successful so return 0*/
-   return 0;
+   return EXIT_SUCCESS;
 }
