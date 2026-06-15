@@ -35,4 +35,12 @@ int main(void) {
     /* TEST 1 */
     assert(read_line(f, buffer, BUFFER_SIZE) == true);
     assert(strcmp(buffer, "hello world") == 0);
+
+    /* TEST 2 */
+    assert(read_line(f, buffer, BUFFER_SIZE) == true);
+    assert(strcmp(buffer, "foo bar") == 0);
+
+        /* TEST 3 */
+    assert(read_line(f, buffer, BUFFER_SIZE) == true);
+    assert(strcmp(buffer, "baz") == 0);
 }
