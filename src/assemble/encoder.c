@@ -5,15 +5,13 @@
 #include "shared/decode.h"
 
 /* 
- * 
  * This struct stores data similar to a record
  * 
  * opcode: Stores the opcode string, which should be checked using lookup
  * type: Stores instruction type, needed for identifying instruction type for field builder
  * binary_encoding: Stores the binary bits of instruction opcode, used for filling in fields in field builder
  */
-
- typedef struct {
+typedef struct {
     const char *opcode;
     instr_type_t type;
     byte_t binary_encoding;
@@ -25,9 +23,6 @@
  * Aliases are not accounted for here
  */
 static const opcode_entry_t opcode_map[] = {
-    /* Special */
-    {"halt", INSTR_HALT, 0x00},
-
     /* Data Processing - Immediate */
     {"add", INSTR_DP_IMM, 0x0},
     {"adds", INSTR_DP_IMM, 0x1},
@@ -130,6 +125,7 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
     field_block->instr_type = entry->type;
 
     switch (entry->type) {
+        // TODO ALL CASES ------------
         case INSTR_DP_IMM:
         case INSTR_DP_REG:
         case INSTR_BRANCH:
@@ -141,6 +137,18 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
 
     return field_block;
 };
+
+/*
+ * This is a function that builds a field for any instruction type
+ * 
+ * st: Symbol table used for lookup (only for the branching case)
+ * tokens: Used so that numerical translation from operands/opcodes can be applied
+ * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
+ */
+static word_t assemble_fields(instruction_fields_t *fields) {
+    // TODO -------- 
+    return 0;
+}
 
 /*
  * Assemble_directive will assemble the directive token type
@@ -185,7 +193,7 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             instruction_fields_t *fields = build_fields(st, tokens, entry);
         
             /* Assemble the bits from field_builder */
-            // TODO ----------
+            encoded_value = assemble_fields(fields);
 
             /* Take build field result to re-assign encoded_value using an instruction_assembler */
             break;
