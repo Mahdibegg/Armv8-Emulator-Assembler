@@ -369,7 +369,7 @@ static word_t assemble_directive(const tokenized_line_t *tokens) {
     return tokens->data.directive_data.value;
 }
 
-word_t encode(symbol_table_t st, const tokenized_line_t *tokens, addr_t address) {
+word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
     /* Value to be written to .bin file */
     word_t encoded_value = 0;
 
@@ -386,6 +386,7 @@ word_t encode(symbol_table_t st, const tokenized_line_t *tokens, addr_t address)
 
             /*
              * Alias handling before opcode lookup (will update tokens buffer)
+             * Tokens is NOT const only for alias_handler
              */
             alias_handler(tokens);
 

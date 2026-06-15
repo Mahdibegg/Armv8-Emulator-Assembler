@@ -16,6 +16,6 @@
  * st: Symbol table that will be used for lookup across fully processed symbol table
  * tokens: A tokenized + partially parsed struct, tokens is the result of tokenize_line
  */
-word_t encode(symbol_table_t st, const tokenized_line_t *tokens, addr_t address);
+word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address);
 
 #endif
