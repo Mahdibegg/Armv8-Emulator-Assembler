@@ -174,6 +174,18 @@ typedef struct {
 } instruction_fields_t;
 
 /*
+ * This function will handle all the alias cases if the lookup function returns null
+ *
+ * This will check a separate table for alias lookup to change tokens buffer before opcode lookup
+ * then correct opcode is mapped to with the new transformed instruction
+ * 
+ * tokens: Reference tokens so that it can be cleared and re-tokenized with the alias map
+ */
+static void alias_handler(tokenized_line_t *tokens) {
+    return;
+};
+
+/*
  * This is a function that builds a field for any instruction type
  * 
  * st: Symbol table used for lookup (only for the branching case)
@@ -371,15 +383,18 @@ word_t encode(symbol_table_t st, const tokenized_line_t *tokens, addr_t address)
             encoded_value = assemble_directive(tokens);
             break;
         case INSTRUCTION:
-            
-            /* Alias handling function */
-            // TODO --------
+
+            /*
+             * Alias handling before opcode lookup (will update tokens buffer)
+             */
+            alias_handler(tokens);
 
             /* Identify instruction type before selecting correct struct to fill fields in */
             opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode);
 
             /* No instruction found, must quit program */
             if (entry->type == NULL) {
+                
                 fprintf(stderr, "ERROR: Unknown opcode '%s' on line %zu\n",
                     tokens->data.instruction_data.opcode, 
                     tokens->line_number
