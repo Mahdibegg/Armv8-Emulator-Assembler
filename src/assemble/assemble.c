@@ -16,9 +16,9 @@ static bool file_type_check( char *input_file,  char *output_file) {
 
   const char *input_dot = strrchr(input_file, '.');
 
-  const char *outupt_dot = strrchr(output_file, '.');
+  const char *output_dot = strrchr(output_file, '.');
 
-  if (input_dot == NULL || outupt_dot == NULL) {
+  if (input_dot == NULL || output_dot == NULL) {
     return false;
   }
 
@@ -27,7 +27,7 @@ static bool file_type_check( char *input_file,  char *output_file) {
    * Use strcmp() to chekc if ".bin" is in output file name
    */
 
-  return ((strcmp(input_dot, ".s") == 0) && (strcmp(outupt_dot, ".bin") == 0));
+  return ((strcmp(input_dot, ".s") == 0) && (strcmp(output_dot, ".bin") == 0));
 }
 
 int main(int argc, char **argv) {
