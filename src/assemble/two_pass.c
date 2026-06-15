@@ -8,7 +8,6 @@
 
 #include <string.h>
 
-#define MAX_LINE_LENGTH 256
 #define NEXT_INSTRUCTION 4
 
 /*

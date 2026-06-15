@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define MAX_LINE_LENGTH 256
 #define WORD_BITS 32
 #define DWORD_BITS 64
 
