@@ -180,13 +180,13 @@ typedef struct {
  * tokens: Used so that numerical translation from operands/opcodes can be applied
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
-static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t tokens, opcode_entry_t *entry) {
+static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t *tokens, opcode_entry_t *entry) {
     /* Initialising the struct */
     instruction_fields_t *field_block = malloc(sizeof(instruction_fields_t));
 
     if (field_block == NULL) {
         fprintf(stderr, "ERROR: Could not allocate memory to instruction fields on line %zu\n", 
-            tokens.line_number
+            tokens->line_number
         );
         abort();
     }
@@ -353,11 +353,11 @@ static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t
  * 
  * tokens: Returns the directive value from the struct union
  */
-static word_t assemble_directive(const tokenized_line_t tokens) {
-    return tokens.data.directive_data.value;
+static word_t assemble_directive(const tokenized_line_t *tokens) {
+    return tokens->data.directive_data.value;
 }
 
-word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
+word_t encode(symbol_table_t st, const tokenized_line_t *tokens, addr_t address) {
     /* Value to be written to .bin file */
     word_t encoded_value = 0;
 
@@ -366,7 +366,7 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
      * Assembling of parsed tokens are separated, since their assembly is different
      * Before INSTRUCTIONS are assembled, they must be further parsed
      */
-    switch (tokens.token_type) {
+    switch (tokens->token_type) {
         case DIRECTIVE:
             encoded_value = assemble_directive(tokens);
             break;
@@ -376,13 +376,13 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             // TODO --------
 
             /* Identify instruction type before selecting correct struct to fill fields in */
-            opcode_entry_t *entry = lookup_opcode(tokens.data.instruction_data.opcode);
+            opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode);
 
             /* No instruction found, must quit program */
             if (entry->type == NULL) {
                 fprintf(stderr, "ERROR: Unknown opcode '%s' on line %zu\n",
-                    tokens.data.instruction_data.opcode, 
-                    tokens.line_number
+                    tokens->data.instruction_data.opcode, 
+                    tokens->line_number
                 );
                 abort();
             }

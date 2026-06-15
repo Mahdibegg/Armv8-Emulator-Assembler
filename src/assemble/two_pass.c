@@ -123,7 +123,7 @@ static void second_pass(const FILE *input, FILE *output, const symbol_table_t st
             /* Encode function abstracts encoding process for both directive and instruction tokens */
             case DIRECTIVE:
             case INSTRUCTION:
-                word_t encoded_value = encode(st, *tokens);
+                word_t encoded_value = encode(st, tokens, address);
                 binary_writer(output, encoded_value);
                 break;
             /* Break LABEL and EMPTY case, continue to next line */
