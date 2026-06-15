@@ -26,10 +26,17 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
    }
 
-   /*Open the input file in read mode and the output file in write mode*/
+   /* Open the input file in read mode, if fail to open input -> program exit*/
    FILE *input = open_file_or_exit(argv[1], "r");
 
-   FILE *output = open_file_or_exit(argv[2], "wb");
+   /* Open the output file in write mode, do not use helper as input file is open, needs to be closed*/
+   FILE *output = fopen(argv[2], "wb");
+
+   if (output == NULL) {
+    fprintf(stderr, "ERROR: Failed to open output file in write mode\n");
+    fclose(input);
+    return EXIT_FAILURE;
+   }
 
    two_pass(input, output);
 
