@@ -14,74 +14,76 @@
  * First_pass function runs the first pass of a two pass
  * 
  * input: File input that will be read, tokenized and then build the symbol table
- */ // NEED TO CHANGE CONST
+ */
 static symbol_table_t first_pass(FILE *input) {
     /*
-     * Check if Input file is null 
-     * Initialise line number, current address and line buffer, symbol table and tokenized line buffer
+     * Check if input file is null 
      * WHILE Loop with readline function to read each line 
      * For each line, tokenize line, check token type and update the current address appropriately or add to symbol table if it is a label
      * Return Symbol Table
      */
-
     
     if (input == NULL) {
         fprintf(stderr, "ERROR: Input file could not be opened");
         abort();
     }
-    
      
-    size_t line_number = 0;
-
+    /* Initialise required variables for looping through file */
+    char buffer[MAX_LINE_LENGTH];
+    size_t line_number = 1;
     addr_t current_addr = 0;
-
-    char raw_line[MAX_LINE_LENGTH];
-
+    
     tokenized_line_t *tokenized_line = init_tokenized_line();
-
     symbol_table_t st = symbol_table_create();
 
-    while (read_line(input, raw_line, MAX_LINE_LENGTH)) {
+    /*
+     * Loop until end of file to which read_line returns false when EOF is reached
+     */
+    while (read_line(input, buffer, MAX_LINE_LENGTH)) {
 
         /*
          * Tokenize the raw line and store in tokenized_line
          * Pass in line_number + 1 for consistency for error messages 
          */
-        tokenize_line(tokenized_line, raw_line, line_number+1);
+        tokenize_line(tokenized_line, buffer, line_number);
 
         /* Check the token type and upadate current address appropriately */
-        if (tokenized_line->token_type == LABEL) {
-            /* 
-             * Since the line is of type LABEL, we want to add the Labelname alongise the current address into the symbol table
-             * if add returns false then duplicate is found in this line, return error plus abort
-             */
-            if(!symbol_table_add(st, tokenized_line->data.label_data.label, current_addr)) {
-                fprintf(stderr, "ERROR: Duplicate label found on line: %zu\n", line_number + 1);
-                abort();
-            }
-        } else if (tokenized_line->token_type == EMPTY) {
-            clear_tokenized_line(tokenized_line);
-            line_number++;
-            continue;
-        } else {
-            /* If the line is a directive or instruction then we simply increment the current address */
-            current_addr+= NEXT_INSTRUCTION;
+        switch (tokenized_line->token_type) {
+            case LABEL:
+                /* 
+                 * Since the line is of type LABEL, we want to add the Labelname alongise the current address into the symbol table
+                 * if add returns false then duplicate is found in this line, return error plus abort
+                 */
+                if(!symbol_table_add(st, tokenized_line->data.label_data.label, current_addr)) {
+                    fprintf(stderr, "ERROR: Duplicate label found on line: %zu\n", line_number + 1);
+                    abort();
+                }
+                break;
+
+            case EMPTY:
+                clear_tokenized_line(tokenized_line);
+                line_number++;
+                continue;
+
+            case DIRECTIVE:
+            case INSTRUCTION:
+                /* If the line is a directive or instruction then we simply increment the current address */
+                current_addr+= NEXT_INSTRUCTION;
+                break;
         }
 
         /*
          * Need to clear the tokenized line for the next iteration
          * Increment line number
          */
-
         clear_tokenized_line(tokenized_line);
         line_number++;
     }
 
     /*
      * Free the tokenized line 
-     * Return symbol table
+     * And return reference to symbol table
      */
-
     free_tokenized_line(tokenized_line);
     
     return st;
@@ -95,10 +97,22 @@ static symbol_table_t first_pass(FILE *input) {
  * st: Symbol table pointer that will be used for label lookup
  */
 static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
-    /* magic number to change */
+    /*
+     * Check for null input file
+     * Reading each line during the loop
+     * Then verify its not an empty read (empty line)
+     * Tokenize the line and encode directives/instructions through a switch case
+     */
+
+    if (input == NULL) {
+        fprintf(stderr, "ERROR: Input file could not be opened");
+        abort();
+    }
+
+    /* Initialise required variables for looping through file */
     char buffer[MAX_LINE_LENGTH];
-    size_t line_number = 0;
-    addr_t address = 0;
+    size_t line_number = 1;
+    addr_t current_addr = 0;
 
     tokenized_line_t *tokens = init_tokenized_line();
 
@@ -122,11 +136,11 @@ static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
             /* Encode function abstracts encoding process for both directive and instruction tokens */
             case DIRECTIVE:
             case INSTRUCTION:
-                word_t encoded_value = encode(st, tokens, address);
+                word_t encoded_value = encode(st, tokens, current_addr);
                 binary_writer(output, encoded_value);
 
                 /* Forward to the next address */
-                address += NEXT_INSTRUCTION;
+                current_addr += NEXT_INSTRUCTION;
                 break;
             /* Break LABEL and EMPTY case, continue to next line */
             case LABEL:
@@ -146,6 +160,6 @@ static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
     free_tokenized_line(tokens);
 }
 
-void two_pass(FILE *input, FILE *output, symbol_table_t st) {
+void two_pass(FILE *input, FILE *output) {
     return NULL;
 }
