@@ -1,5 +1,5 @@
 #ifndef ASSEMBLE_H
 #define ASSEMBLE_H
-// Just add every inclusion here before including this into the assemble.c
+/* Add all include paths so that assemble.c can indirectly include anything from assesmble.h, making the assemble.c file cleaner */
 
 #endif
