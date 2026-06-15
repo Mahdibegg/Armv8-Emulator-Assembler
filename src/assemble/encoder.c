@@ -8,7 +8,7 @@
 typedef struct {
     const char *opcode;
     instr_type_t type;
-    byte_t encoding;
+    byte_t binary_encoding;
 } opcode_entry_t;
 
 /*
@@ -67,6 +67,21 @@ static const opcode_entry_t opcode_map[] = {
 };
 
 /*
+ * Looks up for opcode in opcode_map
+ * Returns pointer to matching entry or NULL if not found
+ */
+static const opcode_entry_t *lookup_opcode(const char *opcode) {
+    /* Function return type and char should both be const, lookup function will not allow changes */
+    for (size_t i = 0; opcode_map[i].opcode != NULL; i++) {
+        if (strcmp(opcode, opcode_map[i].opcode) == 0) {
+            return &opcode_map[i];
+        }
+    }
+
+    return NULL;
+}
+
+/*
  * This struct allows field building helper functions to generalise the instruction field return type
  *
  * instr_type is an enum from a shared header file (decode) which determine the instruction type
@@ -87,39 +102,13 @@ typedef struct {
 } instruction_fields_t;
 
 /*
- * Instruction type is identified based on the opcode token from a tokenized line
- *
- * tokens: Tokens are required, so that the opcode can be checked and an instruction type is identified
- */
-static instr_type_t identify_instr_type(const tokenized_line_t tokens) {
-    instr_type_t instr_type = INSTR_UNKNOWN;
-
-    /* 
-    
-    TODO OTHER CASES
-
-    */
-
-    /* 
-     * Error handling earlier on in the build process
-     * Eliminates error handling later on in the build process
-     */
-    if (instr_type == INSTR_UNKNOWN) {
-        fprintf(stderr, "ERROR: Could not identify instruction type on line %zu\n",
-            tokens.line_number
-        );
-        abort();
-    }
-} 
-
-/*
  * This is a function that builds a field for any instruction type
  * 
  * st: Symbol table used for lookup (only for the branching case)
  * tokens: Used so that numerical translation from operands/opcodes can be applied
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
-static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t tokens, instr_type_t instr_type) {
+static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t tokens, opcode_entry_t *instr_type) {
     /* Initialising the struct */
     instruction_fields_t *field_block = malloc(sizeof(instruction_fields_t));
 
@@ -130,15 +119,15 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
         abort();
     }
 
-    field_block->instr_type = instr_type;
+    field_block->instr_type = instr_type->type;
 
-    switch (instr_type) {
+    switch (instr_type->type) {
         case INSTR_DP_IMM:
         case INSTR_DP_REG:
         case INSTR_BRANCH:
         case INSTR_LOAD_STORE:
         case INSTR_HALT:
-            field_block->fields.halt_instr = HALT_INSTR;
+            field_block->fields.halt_instr = instr_type->binary_encoding;
             break;
     }
 
@@ -172,7 +161,16 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             /* Alias handling function */
 
             /* Identify instruction type before selecting correct struct to fill fields in */
-            instr_type_t instr_type = identify_instr_type(tokens);
+            opcode_entry_t *instr_type = lookup_opcode(tokens.data.instruction_data.opcode);
+
+            /* No instruction found, must quit program */
+            if (instr_type->type == NULL) {
+                fprintf(stderr, "ERROR: Unknown opcode '%s' on line %zu\n",
+                    tokens.data.instruction_data.opcode, 
+                    tokens.line_number
+                );
+                abort();
+            }
 
             /* Build field for correct struct */
             instruction_fields_t *fields = build_fields(st, tokens, instr_type);
