@@ -1,6 +1,6 @@
 #include "assemble/two_pass.h"
 #include "shared/types.h"
-#include "tokenizer.h"
+#include "assemble/tokenizer.h"
 #include "assemble/symbol_table.h"
 #include "assemble/reader.h"
 #include "assemble/binary_writer.h"
