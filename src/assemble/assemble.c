@@ -4,7 +4,9 @@
 
 #include <assemble/assemble.h>
 
-
+static bool file_type_check( char *input_file,  char *output_file) {
+  return false;
+}
 
 int main(int argc, char **argv) {
 
