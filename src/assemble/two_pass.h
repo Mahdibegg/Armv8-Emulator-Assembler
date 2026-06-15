@@ -11,8 +11,7 @@
  * 
  * input: File input that will be read, tokenized, encoded then written
  * output: File output that will be written to, should be a .bin file
- * st: Symbol table pointer that will be used for label lookup
  */
-void two_pass(const FILE *input, FILE *output, symbol_table_t st);
+void two_pass(const FILE *input, FILE *output);
 
 #endif
