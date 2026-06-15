@@ -39,8 +39,16 @@ AT_READ_LINE_OBJS = \
 
 at_read_line: $(AT_READ_LINE_OBJS)
 	$(CC) $(CFLAGS) -o at_read_line $(AT_READ_LINE_OBJS)
-	
-TEST_BINS = at_read_line
+
+AT_BINARY_WRITER_OBJS = \
+    test/at_binary_writer.o \
+    src/assemble/binary_writer.o \
+    src/shared/bit.o
+
+at_binary_writer: $(AT_BINARY_WRITER_OBJS)
+    $(CC) $(CFLAGS) -o at_binary_writer $(AT_BINARY_WRITER_OBJS)
+
+TEST_BINS = at_read_line at_binary_writer
 
 test: $(TEST_BINS)
 
@@ -49,4 +57,4 @@ test: $(TEST_BINS)
 clean:
 	find src -name '*.o' -delete
 	find test -name '*.o' -delete
-	$(RM) assemble emulate $(TEST_BINS) test_input.txt
+	$(RM) assemble emulate $(TEST_BINS) test_input.txt test_binary_output.bin
