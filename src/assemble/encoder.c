@@ -25,6 +25,31 @@ typedef struct {
 } instruction_fields_t;
 
 /*
+ * Instruction type is identified based on the opcode token from a tokenized line
+ *
+ * tokens: Tokens are required, so that the opcode can be checked and an instruction type is identified
+ */
+static instr_type_t identify_instr_type(const tokenized_line_t tokens) {
+    instr_type_t instr_type = INSTR_UNKNOWN;
+
+    /* 
+    
+    TODO OTHER CASES
+
+    */
+
+    /* 
+     * Error handling earlier on in the build process
+     * Eliminates error handling later on in the build process
+     */
+    if (instr_type == INSTR_UNKNOWN) {
+        fprintf(stderr, "ERROR: Could not identify instruction type on line %zu\n",
+            tokens.line_number
+        );
+    }
+} 
+
+/*
  * This is a function that builds a field for any instruction type
  * 
  * st: Symbol table used for lookup (only for the branching case)
@@ -52,10 +77,6 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
         case INSTR_HALT:
             field_block->fields.halt_instr = HALT_INSTR;
             break;
-        default:
-            fprintf(stderr, "ERROR: Could not identify instruction type on line %zu\n",
-            tokens.line_number
-        );
     }
 
     return field_block;
@@ -88,10 +109,10 @@ word_t encode(symbol_table_t st, const tokenized_line_t tokens) {
             /* Alias handling function */
 
             /* Identify instruction type before selecting correct struct to fill fields in */
-            instr_type_t instr_type;
+            instr_type_t instr_type = identify_instr_type(tokens);
 
             /* Build field for correct struct */
-            build_fields(st, tokens, instr_type);
+            instruction_fields_t *fields = build_fields(st, tokens, instr_type);
         
             /* Assemble the bits from field_builder */
 
