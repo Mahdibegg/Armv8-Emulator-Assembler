@@ -5,7 +5,12 @@
 #include <assemble/assemble.h>
 
 static bool file_type_check( char *input_file,  char *output_file) {
-  return false;
+  /*
+   * Use strchr to get pointer to the '.' character
+   * Check if '.' is even in the file name by checking if strchr returned a null pointer 
+   * Then check if this matches ".s" for the input
+   * And if this matches ".bin" for the output file
+   */
 }
 
 int main(int argc, char **argv) {
