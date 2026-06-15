@@ -1,6 +1,7 @@
 #include "emulate/io.h"
 #include "shared/types.h"
 #include "emulate/memory.h"
+#include "shared/file_utils.h"
 
 /*
  * Helper function for checking file format
@@ -45,13 +46,13 @@ void validate_args(int argc, char **argv, char **input, char **output) {
     }
 
     /* validate input file extension using helper function ends_with */
-    if (!ends_with(*input, ".bin")) {
+    if (!has_extension(*input, ".bin")) {
         fprintf(stderr, "File input error: input file must have .bin extension\nUse: ./emulate <filename>.bin\n");
         exit(EXIT_FAILURE);
     }
 
     /* validate output file extension (if not provided short circuit) */
-    if (*output && !ends_with(*output, ".out")) {
+    if (*output && !has_extension(*output, ".out")) {
         fprintf(stderr, "File output error: output file must have .out extension\nUse: ./emulate <filename>.bin <filename>.out\n");
         exit(EXIT_FAILURE);
     }
