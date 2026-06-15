@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "encoder.h"
 #include "shared/instruction_fields.h"
@@ -72,6 +73,18 @@
 #define BR_UNCOND_FIXED 0x5
 #define BR_REG_FIXED 0xD61F0000
 #define BR_COND_FIXED 0x54
+
+/* Prevent buffer overflows when concatenating for instruction reformatting in alias handler */
+#define SAFE_STRCAT(dst, src, remaining) \
+    do { \
+        size_t len = strlen(src); \
+        if (len >= remaining) { \
+            fprintf(stderr, "ERROR: Instruction buffer overflow during instruction re format\n"); \
+            abort(); \
+        } \
+        strncat(dst, src, remaining); \
+        remaining -= len; \
+    } while (0)
 
 /*
  * Opcode map + lookup section
@@ -241,12 +254,98 @@ typedef struct {
  *
  * This will check a separate table for alias lookup to change tokens buffer before opcode lookup
  * then correct opcode is mapped to with the new transformed instruction
- * 
+ *
  * tokens: Reference tokens so that it can be cleared and re-tokenized with the alias map
  */
 static void alias_handler(tokenized_line_t *tokens) {
-    return;
-};
+    /* First check if opcode in tokens is an alias to continue */
+    const alias_entry_t *alias_entry = lookup_alias(tokens->data.instruction_data.opcode);
+
+    if (alias_entry != NULL) {
+        /* Building re-formatted instruction with real opcode */
+        char instruction[MAX_LINE_LENGTH];
+        instruction[0] = '\0'; /* Strcat requires null terminator to be used */
+
+        /* Make operand access more easier than constant struct to union to field access */
+        token_t *operands = tokens->data.instruction_data.operands;
+
+        const char *width_suffix;
+
+        /* 
+         * Single character check, no strcmp required
+         * Checking if zero register has to be x or w
+         */
+        if (operands[0][0] == 'x') {
+            width_suffix = "x";
+        } else if (operands[0][0] == 'w') {
+            width_suffix = "w";
+        } else {
+            fprintf(stderr, "ERROR: Invalid register width in alias on line: %zu\n",
+                tokens->line_number
+            );
+            abort();
+        }
+
+        /* Prevent buffer overflow for instruction */
+        size_t remaining = MAX_LINE_LENGTH - 1;
+
+        /* Non NULL pointer means instr_opcode is not null since map is already defined */
+        SAFE_STRCAT(instruction, alias_entry->instr_opcode, remaining);
+        SAFE_STRCAT(instruction, " ", remaining);
+
+        /*
+         * Reformat the instruction by concatenating to buffer
+         * Bunching cases that have similar real instruction formats
+         */
+        if (strcmp(alias_entry->alias_opcode, "cmp") == 0 ||
+            strcmp(alias_entry->alias_opcode, "cmn") == 0 ||
+            strcmp(alias_entry->alias_opcode, "tst") == 0) {
+            /* subs/adds/ands rzr, rn, <op2> */
+
+            SAFE_STRCAT(instruction, width_suffix, remaining);
+            SAFE_STRCAT(instruction, "zr, ", remaining);
+            SAFE_STRCAT(instruction, operands[0], remaining);
+            SAFE_STRCAT(instruction, ", ", remaining);
+            SAFE_STRCAT(instruction, operands[1], remaining);
+        } else if (strcmp(alias_entry->alias_opcode, "neg") == 0 ||
+                strcmp(alias_entry->alias_opcode, "negs") == 0 ||
+                strcmp(alias_entry->alias_opcode, "mvn") == 0) {
+            /* sub/subs/orn rd, rzr, <op2> */
+
+            SAFE_STRCAT(instruction, operands[0], remaining);
+            SAFE_STRCAT(instruction, ", ", remaining);
+            SAFE_STRCAT(instruction, width_suffix, remaining);
+            SAFE_STRCAT(instruction, "zr, ", remaining);
+            SAFE_STRCAT(instruction, operands[1], remaining);
+        } else if (strcmp(alias_entry->alias_opcode, "mov") == 0) {
+            /* orr rd, rzr, rm */
+
+            SAFE_STRCAT(instruction, operands[0], remaining);
+            SAFE_STRCAT(instruction, ", ", remaining);
+            SAFE_STRCAT(instruction, width_suffix, remaining);
+            SAFE_STRCAT(instruction, "zr, ", remaining);
+            SAFE_STRCAT(instruction, operands[1], remaining);
+        } else if (strcmp(alias_entry->alias_opcode, "mul") == 0 ||
+                strcmp(alias_entry->alias_opcode, "mneg") == 0) {
+            /* madd/msub rd, rn, rm, rzr */
+
+            SAFE_STRCAT(instruction, operands[0], remaining);
+            SAFE_STRCAT(instruction, ", ", remaining);
+            SAFE_STRCAT(instruction, operands[1], remaining);
+            SAFE_STRCAT(instruction, ", ", remaining);
+            SAFE_STRCAT(instruction, operands[2], remaining);
+            SAFE_STRCAT(instruction, ", ", remaining);
+            SAFE_STRCAT(instruction, width_suffix, remaining);
+            SAFE_STRCAT(instruction, "zr", remaining);
+        }
+
+        size_t line_number = tokens->line_number;
+
+        /* Clear and re tokenize line through its reference */
+        clear_tokenized_line(tokens);
+        tokenize_line(tokens, instruction, line_number);
+    }
+}
 
 /*
  * This is a function that builds a field for any instruction type
