@@ -51,4 +51,18 @@ int main(void) {
     /* TEST 5: empty line -> should become empty string */
     assert(read_line(f, buffer, BUFFER_SIZE) == true);
     assert(strcmp(buffer, "") == 0);
+
+    /* TEST 6 */
+    assert(read_line(f, buffer, BUFFER_SIZE) == true);
+    assert(strcmp(buffer, "last line") == 0);
+
+    /* TEST EOF */
+    assert(read_line(f, buffer, BUFFER_SIZE) == false);
+    assert(strcmp(buffer, "") == 0);
+
+    fclose(f);
+
+    printf("All tests passed!\n");
+
+    return 0;
 }
