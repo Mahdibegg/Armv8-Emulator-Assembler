@@ -4,23 +4,6 @@
 #include "shared/file_utils.h"
 
 /*
- * Helper function for checking file format
- * used to output error if suffix is not correct
- */
-static int ends_with(const char *str, const char *suffix) {
-    if (!str || !suffix) return 0;
-
-    /* string lengths and suffix lengths for comparison */
-    size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
-
-    if (lensuffix > lenstr) return 0;
-
-    /* move along string until reach where suffix should be, and compare */
-    return strcmp(str + (lenstr - lensuffix), suffix) == 0;
-}
-
-/*
  * Validate arguments passed in
  * length of arguments
  */
