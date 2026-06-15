@@ -23,7 +23,7 @@ static bool file_type_check( char *input_file,  char *output_file) {
    * Use strcmp() to chekc if ".bin" is in output file name
    */
 
-  return ((strcmp(input_dot, ".s") == 0) && (strcmp(output_file, ".bin") == 0));
+  return ((strcmp(input_dot, ".s") == 0) && (strcmp(outupt_dot, ".bin") == 0));
 }
 
 int main(int argc, char **argv) {
