@@ -21,8 +21,8 @@ _start:
 loop:
     /* Turn LED ON */
     str w1, [x0, #0x1c]         /* GPSET0 */
-    mov w1, #(1 << 16)
+    movz x3, #0x800, lsl #16
 
     /* Turn LED OFF */
     str w1, [x0, #0x28]         /* GPCLR0 */
-    mov w1, #(1 << 16)
+    movz x3, #0x800, lsl #16
