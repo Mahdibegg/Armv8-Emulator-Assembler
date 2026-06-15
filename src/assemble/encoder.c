@@ -4,6 +4,68 @@
 #include "shared/instruction_fields.h"
 #include "shared/decode.h"
 
+/* This struct stores data similar to a record */
+typedef struct {
+    const char *opcode;
+    instr_type_t type;
+    byte_t encoding;
+} opcode_entry_t;
+
+/*
+ * This array uses the record-like struct to map to the relative opcode byte and instruction type
+ * Hence a simple lookup loop will keep the table simple
+ * Aliases are not accounted for here
+ */
+static const opcode_entry_t opcode_map[] = {
+    /* Special */
+    {"halt", INSTR_HALT, 0x00},
+
+    /* Data Processing - Immediate */
+    {"add", INSTR_DP_IMM, 0x0},
+    {"adds", INSTR_DP_IMM, 0x1},
+    {"sub", INSTR_DP_IMM, 0x2},
+    {"subs", INSTR_DP_IMM, 0x3},
+
+    {"movn", INSTR_DP_IMM, 0x0},
+    {"movz", INSTR_DP_IMM, 0x2},
+    {"movk", INSTR_DP_IMM, 0x3},
+
+    /* Data Processing - Register */
+    {"add", INSTR_DP_REG, 0x0},
+    {"adds", INSTR_DP_REG, 0x1},
+    {"sub", INSTR_DP_REG, 0x2},
+    {"subs", INSTR_DP_REG, 0x3},
+
+    {"and", INSTR_DP_REG, 0x0},
+    {"bic", INSTR_DP_REG, 0x1},
+    {"orr", INSTR_DP_REG, 0x2},
+    {"orn", INSTR_DP_REG, 0x3},
+    {"eor", INSTR_DP_REG, 0x4},
+    {"eon", INSTR_DP_REG, 0x5},
+    {"ands", INSTR_DP_REG, 0x6},
+    {"bics", INSTR_DP_REG, 0x7},
+
+    {"madd", INSTR_DP_REG, 0x0},
+    {"msub", INSTR_DP_REG, 0x1},
+
+    /* Load store */
+    {"ldr", INSTR_LOAD_STORE, 0x1},
+    {"str", INSTR_LOAD_STORE, 0x0},
+
+    /* Branch */
+    {"b", INSTR_BRANCH, 0x0},
+    {"br", INSTR_BRANCH, 0x1},
+    {"beq", INSTR_BRANCH, 0x0},
+    {"bne", INSTR_BRANCH, 0x1},
+    {"bge", INSTR_BRANCH, 0xA},
+    {"blt", INSTR_BRANCH, 0xB},
+    {"bgt", INSTR_BRANCH, 0xC},
+    {"ble", INSTR_BRANCH, 0xD},
+    {"bal", INSTR_BRANCH, 0xE},
+
+    {NULL, INSTR_UNKNOWN, 0x0}
+};
+
 /*
  * This struct allows field building helper functions to generalise the instruction field return type
  *
@@ -46,6 +108,7 @@ static instr_type_t identify_instr_type(const tokenized_line_t tokens) {
         fprintf(stderr, "ERROR: Could not identify instruction type on line %zu\n",
             tokens.line_number
         );
+        abort();
     }
 } 
 
