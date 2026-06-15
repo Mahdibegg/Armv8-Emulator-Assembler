@@ -73,6 +73,12 @@
 #define BR_REG_FIXED 0xD61F0000
 #define BR_COND_FIXED 0x54
 
+/*
+ * Opcode map + lookup section
+ * 
+ * Each opcode string is mapped to its respective encoding and instruction type
+ */
+
 /* 
  * This struct stores data similar to a record
  * 
@@ -152,6 +158,23 @@ static const opcode_entry_t *lookup_opcode(const char *opcode) {
 
     return NULL;
 }
+
+/*
+ * Alias map + lookup section
+ * 
+ * Each alias opcode string is mapped to its respective real opcode mnemonic string
+ */
+
+/* 
+ * This struct stores data similar to a record
+ * 
+ * instr_opcode: Stores the instruction mnemonic (ones not in opcode_map) 
+ * alias_opcode: Stores the alias opcode string, which should be checked using lookup
+ */
+typedef struct {
+    const token_t instr_opcode;
+    const token_t alias_opcode;
+} alias_entry_t;
 
 /*
  * This struct allows field building helper functions to generalise the instruction field return type
