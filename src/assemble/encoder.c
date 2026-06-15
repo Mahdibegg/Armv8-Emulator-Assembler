@@ -357,7 +357,7 @@ static void alias_handler(tokenized_line_t *tokens) {
  * tokens: Used so that numerical translation from operands/opcodes can be applied
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
-static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t *tokens, const opcode_entry_t *entry) {
+static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t *tokens, const opcode_entry_t *entry, addr_t current_addr) {
     /* Initialising the struct (should free this later on) */
     instruction_fields_t *field_block = malloc(sizeof(instruction_fields_t));
 
@@ -553,7 +553,7 @@ static word_t assemble_directive(const tokenized_line_t *tokens) {
     return tokens->data.directive_data.value;
 }
 
-word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
+word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t current_addr) {
     /* Value to be written to .bin file */
     word_t encoded_value = 0;
 
@@ -588,7 +588,7 @@ word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
             }
 
             /* Build field for correct struct */
-            instruction_fields_t *fields = build_fields(st, tokens, entry);
+            instruction_fields_t *fields = build_fields(st, tokens, entry, current_addr);
         
             /* Assemble the bits from field_builder */
             encoded_value = assemble_fields(fields, entry, tokens->line_number);
