@@ -47,4 +47,8 @@ int main(void) {
     /* TEST 4: whitespace-only line -> should become empty string */
     assert(read_line(f, buffer, BUFFER_SIZE) == true);
     assert(strcmp(buffer, "") == 0);
+
+    /* TEST 5: empty line -> should become empty string */
+    assert(read_line(f, buffer, BUFFER_SIZE) == true);
+    assert(strcmp(buffer, "") == 0);
 }
