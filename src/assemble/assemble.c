@@ -1,4 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
+
+#include <assemble/assemble.h>
 
 int main(int argc, char **argv) {
 
@@ -10,5 +13,13 @@ int main(int argc, char **argv) {
    * Then close files 
    * Return success or failure
    */
+
+   if (argc != 3) {
+    fprintf(stderr, "ERROR: Invalid number of arguments\n");
+    return 0;
+   }
+
+   /* Check if the first input is a .s file and the second input is a .bin file*/
+
   return EXIT_SUCCESS;
 }
