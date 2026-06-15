@@ -1,3 +1,6 @@
+#ifndef FILE_UTILS_H
+#define FILE_UTILS_H
+
 #include <stdbool.h>
 
 /*
@@ -7,3 +10,5 @@
 * Return true or false accordingly
 */
 bool has_extension(const char *filename, const char *ext);
+
+#endif
