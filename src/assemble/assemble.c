@@ -14,9 +14,13 @@ static bool file_type_check( char *input_file,  char *output_file) {
    * Return true or false accordingly
    */
 
-  const char *input_dot = strchr(input_file, '.');
+  const char *input_dot = strchrr(input_file, '.');
 
-  const char *outupt_dot = strchr(output_file, '.');
+  const char *outupt_dot = strchrr(output_file, '.');
+
+  if (input_dot == NULL || outupt_dot == NULL) {
+    return false;
+  }
 
   /*
    * Use strcmp() to check if ".s" is in input file name
