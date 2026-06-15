@@ -138,7 +138,7 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
     return false;
 }
 
-addr_t symbol_table_get(symbol_table_t st, const char *label) {
+addr_t symbol_table_get(const symbol_table_t st, const char *label) {
     /* iterate through symbol table, find the pair and return the address */
     for (size_t i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {

@@ -144,7 +144,6 @@ static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
                 break;
             /* Break LABEL and EMPTY case, continue to next line */
             case LABEL:
-                break;
             case EMPTY:
                 break;
             default:

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "encoder.h"
 #include "shared/instruction_fields.h"
@@ -357,24 +358,65 @@ static void alias_handler(tokenized_line_t *tokens) {
  * tokens: Used so that numerical translation from operands/opcodes can be applied
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
-static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t *tokens, const opcode_entry_t *entry, addr_t current_addr) {
+static instruction_fields_t *build_fields(const symbol_table_t st, const tokenized_line_t *tokens, const opcode_entry_t *entry, const addr_t current_addr) {    
+    /* Required pre conditions in order to continue building fields, prevents incorrect final executable */
+    assert(st != NULL);
+    assert(tokens != NULL);
+    assert(entry != NULL);
+    
     /* Initialising the struct (should free this later on) */
-    instruction_fields_t *field_block = malloc(sizeof(instruction_fields_t));
+    instruction_fields_t *fields = malloc(sizeof(instruction_fields_t));
 
-    if (field_block == NULL) {
+    if (fields == NULL) {
         fprintf(stderr, "ERROR: Could not allocate memory to instruction fields on line %zu\n", 
             tokens->line_number
         );
         abort();
     }
 
-    field_block->instr_type = entry->type;
+    fields->instr_type = entry->type;
 
     switch (entry->type) {
-        // TODO ALL CASES ------------
         case INSTR_DP_IMM:
         case INSTR_DP_REG:
         case INSTR_BRANCH:
+            /*  
+             * First make sure operands size is equal to 1, otherwise abort()
+             * Different structs for the three types of branching (b, br, b.<cond>) to be filled
+             * However the .offset field is common to cond and uncond branch instructions
+             */
+
+            if (tokens->data.instruction_data.operand_count != 1) {
+                fprintf(stderr, "ERROR: Invalid number of operands for branch b on line %zu\n",
+                    tokens->line_number
+                );
+                abort();
+            }
+
+            /* Label string is now accessible */
+            token_t label = tokens->data.instruction_data.operands[0];
+
+            /* 
+             * Symbol_table_get has its own error handling
+             * If the label didn't exist it would throw the correct error message
+             * So the missing label doesn't need to be handled here 
+             */
+            dword_t offset = current_addr - symbol_table_get(st, label);
+
+            if (strcmp(entry->opcode, "b") == 0) {
+                /* b <literal> where <literal> is an offset calculated */
+
+            } else if (strcmp(entry->opcode, "br") == 0) {
+                /* b Xn where Xn is a 64 bit register  calculated */
+
+            } else {
+                /* 
+                 * b.<cond> <literal> case
+                 * <literal> is the offset calculate
+                 * <cond> should be the opcode for the condition selected
+                 */
+            }
+            break;
         case INSTR_LOAD_STORE:
         case INSTR_HALT:
             /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
@@ -387,7 +429,7 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
             abort();
     }
 
-    return field_block;
+    return fields;
 }
 
 /*
@@ -553,7 +595,7 @@ static word_t assemble_directive(const tokenized_line_t *tokens) {
     return tokens->data.directive_data.value;
 }
 
-word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t current_addr) {
+word_t encode(const symbol_table_t st, tokenized_line_t *tokens, const addr_t current_addr) {
     /* Value to be written to .bin file */
     word_t encoded_value = 0;
 
