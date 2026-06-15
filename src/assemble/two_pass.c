@@ -15,7 +15,7 @@
  * 
  * input: File input that will be read, tokenized and then build the symbol table
  */ // NEED TO CHANGE CONST
-static symbol_table_t first_pass(const FILE *input) {
+static symbol_table_t first_pass(FILE *input) {
     /*
      * Check if Input file is null 
      * Initialise line number, current address and line buffer, symbol table and tokenized line buffer
@@ -94,7 +94,7 @@ static symbol_table_t first_pass(const FILE *input) {
  * output: File output that will be written to, should be a .bin file
  * st: Symbol table pointer that will be used for label lookup
  */
-static void second_pass(const FILE *input, FILE *output, const symbol_table_t st) {
+static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
     /* magic number to change */
     char buffer[MAX_LINE_LENGTH];
     size_t line_number = 0;
@@ -124,6 +124,9 @@ static void second_pass(const FILE *input, FILE *output, const symbol_table_t st
             case INSTRUCTION:
                 word_t encoded_value = encode(st, tokens, address);
                 binary_writer(output, encoded_value);
+
+                /* Forward to the next address */
+                address += NEXT_INSTRUCTION;
                 break;
             /* Break LABEL and EMPTY case, continue to next line */
             case LABEL:
@@ -137,15 +140,12 @@ static void second_pass(const FILE *input, FILE *output, const symbol_table_t st
                 abort();
         }
 
-        /* Magic number to change*/
-        address += NEXT_INSTRUCTION;
-
         line_number++;
     }
 
     free_tokenized_line(tokens);
 }
 
-void two_pass(const FILE *input, FILE *output, symbol_table_t st) {
+void two_pass(FILE *input, FILE *output, symbol_table_t st) {
     return NULL;
 }
