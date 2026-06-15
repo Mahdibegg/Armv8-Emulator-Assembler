@@ -14,7 +14,8 @@ ASSEMBLE_OBJS = \
 	src/assemble/assemble.o \
 	src/assemble/symbol_table.o \
 	src/assemble/reader.o \
-	src/shared/bit.o
+	src/shared/bit.o \
+	src/shared/file_utils.o
 
 assemble: $(ASSEMBLE_OBJS)
 	$(CC) $(CFLAGS) -o assemble $(ASSEMBLE_OBJS)
@@ -28,7 +29,8 @@ EMULATE_OBJS = \
 	src/emulate/branch.o \
 	src/emulate/data_processing.o \
 	src/emulate/load_store.o \
-	src/shared/bit.o
+	src/shared/bit.o \
+	src/shared/file_utils.o
 
 emulate: $(EMULATE_OBJS)
 	$(CC) $(CFLAGS) -o emulate $(EMULATE_OBJS)
