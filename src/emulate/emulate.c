@@ -7,13 +7,6 @@ int main(int argc, char **argv) {
 
     validate_args(argc, argv, &inputfile, &outputfile);
 
-    /*
-     * selecting output
-     * IMPORTANT! if an output file exists, file is opened and will close at the end
-     * if no output file, using stdout, not recommended to fopen or fclose stdout
-     */
-    FILE *out = setup_output(outputfile);
-
     /* initialising machine state */
     machine_state_t state;   /* dont initialise anything */
 
@@ -26,6 +19,13 @@ int main(int argc, char **argv) {
 
     /* load input file into state memory */
     binary_loader(&state, inputfile);
+
+    /*
+     * selecting output
+     * IMPORTANT! if an output file exists, file is opened and will close at the end
+     * if no output file, using stdout, not recommended to fopen or fclose stdout
+     */
+    FILE *out = setup_output(outputfile);
 
     /* run FDE cycle until halt */
     run_pipeline(&state);
