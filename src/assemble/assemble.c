@@ -55,8 +55,8 @@ int main(int argc, char **argv) {
 
    two_pass(input, output);
 
-   fclose(argv[1]);
-   fclose(argv[2]);
+   fclose(input);
+   fclose(output);
 
    /*Successful so return 0*/
    return 0;
