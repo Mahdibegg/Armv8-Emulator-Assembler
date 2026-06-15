@@ -4,6 +4,7 @@
 #include "assemble/symbol_table.h"
 #include "assemble/assemble.h"
 #include "shared/types.h"
+#include "assemble/tokenizer.h"
 
 /*
  * Returns word to be written to .bin file
