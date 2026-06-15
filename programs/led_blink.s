@@ -1,5 +1,3 @@
-.global _start
-
 _start:
     /* Load GPIO base address 0x3f20 in x0 */
     movz x0, #0                 
