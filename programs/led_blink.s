@@ -16,4 +16,6 @@ _start:
     str w1, [x0, #0x04]
 
 loop:
-    b loop
+    /* Turn LED ON */
+    mov w1, #(1 << 16)
+    str w1, [x0, #0x1c]
