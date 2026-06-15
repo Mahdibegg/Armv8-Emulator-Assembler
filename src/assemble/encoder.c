@@ -354,8 +354,8 @@ static void alias_handler(tokenized_line_t *tokens) {
  * tokens: Used so that numerical translation from operands/opcodes can be applied
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
-static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t *tokens, opcode_entry_t *entry) {
-    /* Initialising the struct */
+static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_line_t *tokens, const opcode_entry_t *entry) {
+    /* Initialising the struct (should free this later on) */
     instruction_fields_t *field_block = malloc(sizeof(instruction_fields_t));
 
     if (field_block == NULL) {
@@ -376,10 +376,16 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
         case INSTR_HALT:
             /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
             break;
+
+        default:
+            fprintf(stderr, "ERROR: Unhandled instruction type on line %zu\n",
+                tokens->line_number
+            );
+            abort();
     }
 
     return field_block;
-};
+}
 
 /*
  * This is a function that assembles a word from a general field struct
@@ -387,13 +393,12 @@ static instruction_fields_t *build_fields(symbol_table_t st, const tokenized_lin
  * fields: Used so that the different sections of the word can be shifted into the correct position
  * opcode: Used to know which branch struct is going to be used by string comparing
  */
-static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t *entry) {
+static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t *entry, size_t line_number) {
 
     /* 
      * Case checking instruction type and shifting bits into correct position using fixed constants (reduce magic number usage)
      * Using f as a copy of imm_instr reference in fields to keep each line shorter
      */
-
     switch (fields->instr_type) {
         case INSTR_DP_IMM: {
             imm_instr_fields_t f = fields->fields.imm_instr;
@@ -509,17 +514,31 @@ static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t
 
                 case LS_LOAD_LITERAL:
                     break;
+
+                default:
+                    fprintf(stderr, "ERROR: Unknown load/store type on line %zu\n",
+                        line_number);
+                    abort();
             }
 
             return instr;
         }
 
         case INSTR_HALT:
-            /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
+            /* 
+             * Case is handled by default as "and" gets looked up and handled via dp_reg logical execution
+             * For safety we can just also return the halt instruction
+             */
+            fields->fields.halt_instr = HALT_INSTR;
+            return HALT_INSTR;
             break;
-    }
 
-    return 0;
+        default:
+            fprintf(stderr, "ERROR: Unhandled instruction type on line %zu\n",
+                line_number
+            );
+            abort();
+    }
 }
 
 /*
@@ -536,7 +555,7 @@ word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
     word_t encoded_value = 0;
 
     /* 
-     * Identify DIRECTIVE, LABEL, INSTRUCTION, EMPTY token types 
+     * Identify DIRECTIVE, INSTRUCTION token types
      * Assembling of parsed tokens are separated, since their assembly is different
      * Before INSTRUCTIONS are assembled, they must be further parsed
      */
@@ -553,10 +572,10 @@ word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
             alias_handler(tokens);
 
             /* Identify instruction type before selecting correct struct to fill fields in */
-            opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode);
+            const opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode);
 
             /* No instruction found, must quit program */
-            if (entry->type == NULL) {
+            if (entry == NULL) {
                 
                 fprintf(stderr, "ERROR: Unknown opcode '%s' on line %zu\n",
                     tokens->data.instruction_data.opcode, 
@@ -569,10 +588,24 @@ word_t encode(symbol_table_t st, tokenized_line_t *tokens, addr_t address) {
             instruction_fields_t *fields = build_fields(st, tokens, entry);
         
             /* Assemble the bits from field_builder */
-            encoded_value = assemble_fields(fields, entry);
+            encoded_value = assemble_fields(fields, entry, tokens->line_number);
+
+            free(fields);
 
             /* Take build field result to re-assign encoded_value using an instruction_assembler */
             break;
+
+        case EMPTY:
+        case LABEL:
+            /* 
+             * Labels and empty spaces produce no output in second pass
+             * If they are going to become encoded these cases should cause an error 
+             * Otherwise the binary will give unexpected outputs if something is returned
+             */
+        default:
+            fprintf(stderr, "ERROR: Unexpected token type to be encoded on line %zu\n",
+                tokens->line_number);
+            abort();
     }    
 
     return encoded_value;
