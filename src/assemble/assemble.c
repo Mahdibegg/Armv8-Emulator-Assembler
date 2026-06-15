@@ -43,6 +43,11 @@ int main(int argc, char **argv) {
    }
 
    /* Check if the first input is a .s file and the second input is a .bin file*/
+   if (!file_type_check(argv[1], argv[2])) {
+    fprintf(stderr, "ERROR: Invalid file types for input/output\n");
+    return 0;
+   }
 
+   
   return EXIT_SUCCESS;
 }
