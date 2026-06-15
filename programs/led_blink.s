@@ -7,7 +7,7 @@ _start:
     ldr w1, [x0, #0x04]
 
     /* Set GPIO16 to output (001 in bits 20–18) */
-    mov w2, #(1 << 18)
+    movz w2, #0x4, lsl #16
     orr w1, w1, w2
 
     /* Store back to GPFSEL1 */
