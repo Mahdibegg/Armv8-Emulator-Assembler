@@ -5,7 +5,7 @@
 
 #include "assemble/assemble.h"
 
-static bool file_type_check( char *input_file,  char *output_file) {
+static bool file_type_check( const char *input_file,  const char *output_file) {
   /*
    * Use strrchr to get pointer to the last '.' character
    * Check if '.' is even in the file name by checking if strrchr returned a null pointer 
