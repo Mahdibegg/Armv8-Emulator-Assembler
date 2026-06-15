@@ -28,7 +28,7 @@ void validate_args(int argc, char **argv, char **input, char **output) {
         *output = NULL;
     }
 
-    /* validate input file extension using helper function ends_with */
+    /* validate input file extension using shared helper */
     if (!has_extension(*input, ".bin")) {
         fprintf(stderr, "File input error: input file must have .bin extension\nUse: ./emulate <filename>.bin\n");
         exit(EXIT_FAILURE);
@@ -48,28 +48,16 @@ FILE *setup_output(char *outputfile) {
         return stdout;
     }
 
-    /* attempt to open the output file, in order to check whether it exists */
-    FILE *out = fopen(outputfile, "w");
-
-    /* fail if unsuccessful (if it doesn't exist then exit the program) */
-    if (out == NULL) {
-        perror("File error: file cannot be opened\n");
-        exit(EXIT_FAILURE);
-    }
+    /* attempt to open output file to check existence, if the file does not exit the program to prevent further crashes*/
+    FILE *out = open_file_or_exit(outputfile, "w");
 
     return out;
 }
 
 /* Load the binary input file into state (specifically the memory field, since instructions will be fetched) */
 void binary_loader(machine_state_t *state, char *inputfile) {
-    /* attempt to open file to check existence */
-    FILE *file = fopen(inputfile, "rb");
-
-    /* if the file does not exit the program to prevent further crashes */
-    if (file == NULL) {
-        perror("Error opening input file\n");
-        exit(EXIT_FAILURE);
-    }
+    /* attempt to open input file to check existence, if the file does not exit the program to prevent further crashes */
+    FILE *file = open_file_or_exit(inputfile, "rb");
 
     /* read bytes into the memory array, capped at memory size */
     size_t bytes_read = fread(state->memory.memory, sizeof(byte_t), MEMORY_SIZE, file);
