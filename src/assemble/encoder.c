@@ -210,6 +210,13 @@ static const alias_entry_t *lookup_alias(const char *alias_opcode) {
 }
 
 /*
+ * Build process section
+ *
+ * All functions only help to further parse instructions to finally assemble binary instruction
+ * Thus everything besides encode is private in this section
+ */
+
+/*
  * This struct allows field building helper functions to generalise the instruction field return type
  *
  * instr_type is an enum from a shared header file (decode) which determine the instruction type
