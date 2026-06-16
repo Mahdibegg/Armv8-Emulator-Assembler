@@ -5,6 +5,7 @@
 #include "assemble/reader.h"
 #include "assemble/binary_writer.h"
 #include "assemble/encoder.h"
+#include "stdlib.h"
 
 #include <string.h>
 
@@ -34,7 +35,7 @@ static symbol_table_t first_pass(FILE *input) {
     addr_t current_addr = 0;
     
     tokenized_line_t *tokenized_line = init_tokenized_line();
-    symbol_table_t st = symbol_table_create();
+    symbol_table_t st = init_symbol_table();
 
     /*
      * Loop until end of file to which read_line returns false when EOF is reached
@@ -135,13 +136,14 @@ static void second_pass(FILE *input, FILE *output, const symbol_table_t st) {
         switch (tokens->token_type) {
             /* Encode function abstracts encoding process for both directive and instruction tokens */
             case DIRECTIVE:
-            case INSTRUCTION:
+            case INSTRUCTION: {
                 word_t encoded_value = encode(st, tokens, current_addr);
                 binary_writer(output, encoded_value);
 
                 /* Forward to the next address */
                 current_addr += NEXT_INSTRUCTION;
                 break;
+            }
             /* Break LABEL and EMPTY case, continue to next line */
             case LABEL:
             case EMPTY:
@@ -168,11 +170,11 @@ void two_pass(FILE *input, FILE *output) {
      * Frees the memory allocated by the symbol table
      */
 
-    symbol_table_t *st = first_pass(input);
+    symbol_table_t st = first_pass(input);
 
     rewind(input);
 
     second_pass(input, output, st);
 
-    symbol_table_free(st);
+    free_symbol_table(st);
 }
