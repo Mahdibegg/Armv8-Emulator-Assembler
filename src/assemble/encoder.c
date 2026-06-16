@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "encoder.h"
 #include "shared/instruction_fields.h"
@@ -230,6 +231,7 @@ static const alias_entry_t *lookup_alias(const char *alias_opcode) {
  * Parse section
  * 
  * Used to take in strings and numerically interpret them in different ways
+ * This section also has to do lots of syntax error handling, so user can debug syntax errors
  */
 
 /*
@@ -275,6 +277,116 @@ static unsigned parse_reg(token_t operand, size_t line_number) {
     }
 
     return reg;
+}
+
+/*
+ * Take immediate operand and return the value as signed integer
+ */
+static sdword_t parse_imm(token_t operand, size_t line_number) {
+    sdword_t imm = 0;
+
+    if (operand == NULL) {
+        fprintf(stderr, "ERROR: Missing immediate on line %zu\n",
+            line_number
+        );
+        abort();
+    }
+
+    /* Check operand string starts with # for immediates */
+    if (operand[0] != '#') {
+        fprintf(stderr, "ERROR: Invalid immediate '%s' on line %zu\n",
+            operand,
+            line_number
+        );
+        abort();
+    }
+
+    /* Check there for number after # */
+    if (operand[1] == '\0') {
+        fprintf(stderr, "ERROR: Missing immediate value on line %zu\n",
+            line_number
+        );
+        abort();
+    }
+
+    /* Convert characters after # into signed immediate value using strtoll */
+    char *end_ptr = NULL;
+    imm = strtoll(operand + 1, &end_ptr, 0);
+
+    /* Check full string was valid */
+    if (*end_ptr != '\0') {
+        fprintf(stderr, "ERROR: Invalid immediate value '%s' on line %zu\n",
+            operand,
+            line_number
+        );
+        abort();
+    }
+
+    return imm;
+}
+
+/* Remove the first character from a string, for ldr/str parse */
+static void remove_first_char(token_t str) {
+    assert(str != NULL);
+
+    memmove(str, str + 1, strlen(str));
+}
+
+/* Remove the last character from a string, for ldr/str parse */
+static void remove_last_char(token_t str) {
+    assert(str != NULL);
+
+    size_t len = strlen(str);
+
+    if (len > 0) {
+        str[len - 1] = '\0';
+    }
+}
+
+/* 
+ * Remove [] from the start and ] from the end if they exist 
+ * Used for further parse of the [x, y] in operand tokens
+ */
+static void remove_brackets(token_t str) {
+    assert(str != NULL);
+
+    if (str[0] == '[') {
+        remove_first_char(str);
+    }
+
+    size_t len = strlen(str);
+
+    if (len > 0 && str[len - 1] == ']') {
+        remove_last_char(str);
+    }
+}
+
+/* Remove ! from the end if it exists for ldr/str further parse */
+static void remove_index_suffix(token_t str) {
+    assert(str != NULL);
+
+    size_t len = strlen(str);
+
+    if (len > 0 && str[len - 1] == '!') {
+        remove_last_char(str);
+    }
+}
+
+/* 
+ * Copy a token into a new buffer since the token buffer is constant
+ * src or dest token being null means tokens are missing (if correct arguments passed)
+ */
+static void copy_token(token_t dest, token_t src, size_t line_number) {
+    assert(dest != NULL);
+    assert(src != NULL);
+    assert(strlen(src) >= MAX_TOKEN_LENGTH);
+
+    strcpy(dest, src);
+}
+
+/* Calculate the raw encoded offset between two byte addresses, since we don't want byte size and raw size */
+static sdword_t get_offset(addr_t target_addr, addr_t current_addr) {
+    return ((sdword_t) target_addr - (sdword_t) current_addr) / 4;
 }
 
 /*
@@ -455,7 +567,7 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
 
             if (strcmp(entry->opcode, "b") == 0) {
                 /* b <literal> where <literal> is an offset calculated */
-                dword_t offset = symbol_table_get(st, operand) - current_addr;
+                sdword_t offset = get_offset(symbol_table_get(st, operand), current_addr);
                 fields->fields.uncond_branch.offset = offset;
                 
             } else if (strcmp(entry->opcode, "br") == 0) {
@@ -468,13 +580,130 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                  * <literal> is the offset calculate
                  * <cond> should be the opcode for the condition selected
                  */
-                dword_t offset = symbol_table_get(st, operand) - current_addr;
+                sdword_t offset = get_offset(symbol_table_get(st, operand), current_addr);
                 fields->fields.cond_branch.offset = offset;
 
                 fields->fields.cond_branch.cond = entry->binary_encoding;
             }
             break;
-        case INSTR_LOAD_STORE:
+
+        case INSTR_LOAD_STORE: {
+            /* Validate the number of tokenized operands for all load/store forms before referencing tokens*/
+            size_t operand_counts = tokens->data.instruction_data.operand_count;
+
+            if (operand_counts < 2 || operand_counts > 3) {
+                fprintf(stderr, "ERROR: Invalid number of operands for load/store on line %zu\n",
+                    tokens->line_number
+                );
+                abort();
+            }
+
+            /* First operand is always the target register in W or X*/
+            token_t rt_operand = tokens->data.instruction_data.operands[0];
+
+            /* Second operand is a label or the start of the address operand */
+            token_t addr_operand = tokens->data.instruction_data.operands[1];
+
+            /* Obtain the register encoding to fill in rt field (ignore register size) */
+            fields->fields.ls_instr.rt = parse_reg(rt_operand, tokens->line_number);
+
+            /* Set sf bits based on the register size */
+            fields->fields.ls_instr.sf = (rt_operand[0] == 'x') ? 1 : 0;
+
+            /* Check if the instruction is a ldr or str */
+            fields->fields.ls_instr.L = (strcmp(entry->opcode, "ldr") == 0) ? 1 : 0;
+
+            /* Load literal uses a label instead of a bracketed address */
+            if (addr_operand[0] != '[') {
+                /* ldr Rt, <literal> case since the [ does not appear in the first address operands*/
+                
+                /* Cannot parse this format for str, user would have made a bug in assembly */
+                if (strcmp(entry->opcode, "ldr") != 0) {
+                    fprintf(stderr, "ERROR: Invalid load/store literal on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                fields->fields.ls_instr.type = LS_LOAD_LITERAL;
+
+                /* Store signed offset then write to the .simm19 field and scale since its a raw size and not byte size*/
+                sdword_t offset = get_offset(symbol_table_get(st, addr_operand), current_addr);
+                fields->fields.ls_instr.simm19 = offset;
+
+            } else {
+                /* ldr/str Rt, [Xn] case, as the [ exists in the first address operand */
+
+                /* Initialise fixed size buffers for copying, valid operand sizes would not exceed a maximum length*/
+                char xn_operand[MAX_TOKEN_LENGTH];
+                char offset_operand[MAX_TOKEN_LENGTH];
+
+                /* Copy and clean the base register operand, sinze the previous tokenize function only splits based on a , */
+                copy_token(xn_operand, addr_operand, tokens->line_number);
+                remove_brackets(xn_operand);
+
+                /* Base only addressing has no offset operand */
+                if (operand_counts == 2) {
+                    fields->fields.ls_instr.type = LS_UNSIGNED_OFFSET;
+                    fields->fields.ls_instr.xn = parse_reg(xn_operand, tokens->line_number);
+                    fields->fields.ls_instr.imm12 = 0;
+
+                } else {
+                    /* Third operand contains the offset immediate or offset register, handled separately */
+                    token_t raw_offset_operand = tokens->data.instruction_data.operands[2];
+
+                    copy_token(offset_operand, raw_offset_operand, tokens->line_number);
+
+                    /* Post index addressing keeps the closing bracket on the base operand */
+                    if (addr_operand[strlen(addr_operand) - 1] == ']') {
+                        /* ldr/str Rt, [Xn], #<simm9> case */
+                        fields->fields.ls_instr.type = LS_POST_INDEX;
+                        fields->fields.ls_instr.xn = parse_reg(xn_operand, tokens->line_number);
+                        fields->fields.ls_instr.simm9 = parse_imm(offset_operand, tokens->line_number);
+
+                    } else {
+                        /* Cleaning offset operand before continuing with other formats */
+                        remove_index_suffix(offset_operand);
+                        remove_brackets(offset_operand);
+
+                        
+                        if (raw_offset_operand[strlen(raw_offset_operand) - 1] == '!') {
+                            /* ldr/str Rt, [Xn, #<simm9>]! case */
+
+                            /* Pre index addressing has the index suffix */
+                            fields->fields.ls_instr.type = LS_PRE_INDEX;
+                            fields->fields.ls_instr.xn = parse_reg(xn_operand, tokens->line_number);
+                            fields->fields.ls_instr.simm9 = parse_imm(offset_operand, tokens->line_number);
+
+                        } else if (offset_operand[0] == '#') {
+                            /* ldr/str Rt, [Xn, #<imm12>] case */
+
+                            /* Unsigned offset addressing uses an immediate offset */
+                            sdword_t imm = parse_imm(offset_operand, tokens->line_number);
+
+                            fields->fields.ls_instr.type = LS_UNSIGNED_OFFSET;
+                            fields->fields.ls_instr.xn = parse_reg(xn_operand, tokens->line_number);
+
+                            /* Store the .imm12 field by scaling down since we count a raw offset and not in bytes */
+                            if (fields->fields.ls_instr.sf == 1) {
+                                fields->fields.ls_instr.imm12 = imm / 8;
+                            } else {
+                                fields->fields.ls_instr.imm12 = imm / 4;
+                            }
+                        
+                        } else {
+                            /* ldr/str Rt, [Xn, Xm] case */
+                            
+                            /* Register offset addressing uses a register offset */
+                            fields->fields.ls_instr.type = LS_REGISTER_OFFSET;
+                            fields->fields.ls_instr.xn = parse_reg(xn_operand, tokens->line_number);
+                            fields->fields.ls_instr.xm = parse_reg(offset_operand, tokens->line_number);
+                        }
+                    }
+                }
+            }
+        }
+            break;
         case INSTR_HALT:
             /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
             break;
@@ -649,7 +878,7 @@ static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t
  * tokens: Returns the directive value from the struct union
  */
 static word_t assemble_directive(const tokenized_line_t *tokens) {
-    return tokens->data.directive_data.value;
+    return atoi(tokens->data.directive_data.value);
 }
 
 word_t encode(const symbol_table_t st, tokenized_line_t *tokens, const addr_t current_addr) {

@@ -6,6 +6,7 @@
 
 /* Instruction length related constants */
 #define MAX_LINE_LENGTH 256
+#define MAX_TOKEN_LENGTH 128
 
 /* Data size related constants */ 
 #define WORD_BITS 32U
