@@ -228,6 +228,10 @@ void free_tokenized_line(tokenized_line_t *line) {
 
             free(line->data.instruction_data.operands);
             break;
+
+        case EMPTY:
+            /* Nothing to free */
+            break;
     }
     
     free(line);
