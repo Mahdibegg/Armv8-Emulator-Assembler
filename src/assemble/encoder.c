@@ -147,13 +147,13 @@ static const opcode_entry_t opcode_map[] = {
     /* Branch */
     {"b", INSTR_BRANCH, 0x0},
     {"br", INSTR_BRANCH, 0x1},
-    {"beq", INSTR_BRANCH, 0x0},
-    {"bne", INSTR_BRANCH, 0x1},
-    {"bge", INSTR_BRANCH, 0xA},
-    {"blt", INSTR_BRANCH, 0xB},
-    {"bgt", INSTR_BRANCH, 0xC},
-    {"ble", INSTR_BRANCH, 0xD},
-    {"bal", INSTR_BRANCH, 0xE},
+    {"b.eq", INSTR_BRANCH, 0x0},
+    {"b.ne", INSTR_BRANCH, 0x1},
+    {"b.ge", INSTR_BRANCH, 0xA},
+    {"b.lt", INSTR_BRANCH, 0xB},
+    {"b.gt", INSTR_BRANCH, 0xC},
+    {"b.le", INSTR_BRANCH, 0xD},
+    {"b.al", INSTR_BRANCH, 0xE},
 
     {NULL, INSTR_UNKNOWN, 0x0}
 };
@@ -224,6 +224,57 @@ static const alias_entry_t *lookup_alias(const char *alias_opcode) {
     }
 
     return NULL;
+}
+
+/*
+ * Parse section
+ * 
+ * Used to take in strings and numerically interpret them in different ways
+ */
+
+/*
+ * Take register operand and return the register number as unsigned
+ */
+static unsigned parse_reg(token_t operand, size_t line_number) {
+    unsigned reg = 0;
+
+    if (operand == NULL) {
+        fprintf(stderr, "ERROR: Missing register on line %zu\n",
+            line_number
+        );
+        abort();
+    }
+
+    /* Check operand string starts with x or w */
+    if (operand[0] != 'x' && operand[0] != 'w') {
+        fprintf(stderr, "ERROR: Invalid register '%s' on line %zu\n",
+            operand,
+            line_number
+        );
+        abort();
+    }
+
+    /* Check there is a number after x or w */
+    if (operand[1] == '\0') {
+        fprintf(stderr, "ERROR: Missing register number on line %zu\n",
+            line_number
+        );
+        abort();
+    }
+
+    /* Convert characters after x and w into unsigned register number */
+    char *end_ptr = NULL;
+    reg = (unsigned) strtoul(operand + 1, &end_ptr, 10);
+
+    /* Check full string was valid and register is in range */
+    if (*end_ptr != '\0' || reg > REG_NUM) {
+        fprintf(stderr, "ERROR: Invalid register number access on line %zu\n",
+            line_number
+        );
+        abort();
+    }
+
+    return reg;
 }
 
 /*
@@ -359,7 +410,7 @@ static void alias_handler(tokenized_line_t *tokens) {
  * instr_type: Obtained from the previous helper in the encode(), so the correct struct is selected from the union
  */
 static instruction_fields_t *build_fields(const symbol_table_t st, const tokenized_line_t *tokens, const opcode_entry_t *entry, const addr_t current_addr) {    
-    /* Required pre conditions in order to continue building fields, prevents incorrect final executable */
+    /* Required pre conditions in order to continue building fields */
     assert(st != NULL);
     assert(tokens != NULL);
     assert(entry != NULL);
@@ -393,21 +444,23 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                 abort();
             }
 
-            /* Label string is now accessible */
-            token_t label = tokens->data.instruction_data.operands[0];
-
             /* 
-             * Symbol_table_get has its own error handling
+             * The operand can either be the literal for b or b.<cond> or a register for br
+             *
+             * symbol_table_get function has its own error handling when called for b or b.<cond>
              * If the label didn't exist it would throw the correct error message
              * So the missing label doesn't need to be handled here 
              */
-            dword_t offset = current_addr - symbol_table_get(st, label);
+            token_t operand = tokens->data.instruction_data.operands[0];
 
             if (strcmp(entry->opcode, "b") == 0) {
                 /* b <literal> where <literal> is an offset calculated */
-
+                dword_t offset = symbol_table_get(st, operand) - current_addr;
+                fields->fields.uncond_branch.offset = offset;
+                
             } else if (strcmp(entry->opcode, "br") == 0) {
                 /* b Xn where Xn is a 64 bit register  calculated */
+                fields->fields.reg_branch.xn = parse_reg(operand, tokens->line_number);
 
             } else {
                 /* 
@@ -415,6 +468,10 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                  * <literal> is the offset calculate
                  * <cond> should be the opcode for the condition selected
                  */
+                dword_t offset = symbol_table_get(st, operand) - current_addr;
+                fields->fields.cond_branch.offset = offset;
+
+                fields->fields.cond_branch.cond = entry->binary_encoding;
             }
             break;
         case INSTR_LOAD_STORE:
@@ -509,7 +566,7 @@ static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t
             word_t instr = 0;
             instr |= BR_COND_FIXED << BR_COND_FIXED_SHIFT;
             instr |= ((word_t) f.offset & IMM19_MASK) << BR_COND_OFFSET_SHIFT;
-            instr |= ((word_t) entry->binary_encoding & FOUR_BIT_MASK);
+            instr |= ((word_t) f.cond & FOUR_BIT_MASK);
 
             return instr;
         }
