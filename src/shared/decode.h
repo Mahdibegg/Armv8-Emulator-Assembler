@@ -1,8 +1,6 @@
 #ifndef DECODE_STRUCT_H
 #define DECODE_STRUCT_H
 
-#define HALT_INSTR 0x8a000000
-
 #include "shared/types.h"
 
 /* Instruction set modelled as enums */

@@ -6,6 +6,7 @@
 #include "assemble/encoder.h"
 #include "shared/instruction_fields.h"
 #include "shared/decode.h"
+#include "shared/shared_opcodes.h"
 
 /* General masks for set up */
 #define BIT_MASK 0x1
@@ -81,6 +82,21 @@
  */
 #define WIDE_MOVE_INSTR_OPI 0x5
 #define ARITHMETIC_INSTR_OPI 0x2
+
+/*
+ * Fixed opr
+ * 
+ */
+#define REG_SHIFT_ENCODING_SHIFT 1
+
+#define REG_MULTIPLY_OPR 0x8
+#define MULTIPLY_X_BIT 0x20
+
+#define REG_ARITHMETIC_OPR 0x8
+#define REG_LOGICAL_OPR 0x0
+#define REG_LOGICAL_N_BIT 0x1
+
+#define REG_SHIFT_MAX 31
 
 /* Prevent buffer overflows when concatenating for instruction reformatting in alias handler */
 #define SAFE_STRCAT(dst, src, remaining) \
@@ -393,6 +409,30 @@ static void copy_token(token_t dest, token_t src, size_t line_number) {
 /* Calculate the raw encoded offset between two byte addresses, since we don't want byte size and raw size */
 static sdword_t get_offset(addr_t target_addr, addr_t current_addr) {
     return ((sdword_t) target_addr - (sdword_t) current_addr) / 4;
+}
+
+/* Parse register shift and return the shift bits for opr using string pattern match */
+static byte_t parse_reg_shift(token_t shift_operand, register_type_t type, size_t line_number) {
+    assert(shift_operand != NULL);
+
+    /* 
+     * Pattern match shift string and return opcode
+     * Constants are defined within the shift_opcodes.h in shared
+     */
+    if (strcmp(shift_operand, "lsl") == 0) {
+        return LSL;
+    } else if (strcmp(shift_operand, "lsr") == 0) {
+        return LSR;
+    } else if (strcmp(shift_operand, "asr") == 0) {
+        return ASR;
+    } else if (strcmp(shift_operand, "ror") == 0 && type == REG_LOGIC) {
+        return ROR;
+    } else {
+        fprintf(stderr, "ERROR: Invalid shift for register instruction on line %zu\n",
+            line_number
+        );
+        abort();
+    }
 }
 
 /*
@@ -719,6 +759,164 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
         }
 
         case INSTR_DP_REG: {
+            /*
+             * First validate operand size based on entry string being arithmetic, logical or multiply
+             * Store field bits for overlapping/general fields amongst register instructions
+             * 
+             * Operand count = 3 or 5 for arithmetic and logical register instructions
+             * Operand count = 4 for multiply register instructions
+             * 
+             * <arithmetic_opcode> Rd, Rn, Rm
+             * <arithmetic_opcode> Rd, Rn, Rm, <shift> #<amount>
+             * <logical_opcode> Rd, Rn, Rm
+             * <logical_opcode> Rd, Rn, Rm, <shift> #<amount>
+             * madd Rd, Rn, Rm, Ra
+             * msub Rd, Rn, Rm, Ra
+             */
+
+            size_t operand_counts = tokens->data.instruction_data.operand_count;
+
+            /* Set opcode field by default */
+            fields->fields.reg_instr.opc = entry->binary_encoding;
+
+            if (strcmp(entry->opcode, "madd") == 0 || strcmp(entry->opcode, "msub") == 0) {
+                if (operand_counts != 4) {
+                    fprintf(stderr, "ERROR: Invalid number of operands for multiply on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                /*
+                 * madd/msub <rd> <rn> <rm> <ra>
+                 * rd, rn, rm and ra operands are the same field in either case
+                 */
+                token_t rd_operand = tokens->data.instruction_data.operands[0];
+                token_t rn_operand = tokens->data.instruction_data.operands[1];
+                token_t rm_operand = tokens->data.instruction_data.operands[2];
+                token_t ra_operand = tokens->data.instruction_data.operands[3];
+
+                /* Setting general fields, <rd>, <rn>, <rm>, <M> and <opr> */
+                fields->fields.reg_instr.rd = parse_reg(rd_operand, tokens->line_number);
+                fields->fields.reg_instr.rn = parse_reg(rn_operand, tokens->line_number);
+                fields->fields.reg_instr.rm = parse_reg(rm_operand, tokens->line_number);
+                fields->fields.reg_instr.M = 1;
+                fields->fields.reg_instr.opr = REG_MULTIPLY_OPR;
+
+                /* Distinguish 32 and 64 bit operation via sf bit */
+                fields->fields.reg_instr.sf = (rd_operand[0] == 'x') ? 1 : 0;
+
+                /* Store Ra inside operand field */
+                fields->fields.reg_instr.operand = parse_reg(ra_operand, tokens->line_number);
+
+                /* msub sets the multiply negate bit */
+                if (strcmp(entry->opcode, "msub") == 0) {
+                    fields->fields.reg_instr.operand |= MULTIPLY_X_BIT;
+                }
+
+            } else {
+                /* Register arithmetic/logical instructions can only have either 3 or 5 operands */
+                if (operand_counts != 3 && operand_counts != 5) {
+                    fprintf(stderr, "ERROR: Invalid number of operands for register instruction on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                /*
+                 * <opcode> <rd> <rn> <rm> <shift opc> <shift imm>
+                 * rd, rn and rm operands are the same field in either case
+                 */
+                token_t rd_operand = tokens->data.instruction_data.operands[0];
+                token_t rn_operand = tokens->data.instruction_data.operands[1];
+                token_t rm_operand = tokens->data.instruction_data.operands[2];
+
+                /* Setting general fields, <rd>, <rn>, <rm> and <M> */
+                fields->fields.reg_instr.rd = parse_reg(rd_operand, tokens->line_number);
+                fields->fields.reg_instr.rn = parse_reg(rn_operand, tokens->line_number);
+                fields->fields.reg_instr.rm = parse_reg(rm_operand, tokens->line_number);
+                fields->fields.reg_instr.M = 0;
+
+                /* Distinguish 32 and 64 bit operation via sf bit */
+                fields->fields.reg_instr.sf = (rd_operand[0] == 'x') ? 1 : 0;
+
+                /* Set default shift amount to prevent uninitialised field from encoding */
+                fields->fields.reg_instr.operand = 0;
+
+
+                if (strcmp(entry->opcode, "add") == 0 ||
+                    strcmp(entry->opcode, "adds") == 0 ||
+                    strcmp(entry->opcode, "sub") == 0 ||
+                    strcmp(entry->opcode, "subs") == 0) {
+                    register_type_t reg_type = REG_ARITHMETIC;
+
+                    /* Register arithmetic uses arithmetic opr format */
+                    fields->fields.reg_instr.opr = REG_ARITHMETIC_OPR;
+
+                    if (operand_counts == 5) {
+                        /* <shift opc> and <shift imm> for 5 operands in arithmetic register instruction */
+                        token_t shift_operand = tokens->data.instruction_data.operands[3];
+                        token_t shift_amount_operand = tokens->data.instruction_data.operands[4];
+
+                        fields->fields.reg_instr.opr |= parse_reg_shift(
+                            shift_operand,
+                            reg_type,
+                            tokens->line_number
+                        );
+
+                        sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
+
+                        /* User has to know if shift is too large since they made error in code */
+                        if (shift_amount < 0 || shift_amount > REG_SHIFT_MAX) {
+                            fprintf(stderr, "ERROR: Invalid register arithmetic shift amount on line %zu\n",
+                                tokens->line_number
+                            );
+                            abort();
+                        }
+
+                        /* Set shift amount after size validation */
+                        fields->fields.reg_instr.operand = shift_amount;
+                    }
+
+                } else {
+                    register_type_t reg_type = REG_LOGIC;
+
+                    /* Register logical uses logical opr format */
+                    fields->fields.reg_instr.opr = REG_LOGICAL_OPR;
+
+                    /* Negated logical instructions set the N bit in opr */
+                    if (strcmp(entry->opcode, "bic") == 0 ||
+                        strcmp(entry->opcode, "orn") == 0 ||
+                        strcmp(entry->opcode, "eon") == 0 ||
+                        strcmp(entry->opcode, "bics") == 0) {
+                        fields->fields.reg_instr.opr |= REG_LOGICAL_N_BIT;
+                    }
+
+                    if (operand_counts == 5) {
+                        /* <shift opc> and <shift imm> for 5 operands in logical register instructions */
+                        token_t shift_operand = tokens->data.instruction_data.operands[3];
+                        token_t shift_amount_operand = tokens->data.instruction_data.operands[4];
+
+                        /* Using |= we are able to keep the bits that we already added to opr */
+                        fields->fields.reg_instr.opr |= parse_reg_shift(
+                            shift_operand,
+                            reg_type,
+                            tokens->line_number
+                        );
+
+                        sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
+
+                        if (shift_amount < 0 || shift_amount > REG_SHIFT_MAX) {
+                            fprintf(stderr, "ERROR: Invalid register logical shift amount on line %zu\n",
+                                tokens->line_number
+                            );
+                            abort();
+                        }
+
+                        fields->fields.reg_instr.operand = shift_amount;
+                    }
+                }
+            }
 
             break;
         }
