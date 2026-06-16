@@ -34,7 +34,7 @@ tokenized_line_t *init_tokenized_line(void) {
 void clear_tokenized_line(tokenized_line_t *line) {
 
     /* First check if line is NULL */
-    if (line = NULL) {
+    if (line == NULL) {
         fprintf(stderr, "ERROR: Tokenized line is NULL\n");
         abort();
     }
@@ -227,6 +227,10 @@ void free_tokenized_line(tokenized_line_t *line) {
             }
 
             free(line->data.instruction_data.operands);
+            break;
+
+        case EMPTY:
+            /* Nothing to free */
             break;
     }
     

@@ -12,6 +12,6 @@
  * input: File input that will be read, tokenized, encoded then written
  * output: File output that will be written to, should be a .bin file
  */
-void two_pass(const FILE *input, FILE *output);
+void two_pass(FILE *input, FILE *output);
 
 #endif
