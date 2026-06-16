@@ -65,13 +65,14 @@
 #define DP_REG_FIXED 0x5
 
 #define LS_FIXED_TOP 0x1
-#define LS_FIXED_MID 0xC
+#define LS_FIXED_MID 0x1C
 #define LS_LITERAL_FIXED 0x18
 #define LS_UNSIGNED_U 0x1
 #define LS_PRE_INDEX_MODE 0x3
 #define LS_POST_INDEX_MODE 0x1
 #define LS_REGISTER_OFFSET_BIT 0x1
 #define LS_REGISTER_OFFSET_MODE 0x1A
+#define LS_REGISTER_OFFSET_BIT_SHIFT 21
 
 #define BR_UNCOND_FIXED 0x5
 #define BR_REG_FIXED 0xD61F0000
@@ -97,6 +98,7 @@
 #define REG_LOGICAL_N_BIT 0x1
 
 #define REG_SHIFT_MAX 31
+#define REG_SHIFT_MAX_64 63
 
 /* Prevent buffer overflows when concatenating for instruction reformatting in alias handler */
 #define SAFE_STRCAT(dst, src, remaining) \
@@ -256,9 +258,7 @@ static const alias_entry_t *lookup_alias(const char *alias_opcode) {
  * This section also has to do lots of syntax error handling, so user can debug syntax errors
  */
 
-/*
- * Take register operand and return the register number as unsigned
- */
+/* Take register operand and return the register number as unsigned */
 static unsigned parse_reg(token_t operand, size_t line_number) {
     unsigned reg = 0;
 
@@ -301,9 +301,7 @@ static unsigned parse_reg(token_t operand, size_t line_number) {
     return reg;
 }
 
-/*
- * Take immediate operand and return the value as signed integer
- */
+/*Take immediate operand and return the value as signed integer */
 static sdword_t parse_imm(token_t operand, size_t line_number) {
     sdword_t imm = 0;
 
@@ -401,7 +399,12 @@ static void remove_index_suffix(token_t str) {
 static void copy_token(token_t dest, token_t src, size_t line_number) {
     assert(dest != NULL);
     assert(src != NULL);
-    assert(strlen(src) >= MAX_TOKEN_LENGTH);
+
+    /* Oversized token length handling */
+    if (strlen(src) >= MAX_TOKEN_LENGTH) {
+        fprintf(stderr, "ERROR: Token too long on line %zu\n", line_number);
+        abort();
+    }
 
     strcpy(dest, src);
 }
@@ -1232,7 +1235,7 @@ static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t
                     break;
 
                 case LS_REGISTER_OFFSET:
-                    instr |= LS_REGISTER_OFFSET_BIT << DP_IMM_HW_SHIFT;
+                    instr |= LS_REGISTER_OFFSET_BIT << LS_REGISTER_OFFSET_BIT_SHIFT;
                     instr |= ((word_t) f.xm & FIVE_BIT_MASK) << LS_XM_SHIFT;
                     instr |= LS_REGISTER_OFFSET_MODE << LS_OFFSET_SHIFT;
                     break;
@@ -1272,7 +1275,19 @@ static word_t assemble_fields(instruction_fields_t *fields, const opcode_entry_t
  * tokens: Returns the directive value from the struct union
  */
 static word_t assemble_directive(const tokenized_line_t *tokens) {
-    return atoi(tokens->data.directive_data.value);
+    /* Function is adapted to handle hex properly */
+    char *end = NULL;
+    unsigned long value = strtoul(tokens->data.directive_data.value, &end, 0);
+
+    if (*end != '\0') {
+        fprintf(stderr, "ERROR: Invalid directive value '%s' on line %zu\n",
+            tokens->data.directive_data.value,
+            tokens->line_number
+        );
+        abort();
+    }
+
+    return (word_t) value;
 }
 
 word_t encode(const symbol_table_t st, tokenized_line_t *tokens, const addr_t current_addr) {
