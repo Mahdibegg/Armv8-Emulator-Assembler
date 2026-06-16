@@ -10,8 +10,7 @@ CFLAGS  ?= -std=c17 -g \
 all: assemble emulate
 
 SHARED_OBJS = \
-	src/shared/bit.o \
-	src/shared/decode.o
+	src/shared/bit.o
 
 ASSEMBLE_OBJS = \
 	src/assemble/assemble.o \
