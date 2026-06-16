@@ -14,6 +14,6 @@
  * Assert the file and buffer is valid,
  * Abort if reading from the file fails
  */
-bool read_line(const FILE *f, char *buffer, size_t size);
+bool read_line(FILE *f, char *buffer, size_t size);
 
 #endif
