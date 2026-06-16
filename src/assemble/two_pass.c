@@ -1,6 +1,6 @@
 #include "assemble/two_pass.h"
 #include "shared/types.h"
-#include "tokenizer.h"
+#include "assemble/tokenizer.h"
 #include "assemble/symbol_table.h"
 #include "assemble/reader.h"
 #include "assemble/binary_writer.h"
@@ -147,6 +147,6 @@ static void second_pass(const FILE *input, FILE *output, const symbol_table_t st
     free_tokenized_line(tokens);
 }
 
-void two_pass(const FILE *input, FILE *output, symbol_table_t st) {
+void two_pass(const FILE *input, FILE *output) {
     return NULL;
 }

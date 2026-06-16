@@ -1,2 +1,7 @@
+#ifndef ASSEMBLE_H
+#define ASSEMBLE_H
+/* Add all include paths so that assemble.c can indirectly include anything from assesmble.h, making the assemble.c file cleaner */
 
-// Just add every inclusion here before including this into the assemble.c
+#include "assemble/two_pass.h"
+
+#endif

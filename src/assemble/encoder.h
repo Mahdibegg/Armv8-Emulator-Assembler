@@ -1,9 +1,10 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include "symbol_table.h"
-#include "tokenizer.h"
+#include "assemble/symbol_table.h"
+#include "assemble/assemble.h"
 #include "shared/types.h"
+#include "assemble/tokenizer.h"
 
 /*
  * Returns word to be written to .bin file
