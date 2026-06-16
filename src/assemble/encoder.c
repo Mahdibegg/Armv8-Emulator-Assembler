@@ -76,6 +76,12 @@
 #define BR_REG_FIXED 0xD61F0000
 #define BR_COND_FIXED 0x54
 
+/*
+ * Fixed opi for data processing immediate
+ */
+#define WIDE_MOVE_INSTR_OPI 0x5
+#define ARITHMETIC_INSTR_OPI 0x2
+
 /* Prevent buffer overflows when concatenating for instruction reformatting in alias handler */
 #define SAFE_STRCAT(dst, src, remaining) \
     do { \
@@ -540,8 +546,183 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
     fields->instr_type = entry->type;
 
     switch (entry->type) {
-        case INSTR_DP_IMM:
-        case INSTR_DP_REG:
+        case INSTR_DP_IMM: {
+            /*
+             * First validate operand size based on entry string being a wide move or arithmetic
+             * Store field bits for overlapping/general fields amongst immediate instructions (wide move and arithmetic)
+             * 
+             * Operand count = 2 or 4 (for wide move immediate) then operand count = 3 or 5 (for arithmetic immediate) 
+             * 
+             * They should be distinguished via comparing the first three letters of the opcode to be a "mov"
+             * The "mov" alias is ignored since it wouldn't reach here, but the assertion is put just in case
+             * Since using the above check would then not allocate the correct fields for the "mov" alias
+             * 
+             * For the operand count 2, 3 for move and arithmetic respectively,
+             * store field bits for specific fields (within the wide move and arithmetic set of instructions)
+             * 
+             * For the operand count 4, 5 for move and arithmetic respectively ,
+             * validate the lsl immediate to be 12 or 0 for arithmetic
+             * validate lsl immediate to be 48, 32, 16 or 0 for wide move
+             * ignore the other shifts
+             * 
+             * mov(suffix) Rd, #<imm16> case
+             * mov(suffix) Rd, #<imm16>, lsl #<shift> case
+             * <arithmetic_opcode> Rd, Rn, #<imm12> case
+             * <arithmetic_opcode> Rd, Rn, #<imm12>, lsl #12 case
+             */
+
+            assert(strcmp(tokens->data.instruction_data.opcode, "mov") != 0);
+
+            size_t operand_counts = tokens->data.instruction_data.operand_count;
+
+            /* Set opcode field by default */
+            fields->fields.imm_instr.opc = entry->binary_encoding;
+
+            /* In order to compare for move you have to obtain the first 3 characters, hence strncmp is best suited */
+            if (strncmp(entry->opcode, "mov", 3) == 0) {
+                if (operand_counts != 2 && operand_counts != 4) {
+                    fprintf(stderr, "ERROR: Invalid number of operands for wide move on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                /* 
+                 * mov(suffix) <rd> <imm_operand> <shift opc> <shift imm>
+                 * rd, imm operands are the same field in either case
+                 */
+                token_t rd_operand = tokens->data.instruction_data.operands[0];
+                token_t imm_operand = tokens->data.instruction_data.operands[1];
+
+                fields->fields.imm_instr.type = IMM_WIDE_MOVE;
+
+                /* Setting general fields, <opi> and <rd> */
+                fields->fields.imm_instr.opi = WIDE_MOVE_INSTR_OPI;
+                fields->fields.imm_instr.rd = parse_reg(rd_operand, tokens->line_number);
+
+                /* Distinguish 32 and 64 bit operation via sf bit */
+                fields->fields.imm_instr.sf = (rd_operand[0] == 'x') ? 1 : 0;
+
+                sdword_t imm = parse_imm(imm_operand, tokens->line_number);
+
+                if (imm < 0 || imm > IMM16_MASK) {
+                    fprintf(stderr, "ERROR: Invalid wide move immediate on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                /* Validated imm field can be set and .hw to prevent uninitialised field from encoding */
+                fields->fields.imm_instr.imm16 = imm;
+                fields->fields.imm_instr.hw = 0;
+
+                if (operand_counts == 4) {
+                    token_t shift_operand = tokens->data.instruction_data.operands[2];
+                    token_t shift_amount_operand = tokens->data.instruction_data.operands[3];
+
+                    if (strcmp(shift_operand, "lsl") != 0) {
+                        fprintf(stderr, "ERROR: Invalid shift for wide move on line %zu\n",
+                            tokens->line_number
+                        );
+                        abort();
+                    }
+
+                    sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
+
+                    if (shift_amount % 16 != 0 || shift_amount < 0 || shift_amount > 48) {
+                        fprintf(stderr, "ERROR: Invalid wide move shift amount on line %zu\n",
+                            tokens->line_number
+                        );
+                        abort();
+                    }
+
+                    if (fields->fields.imm_instr.sf == 0 && shift_amount > 16) {
+                        fprintf(stderr, "ERROR: Invalid 32-bit wide move shift amount on line %zu\n",
+                            tokens->line_number
+                        );
+                        abort();
+                    }
+
+                    fields->fields.imm_instr.hw = shift_amount / 16;
+                }
+
+            } else {
+                /* Arithmetic immediate instructions can only have either 3 or 5 operands */
+                if (operand_counts != 3 && operand_counts != 5) {
+                    fprintf(stderr, "ERROR: Invalid number of operands for immediate arithmetic on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                /* 
+                 * <arithmetic opcode> <rd> <rn> <imm_operand> <shift opc> <shift imm>
+                 * rd, rn and imm operands are the same field in either case
+                 */
+                token_t rd_operand = tokens->data.instruction_data.operands[0];
+                token_t rn_operand = tokens->data.instruction_data.operands[1];
+                token_t imm_operand = tokens->data.instruction_data.operands[2];
+
+                /* Setting general fields, <opi>, <rd>, <rn> */
+                fields->fields.imm_instr.type = IMM_ARITHMETIC;
+                fields->fields.imm_instr.opi = ARITHMETIC_INSTR_OPI;
+                fields->fields.imm_instr.rd = parse_reg(rd_operand, tokens->line_number);
+                fields->fields.imm_instr.rn = parse_reg(rn_operand, tokens->line_number);
+
+                /* Distinguish between 32 and 64 bit operation */
+                fields->fields.imm_instr.sf = (rd_operand[0] == 'x') ? 1 : 0;
+
+                sdword_t imm = parse_imm(imm_operand, tokens->line_number);
+
+                /* Check if size of immediate is larger than largest 12 bit value */
+                if (imm < 0 || imm > IMM12_MASK) {
+                    fprintf(stderr, "ERROR: Invalid arithmetic immediate on line %zu\n",
+                        tokens->line_number
+                    );
+                    abort();
+                }
+
+                /* Set .imm12 to validated parsed immediate and by default no shift for 3 operand_count */
+                fields->fields.imm_instr.imm12 = imm;
+                fields->fields.imm_instr.sh = 0;
+
+                /* This case requires checking for a lsl #12 or lsl #0 for arithmetic */
+                if (operand_counts == 5) {
+                    /* Obtain shorter named references to operands */
+                    token_t shift_operand = tokens->data.instruction_data.operands[3];
+                    token_t shift_amount_operand = tokens->data.instruction_data.operands[4];
+
+                    /* Return error to use if they have used any other shift for immediate instruction besides lsl */
+                    if (strcmp(shift_operand, "lsl") != 0) {
+                        fprintf(stderr, "ERROR: Invalid shift for immediate arithmetic on line %zu\n",
+                            tokens->line_number
+                        );
+                        abort();
+                    }
+
+                    sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
+
+                    /* Shift amount can only be equal to 12, anything else  is not valid */
+                    if (shift_amount != 12) {
+                        fprintf(stderr, "ERROR: Invalid arithmetic immediate shift amount on line %zu\n",
+                            tokens->line_number
+                        );
+                        abort();
+                    }
+
+                    /* 5 operand_count results in a shift happening */
+                    fields->fields.imm_instr.sh = 1;
+                }
+            }
+
+            break;
+        }
+
+        case INSTR_DP_REG: {
+
+            break;
+        }
+
         case INSTR_BRANCH:
             /*  
              * First make sure operands size is equal to 1, otherwise abort()
@@ -549,6 +730,7 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
              * However the .offset field is common to cond and uncond branch instructions
              */
 
+            /* Validate the number of tokenized operands for all load/store forms before referencing tokens*/
             if (tokens->data.instruction_data.operand_count != 1) {
                 fprintf(stderr, "ERROR: Invalid number of operands for branch b on line %zu\n",
                     tokens->line_number
@@ -588,11 +770,24 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
             break;
 
         case INSTR_LOAD_STORE: {
+            /*
+             * Validating operand count, storing required variables and filling in overlapping fields amongst all 6 str and 5 ldr versions
+             * This case will have 6 smaller cases that need to be handled for ldr and 5 identical cases that overlap in the same branches for str
+             * The cases are as follows, handled in the order stated
+             * 
+             * ldr Rt, <literal> case
+             * ldr/str Rt, [Xn] case
+             * ldr/str Rt, [Xn], #<simm9> case
+             * ldr/str Rt, [Xn, #<simm9>]! case
+             * ldr/str Rt, [Xn, #<imm12>] case
+             * ldr/str Rt, [Xn, Xm] case
+             */
+
             /* Validate the number of tokenized operands for all load/store forms before referencing tokens*/
             size_t operand_counts = tokens->data.instruction_data.operand_count;
 
             if (operand_counts < 2 || operand_counts > 3) {
-                fprintf(stderr, "ERROR: Invalid number of operands for load/store on line %zu\n",
+                fprintf(stderr, "ERROR: Invalid number of operands for load/store instruction on line %zu\n",
                     tokens->line_number
                 );
                 abort();
@@ -702,8 +897,9 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                     }
                 }
             }
-        }
             break;
+        }
+            
         case INSTR_HALT:
             /* Case is handled by default as "and" gets looked up and handled via dp_reg logical execution */
             break;
