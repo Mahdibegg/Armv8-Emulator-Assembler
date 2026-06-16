@@ -5,16 +5,23 @@ CFLAGS  ?= -std=c17 -g \
 	-I src
 
 .SUFFIXES: .c .o
-
 .PHONY: all clean
 
 all: assemble emulate
 
+SHARED_OBJS = \
+	src/shared/bit.o \
+	src/shared/decode.o
+
 ASSEMBLE_OBJS = \
 	src/assemble/assemble.o \
-	src/assemble/symbol_table.o \
+	src/assemble/binary_writer.o \
+	src/assemble/encoder.o \
 	src/assemble/reader.o \
-	src/shared/bit.o
+	src/assemble/symbol_table.o \
+	src/assemble/tokenizer.o \
+	src/assemble/two_pass.o \
+	$(SHARED_OBJS)
 
 assemble: $(ASSEMBLE_OBJS)
 	$(CC) $(CFLAGS) -o assemble $(ASSEMBLE_OBJS)
@@ -28,13 +35,12 @@ EMULATE_OBJS = \
 	src/emulate/branch.o \
 	src/emulate/data_processing.o \
 	src/emulate/load_store.o \
-	src/shared/bit.o
+	$(SHARED_OBJS)
 
 emulate: $(EMULATE_OBJS)
 	$(CC) $(CFLAGS) -o emulate $(EMULATE_OBJS)
 
 # CLEAN MAKE CONFIG
-
 clean:
 	find src -name '*.o' -delete
 	$(RM) assemble emulate
