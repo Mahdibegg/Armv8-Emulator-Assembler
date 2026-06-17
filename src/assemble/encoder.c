@@ -84,12 +84,7 @@
 #define WIDE_MOVE_INSTR_OPI 0x5
 #define ARITHMETIC_INSTR_OPI 0x2
 
-/*
- * Fixed opr
- * 
- */
-#define REG_SHIFT_ENCODING_SHIFT 1
-
+/* Fixed bits */
 #define REG_MULTIPLY_OPR 0x8
 #define MULTIPLY_X_BIT 0x20
 
@@ -97,6 +92,8 @@
 #define REG_LOGICAL_OPR 0x0
 #define REG_LOGICAL_N_BIT 0x1
 
+/* Shift related bits */
+#define REG_SHIFT_ENCODING_SHIFT 1
 #define REG_SHIFT_MAX 31
 #define REG_SHIFT_MAX_64 63
 
@@ -261,6 +258,10 @@ static const alias_entry_t *lookup_alias(const char *alias_opcode) {
 /* Take register operand and return the register number as unsigned */
 static unsigned parse_reg(token_t operand, size_t line_number) {
     unsigned reg = 0;
+
+    if (strcmp(operand, "xzr") == 0 || strcmp(operand, "wzr") == 0) {
+        return 31;
+    }
 
     if (operand == NULL) {
         fprintf(stderr, "ERROR: Missing register on line %zu\n",
@@ -562,7 +563,7 @@ static void alias_handler(tokenized_line_t *tokens) {
         tokenize_line(tokens, instruction, line_number);
     }
 }
-
+ 
 /*
  * This is a function that builds a field for any instruction type
  * 
