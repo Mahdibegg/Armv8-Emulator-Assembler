@@ -180,7 +180,7 @@ static const opcode_entry_t opcode_map[] = {
 
     {"madd", INSTR_DP_REG, 0x0},
     {"msub", INSTR_DP_REG, 0x0},
-    
+
     /* Load store */
     {"ldr", INSTR_LOAD_STORE, 0x1},
     {"str", INSTR_LOAD_STORE, 0x0},
@@ -483,7 +483,7 @@ static void set_reg_shift_fields(reg_instr_fields_t *reg_fields,token_t shift_op
         shift_operand,
         reg_type,
         line_number
-    );
+    ) << REG_SHIFT_ENCODING_SHIFT;
 
     reg_fields->operand = shift_amount;
 }
