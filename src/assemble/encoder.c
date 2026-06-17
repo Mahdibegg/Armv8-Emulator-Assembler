@@ -2,6 +2,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "assemble/encoder.h"
 #include "shared/instruction_fields.h"
@@ -110,6 +111,21 @@
     } while (0)
 
 /*
+ * Helper functions declared at top after spotting redundant code
+ */
+
+/* Remove redundant code that checks for arithmetic instruction */
+static bool check_arith_instr(const char *opcode) {
+    if (strcmp(opcode, "add") == 0 ||
+        strcmp(opcode, "adds") == 0 ||
+        strcmp(opcode, "sub") == 0 ||
+        strcmp(opcode, "subs") == 0) {
+            return true;
+    }
+    return false;
+} 
+
+/*
  * Opcode map + lookup section
  * 
  * Each opcode string is mapped to its respective encoding and instruction type
@@ -184,13 +200,18 @@ static const opcode_entry_t opcode_map[] = {
  * Looks up for opcode in opcode_map
  * Returns pointer to matching entry or NULL if not found
  */
-static const opcode_entry_t *lookup_opcode(const char *opcode, const char *last_operand) {
-    /* Function return type and char should both be const, lookup function will not allow changes */
+static const opcode_entry_t *lookup_opcode(const char *opcode, const tokens_t operands, size_t operand_count) {
     for (size_t i = 0; opcode_map[i].opcode != NULL; i++) {
         if (strcmp(opcode, opcode_map[i].opcode) == 0) {
-            if (last_operand[0] != '#' && opcode_map[i].type == INSTR_DP_IMM) {
-                continue;
+
+            /* Checking the arithmetic instructions and if their operand sizes are above 3 */
+            if (check_arith_instr(opcode) && operand_count >= 3) {
+
+                if (operands[2][0] != '#' && opcode_map[i].type == INSTR_DP_IMM) {
+                    continue;
+                } 
             }
+
             return &opcode_map[i];
         }
     }
@@ -475,23 +496,19 @@ typedef struct {
  * tokens: Reference tokens so that it can be cleared and re-tokenized with the alias map
  */
 static void alias_handler(tokenized_line_t *tokens) {
-    /* First check if opcode in tokens is an alias to continue */
     const alias_entry_t *alias_entry = lookup_alias(tokens->data.instruction_data.opcode);
 
     if (alias_entry != NULL) {
-        /* Building re-formatted instruction with real opcode */
         char instruction[MAX_LINE_LENGTH];
-        instruction[0] = '\0'; /* Strcat requires null terminator to be used */
+        instruction[0] = '\0';
 
-        /* Make operand access more easier than constant struct to union to field access */
+        /* Smaller variable name references to operands and operand_count */
         token_t *operands = tokens->data.instruction_data.operands;
+        size_t operand_count = tokens->data.instruction_data.operand_count;
 
         const char *width_suffix;
 
-        /* 
-         * Single character check, no strcmp required
-         * Checking if zero register has to be x or w
-         */
+        /* Error handling on invalid register width */
         if (operands[0][0] == 'x') {
             width_suffix = "x";
         } else if (operands[0][0] == 'w') {
@@ -503,17 +520,12 @@ static void alias_handler(tokenized_line_t *tokens) {
             abort();
         }
 
-        /* Prevent buffer overflow for instruction */
         size_t remaining = MAX_LINE_LENGTH - 1;
 
-        /* Non NULL pointer means instr_opcode is not null since map is already defined */
         SAFE_STRCAT(instruction, alias_entry->instr_opcode, remaining);
         SAFE_STRCAT(instruction, " ", remaining);
 
-        /*
-         * Reformat the instruction by concatenating to buffer
-         * Bunching cases that have similar real instruction formats
-         */
+        /* The nested branch checks for shifts that need to be added onto the instruction buffer */
         if (strcmp(alias_entry->alias_opcode, "cmp") == 0 ||
             strcmp(alias_entry->alias_opcode, "cmn") == 0 ||
             strcmp(alias_entry->alias_opcode, "tst") == 0) {
@@ -524,9 +536,16 @@ static void alias_handler(tokenized_line_t *tokens) {
             SAFE_STRCAT(instruction, operands[0], remaining);
             SAFE_STRCAT(instruction, ", ", remaining);
             SAFE_STRCAT(instruction, operands[1], remaining);
+
+            if (operand_count == 4) {
+                SAFE_STRCAT(instruction, ", ", remaining);
+                SAFE_STRCAT(instruction, operands[2], remaining);
+                SAFE_STRCAT(instruction, " ", remaining);
+                SAFE_STRCAT(instruction, operands[3], remaining);
+            }
         } else if (strcmp(alias_entry->alias_opcode, "neg") == 0 ||
-                strcmp(alias_entry->alias_opcode, "negs") == 0 ||
-                strcmp(alias_entry->alias_opcode, "mvn") == 0) {
+                   strcmp(alias_entry->alias_opcode, "negs") == 0 ||
+                   strcmp(alias_entry->alias_opcode, "mvn") == 0) {
             /* sub/subs/orn rd, rzr, <op2> */
 
             SAFE_STRCAT(instruction, operands[0], remaining);
@@ -534,6 +553,13 @@ static void alias_handler(tokenized_line_t *tokens) {
             SAFE_STRCAT(instruction, width_suffix, remaining);
             SAFE_STRCAT(instruction, "zr, ", remaining);
             SAFE_STRCAT(instruction, operands[1], remaining);
+
+            if (operand_count == 4) {
+                SAFE_STRCAT(instruction, ", ", remaining);
+                SAFE_STRCAT(instruction, operands[2], remaining);
+                SAFE_STRCAT(instruction, " ", remaining);
+                SAFE_STRCAT(instruction, operands[3], remaining);
+            }
         } else if (strcmp(alias_entry->alias_opcode, "mov") == 0) {
             /* orr rd, rzr, rm */
 
@@ -542,8 +568,15 @@ static void alias_handler(tokenized_line_t *tokens) {
             SAFE_STRCAT(instruction, width_suffix, remaining);
             SAFE_STRCAT(instruction, "zr, ", remaining);
             SAFE_STRCAT(instruction, operands[1], remaining);
+
+            if (operand_count == 4) {
+                SAFE_STRCAT(instruction, ", ", remaining);
+                SAFE_STRCAT(instruction, operands[2], remaining);
+                SAFE_STRCAT(instruction, " ", remaining);
+                SAFE_STRCAT(instruction, operands[3], remaining);
+            }
         } else if (strcmp(alias_entry->alias_opcode, "mul") == 0 ||
-                strcmp(alias_entry->alias_opcode, "mneg") == 0) {
+                   strcmp(alias_entry->alias_opcode, "mneg") == 0) {
             /* madd/msub rd, rn, rm, rzr */
 
             SAFE_STRCAT(instruction, operands[0], remaining);
@@ -558,7 +591,6 @@ static void alias_handler(tokenized_line_t *tokens) {
 
         size_t line_number = tokens->line_number;
 
-        /* Clear and re tokenize line through its reference */
         clear_tokenized_line(tokens);
         tokenize_line(tokens, instruction, line_number);
     }
@@ -747,7 +779,7 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                     sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
 
                     /* Shift amount can only be equal to 12, anything else  is not valid */
-                    if (shift_amount != 12) {
+                    if (shift_amount != 12 && shift_amount != 0) {
                         fprintf(stderr, "ERROR: Invalid arithmetic immediate shift amount on line %zu\n",
                             tokens->line_number
                         );
@@ -755,7 +787,9 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                     }
 
                     /* 5 operand_count results in a shift happening */
-                    fields->fields.imm_instr.sh = 1;
+                    if (shift_amount != 0) {
+                        fields->fields.imm_instr.sh = 1;
+                    }
                 }
             }
 
@@ -848,10 +882,7 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                 fields->fields.reg_instr.operand = 0;
 
 
-                if (strcmp(entry->opcode, "add") == 0 ||
-                    strcmp(entry->opcode, "adds") == 0 ||
-                    strcmp(entry->opcode, "sub") == 0 ||
-                    strcmp(entry->opcode, "subs") == 0) {
+                if (check_arith_instr(entry->opcode)) {
                     register_type_t reg_type = REG_ARITHMETIC;
 
                     /* Register arithmetic uses arithmetic opr format */
@@ -1311,9 +1342,15 @@ word_t encode(const symbol_table_t st, tokenized_line_t *tokens, const addr_t cu
              */
             alias_handler(tokens);
 
-            /* Identify instruction type before selecting correct struct to fill fields in */
-            char *last_operand = tokens->data.instruction_data.operands[tokens->data.instruction_data.operand_count -1];
-            const opcode_entry_t *entry = lookup_opcode(tokens->data.instruction_data.opcode, last_operand);
+            /* 
+             * Identify instruction type before selecting correct struct to fill fields in
+             * Take in operands in order to select between data process immediate/register
+             */
+            const opcode_entry_t *entry = lookup_opcode(
+                tokens->data.instruction_data.opcode, 
+                tokens->data.instruction_data.operands,
+                tokens->data.instruction_data.operand_count
+            );
 
             /* No instruction found, must quit program */
             if (entry == NULL) {
