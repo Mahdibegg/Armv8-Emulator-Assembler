@@ -8,33 +8,33 @@
 #include "assemble/symbol_table.h"
 #include "shared/types.h"
 
-#define INITIAL_CAPACITY 2
+#define INITIAL_CAPACITY 16U
 
- /*
-  * Pair consists of label and address
-  * label is string and address is addr_t
-  */
- typedef struct {
+/*
+ * Pair consists of label and address
+ * label is string and address is addr_t
+ */
+typedef struct {
     char *label;
     addr_t address;
- } Pair;
+} Pair;
 
 /*
  * ADT: Symbol Table (Implemented as Dynamic array of pairs)
- * Fields: Size, Capacity, Pairs(array of pairs)
+ * Fields: Size, Capacity, Pairs (array of pairs)
  * Pair is its own struct 
  */
 struct symbol_table {
     Pair *data;   /* This is a pointer the array of pairs */ 
-    int size;     /* Number of pairs in array */
-    int capacity; /* Maximum number of pairs in array */
+    size_t size;     /* Number of pairs in array */
+    size_t capacity; /* Maximum number of pairs in array */
 };
 
 /*
- * Implementing Functions of Symbol Table
+ * Implementing public functions of Symbol Table
  */
 
-symbol_table_t symbol_table_create(void) {
+symbol_table_t init_symbol_table(void) {
     /* Allocate memory for the symbol table  */
     symbol_table_t st = malloc(sizeof(struct symbol_table));
 
@@ -44,10 +44,8 @@ symbol_table_t symbol_table_create(void) {
         fprintf(stderr, "ERROR: Allocation of memory to symbol table was unsuccessful\n");
         abort();
     }
-    /* Defensive programming assertion check */
-    assert(st != NULL);
 
-    /* now allocate memory for the data */
+    /* Now allocate memory for the data */
     st->data = malloc(sizeof(Pair) * INITIAL_CAPACITY);
 
     /* check if allocation was successfull */
@@ -69,19 +67,22 @@ symbol_table_t symbol_table_create(void) {
 }
 
 /*
- * Helper Functions for symbol_table_add():
- * resize_needed() : Returns True or False based on wether a resize is needed.
- * symbol_table_grow() : Grows Symbol Table if Resize was required.
+ * Helper function for symbol_table_add
+ *
+ * Returns true or false based on whether a a resize is needed.
  */
-
 static bool resize_needed(symbol_table_t st) {
     return (st->size  >= st->capacity);
 }
 
+/*
+ * Helper function for symbol_table_add
+ *
+ * Grows Symbol Table if Resize was required.
+ */
 static void symbol_table_grow(symbol_table_t st) {
-
     /* First Get the new capacity */
-    int new_capacity = st->capacity * 2;
+    size_t new_capacity = st->capacity * 2;
 
     Pair *temp_data = realloc(st->data, sizeof(Pair) * new_capacity);
 
@@ -91,8 +92,6 @@ static void symbol_table_grow(symbol_table_t st) {
         fprintf(stderr, "ERROR: Reallocation of data was unsuccessful\n");
         abort();
     }
-    /* Defensive programming assertion check */
-    assert(temp_data != NULL);
 
     /* now it is safe to reassign data */
     st->data = temp_data;
@@ -130,7 +129,7 @@ bool symbol_table_add(symbol_table_t st, const char *label, addr_t address) {
 
 bool symbol_table_contains(symbol_table_t st, const char *label) {
     /*  We have to iterate through the list until we find the label, or until we reach the end which is up to size-1 index */
-    for (int i = 0; i < st->size; i++) {
+    for (size_t i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {
             return true;
         }
@@ -139,10 +138,9 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
     return false;
 }
 
-addr_t symbol_table_get(symbol_table_t st, const char *label) {
-
+addr_t symbol_table_get(const symbol_table_t st, const char *label) {
     /* iterate through symbol table, find the pair and return the address */
-    for (int i = 0; i < st->size; i++) {
+    for (size_t i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {
             return st->data[i].address;
         }
@@ -157,23 +155,24 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
     if (out == NULL) {
         fprintf(stderr, "ERROR: Provided file is invalid\n");
         abort();
-    } 
-    /*  Defensive programming check */
-    assert(out != NULL);
+    }
 
     /* Iterate through symbol table and print each Pair to the output file */ 
-    for (int i = 0; i < st->size; i++) {
-        fprintf(out, "(%s, 0x%" PRIx32")\n",
+    for (size_t i = 0; i < st->size; i++) {
+        fprintf(out, "(%s, 0x%" PRIx32 ")\n",
              st->data[i].label, st->data[i].address);
     }
 }
 
-void symbol_table_free(symbol_table_t st) {
+void free_symbol_table(symbol_table_t st) {
     /*  Defensive programming check (Making sure that st exists) */
-    assert(st != NULL);
+    if (st == NULL) {
+        fprintf(stderr, "ERROR: symbol table does not exist (in an attempt to free symbol table)\n");
+        abort();
+    }
 
     /* to free the symbol table you first need to free meory allocated to each label */ 
-    for (int i=0; i < st->size; i++) {
+    for (size_t i=0; i < st->size; i++) {
         free(st->data[i].label);
     }
 
@@ -181,4 +180,3 @@ void symbol_table_free(symbol_table_t st) {
     free(st->data);
     free(st);
 }
-

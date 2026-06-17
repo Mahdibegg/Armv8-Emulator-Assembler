@@ -4,32 +4,27 @@
 #include "emulate/data_processing.h"
 #include "shared/bit.h"
 #include "emulate/registers.h"
+#include "shared/shared_opcodes.h"
 
-// immediate instruction field cases (OPI)
+/* Immediate instruction field cases (OPI) */
 #define ARITHMETIC_OPI 0x2
 #define WIDE_MOVE_OPI 0x5
 
-// register instruction field cases (OPR)
+/* Register instruction field cases (OPR) */
 #define MULTIPLY_OPR 0x8
 
-// immediate arithmetic instructions (opcode field)
+/* Immediate arithmetic instructions (opcode field) */
 #define ADD 0x0
 #define ADD_S 0x1
 #define SUB 0x2
 #define SUB_S 0x3
 
-// immediate wide move instructions (opcode field)
+/* Immediate wide move instructions (opcode field) */
 #define MOVN 0x0
 #define MOVZ 0x2
 #define MOVK 0x3
 
-// register arithmetic shift instructions (shift field)
-#define LSL 0x0
-#define LSR 0x1
-#define ASR 0x2
-#define ROR 0x3
-
-// register logical shift instructions (shift field)
+/* Register logical shift instructions (shift field) */
 #define AND 0x0
 #define BIC 0x1
 #define ORR 0x2
@@ -39,22 +34,17 @@
 #define ANDS 0x6
 #define BICS 0x7
 
-// register multiplication instruction (x field)
+/* Register multiplication instruction (x field) */
 #define MADD 0x0
 #define MSUB 0x1
 
 /*
-
-2 functions decode_imm_instr, decode_reg_instr build the immediate/register instr_fields for execution
-
-immediate version - using the opi field against hardcoded constants (in data_processing.h) to set type and operand fields
-register version - checking M, OPR's MSB and LSB and OPR to determine type field
-
-*/
-
+ * 2 functions decode_imm_instr, decode_reg_instr build the immediate/register instr_fields for execution
+ * immediate version - using the opi field against hardcoded constants (in data_processing.h) to set type and operand fields
+ * register version - checking M, OPR's MSB and LSB and OPR to determine type field
+ */
 static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
-
-    // struct to return
+    /* struct to return */
     imm_instr_fields_t fields = {
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
@@ -62,28 +52,27 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
         .rd = extract_bits(instr.instr, 0, 4)
     };
 
-    // differentiate between arithmetic/wide move operand
+    /* differentiate between arithmetic/wide move operand */
     if (fields.opi == ARITHMETIC_OPI) {
-
-        // update type to now arithmetic
+        /* update type to now arithmetic */
         fields.type = IMM_ARITHMETIC;
 
-        // for arithmetic instruction case, fill in sh, imm12, rn fields, ignore hw, imm16
+        /* for arithmetic instruction case, fill in sh, imm12, rn fields, ignore hw, imm16 */
         fields.sh = extract_bits(instr.instr, 22, 22);
         fields.imm12 = extract_bits(instr.instr, 10, 21);
         fields.rn = extract_bits(instr.instr, 5, 9);
     } else if (fields.opi == WIDE_MOVE_OPI) {
-
-        // update type to now wide move
+        /* update type to now wide move */
         fields.type = IMM_WIDE_MOVE;
 
-        // for wide move case, fill in hw, imm16 fields, ignore sh, imm12, rn fields
+        /* for wide move case, fill in hw, imm16 fields, ignore sh, imm12, rn fields */
         fields.hw = extract_bits(instr.instr, 21, 22);
         fields.imm16 = extract_bits(instr.instr, 5, 20);
     } else {
-
-        // handle error when opi does not fit arithmetic or wide move
-        // emulator does not support any other case and unknown opi
+        /*
+         * handle error when opi does not fit arithmetic or wide move
+         * emulator does not support any other case and unknown opi
+         */
         fprintf(stderr, "Invalid data processing immediate instruction: unsupported opi=%u (0x%x) in instruction 0x%08x\n",
             fields.opi,
             fields.opi,
@@ -96,8 +85,7 @@ static imm_instr_fields_t decode_imm_instr(decoded_instr_t instr) {
 }
 
 static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
-    
-    // struct to return
+    /* struct to return */
     reg_instr_fields_t fields = {
         .sf = extract_bits(instr.instr, 31, 31),
         .opc = extract_bits(instr.instr, 29, 30),
@@ -111,35 +99,31 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
         .rd = extract_bits(instr.instr, 0, 4)
     };
 
-    // differentiate between arithmetic/logic and multiply
+    /* differentiate between arithmetic/logic and multiply */
     if (fields.M == 0 && fields.opr_MSB == 1 && fields.opr_LSB == 0 ) {
-
-        // fields.type updated to arithmetic
+        /* fields.type updated to arithmetic */
         fields.type = REG_ARITHMETIC;
 
-        // arithmetic/logic overlap fields - opr_MSB already set
+        /* arithmetic/logic overlap fields - opr_MSB already set */
         fields.shift = extract_bits(instr.instr, 22, 23);
     } else if (fields.M == 0 && fields.opr_MSB == 0) {
-
-        // field.type updated to logic (from arithmetic)
+        /* field.type updated to logic (from arithmetic) */
         fields.type = REG_LOGIC;
-        
-        // arithmetic/logic overlap fields - opr_MSB already set
+
+        /* arithmetic/logic overlap fields - opr_MSB already set */
         fields.shift = extract_bits(instr.instr, 22, 23);
 
-        // setting N fields (for negation)
+        /* setting N fields (for negation) */
         fields.N = fields.opr_LSB;
     } else if (fields.M == 1 && fields.opr == MULTIPLY_OPR){
-
-        // field.type updated to multiply
+        /* field.type updated to multiply */
         fields.type = REG_MULTIPLY;
 
-        // multiplication extracts x and ra bits (ignoring the the shift and N fields)
+        /* multiplication extracts x and ra bits (ignoring the the shift and N fields) */
         fields.x = extract_bits(instr.instr, 15, 15);
         fields.ra = extract_bits(instr.instr, 10,14);
     } else {
-      
-        // handling error case for any M/OPR that the emulator does not support
+        /* handling error case for any M/OPR that the emulator does not support */
         fprintf(stderr, "Invalid data processing register instruction: unsupported M=%u (0x%x), opr=%u (0x%x) in instruction 0x%08x\n",
             fields.M,
             fields.M,
@@ -147,26 +131,23 @@ static reg_instr_fields_t decode_reg_instr(decoded_instr_t instr) {
             fields.opr,
             instr.instr
         );
-        exit(EXIT_FAILURE);  
+        exit(EXIT_FAILURE);
     }
 
     return fields;
 }
 
 /*
-
-Error messages for execution phase
-
-unsupported_opcode_error -> opcode not defined for emulator to execute, show both invalid opcode and address
-unsupported_shift_error -> shift function is not defined for emulator to execute, showing the shift field and address
-invalid_field_error -> any fields other than opcode/shift that are invalid, show both field name, field value and instr 
-
-*/
-
+ * Error messages for execution phase
+ * unsupported_opcode_error -> opcode not defined for emulator to execute, show both invalid opcode and address
+ * unsupported_shift_error -> shift function is not defined for emulator to execute, showing the shift field and address
+ * invalid_field_error -> any fields other than opcode/shift that are invalid, show both field name, field value and instr
+ */
 static void unsupported_opcode_error(byte_t opcode, word_t address) {
-
-    // provide invalid opcode number and the instruction that failed to execute
-    // so you are able to see which opcode is not available, and the address it failed at
+    /*
+     * provide invalid opcode number and the instruction that failed to execute
+     * so you are able to see which opcode is not available, and the address it failed at
+     */
     fprintf(stderr, "Invalid operation: unsupported opcode (0x%02x) at address 0x%08x\n",
         opcode,
         address
@@ -175,9 +156,10 @@ static void unsupported_opcode_error(byte_t opcode, word_t address) {
 }
 
 static void unsupported_shift_error(byte_t shift, word_t address) {
-
-    // provide invalid opcode number and the instruction that failed to execute
-    // so you are able to see which opcode is not available, and the address it failed at
+    /*
+     * provide invalid opcode number and the instruction that failed to execute
+     * so you are able to see which opcode is not available, and the address it failed at
+     */
     fprintf(stderr, "Invalid operation: unsupported shift (0x%02x) at address 0x%08x\n",
         shift,
         address
@@ -186,9 +168,10 @@ static void unsupported_shift_error(byte_t shift, word_t address) {
 }
 
 static void invalid_field_error(const char *field_name, word_t field_value, instr_t instr) {
-        
-    // provide invalid opcode number and the instruction that failed to execute
-    // so you are able to see which opcode is not available, and the address it failed at
+    /*
+     * provide invalid opcode number and the instruction that failed to execute
+     * so you are able to see which opcode is not available, and the address it failed at
+     */
     fprintf(stderr, "Invalid field: unsupported operation due to %s field with value (0x%08x) in instruction (0x%08x)",
         field_name,
         field_value,
@@ -198,73 +181,66 @@ static void invalid_field_error(const char *field_name, word_t field_value, inst
 }
 
 /*
-
-2 helper functions for arithmetic 
-
-one version is designed for 32, the other for 64 bit arithmetic
-the parameters are overlapping fields values from the imm/reg decode structs
-then produces a result and then in the outer case you can continue using the outputted result (such as writing to register etc.)
-these functions will update the pstate register (common to both immediate/register arithmetic)
-
-execute_general_arithmetic_64 is not commented since its just the 64 bit version of execute_general_arithmetic_32
-
-apply_reg_shift should be used for arithmetic and logic operations, also reduces redundant checks
-
-*/
-
+ * 2 helper functions for arithmetic
+ * one version is designed for 32, the other for 64 bit arithmetic
+ * the parameters are overlapping fields values from the imm/reg decode structs
+ * then produces a result and then in the outer case you can continue using the outputted result (such as writing to register etc.)
+ * these functions will update the pstate register (common to both immediate/register arithmetic)
+ * execute_general_arithmetic_64 is not commented since its just the 64 bit version of execute_general_arithmetic_32
+ * apply_reg_shift should be used for arithmetic and logic operations, also reduces redundant checks
+ */
 static word_t execute_general_arithmetic_32(machine_state_t *state, byte_t opcode, word_t rn, word_t rm) {
-    
-    // final value to return
+    /* final value to return */
     word_t result;
 
-    // cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags
+    /* cases for opc, 00 - add, 01 - add and set flags, 10 - sub, 11 - sub and set flags */
     switch (opcode) {
-        case ADD_S: 
+        case ADD_S:
         case ADD:
-
-            // ADD_S and ADD both create the result by adding
-            result = rn + rm;    
-            break;    
+            /* ADD_S and ADD both create the result by adding */
+            result = rn + rm;
+            break;
         case SUB_S:
         case SUB:
-
-            // SUB_S and SUB both create result by subtracting
+            /* SUB_S and SUB both create result by subtracting */
             result = rn - rm;
             break;
         default:
-
             unsupported_opcode_error(opcode, read_pc(&state->special_registers));
     }
 
-    // updating processor state register only if opcode fits add_s and sub_s
-    // otherwise ignore for the other instructions
+    /*
+     * updating processor state register only if opcode fits add_s and sub_s
+     * otherwise ignore for the other instructions
+     */
     if (opcode == ADD_S || opcode == SUB_S) {
-
-        // take sign bit of result in 32 bit
+        /* take sign bit of result in 32 bit */
         bit_t n = sign_bit_32(result);
 
         bit_t z = result == 0;
 
-        // addition, check overflow past 32 bits (carry)
-        // subtraction, check borrow (rn >= rm)
+        /*
+         * addition, check overflow past 32 bits (carry)
+         * subtraction, check borrow (rn >= rm)
+         */
         bit_t c;
         if (opcode == ADD_S) {
-
-            // do the addition in 64 bits and check if it spills past bit 31
+            /* do the addition in 64 bits and check if it spills past bit 31 */
             c = ((dword_t) rn + (dword_t) rm) > UINT32_MAX;;
         } else {
-
-            // borrow occurs when rn < rm (unsigned)
+            /* borrow occurs when rn < rm (unsigned) */
             c = (word_t) rn >= (word_t) rm;
         }
 
-        // addition, check cases where signs are the same
-        // subtraction, check cases where signs are different
+        /*
+         * addition, check cases where signs are the same
+         * subtraction, check cases where signs are different
+         */
         bit_t v;
         if (opcode == ADD_S) {
             v = ((sword_t) rn > 0 && (sword_t) rm > 0 && (sword_t) result < 0) ||
                 ((sword_t) rn < 0 && (sword_t) rm < 0 && (sword_t) result > 0);
-        } else { 
+        } else {
             v = ((sword_t) rn > 0 && (sword_t) rm < 0 && (sword_t) result < 0) ||
                 ((sword_t) rn < 0 && (sword_t) rm > 0 && (sword_t) result > 0);
         }
@@ -276,47 +252,38 @@ static word_t execute_general_arithmetic_32(machine_state_t *state, byte_t opcod
 }
 
 static dword_t execute_general_arithmetic_64(machine_state_t *state, byte_t opcode, dword_t rn, dword_t rm) {
-
     dword_t result;
 
     switch (opcode) {
-        case ADD_S: 
+        case ADD_S:
         case ADD:
-
             result = (dword_t) rn + (dword_t) rm;
             break;
         case SUB_S:
         case SUB:
-
             result = (dword_t) rn - (dword_t) rm;
             break;
         default:
-
             unsupported_opcode_error(opcode, read_pc(&state->special_registers));
     }
-    
-    if (opcode == ADD_S || opcode == SUB_S) {
 
+    if (opcode == ADD_S || opcode == SUB_S) {
         bit_t n = sign_bit_64(result);
 
         bit_t z = result == 0;
 
         bit_t c;
         if (opcode == ADD_S) {
-
             c = (UINT64_MAX - (dword_t) rn) < (dword_t) rm;
         } else {
-
             c = (dword_t) rn >= (dword_t) rm;
         }
 
         bit_t v;
         if (opcode == ADD_S) {
-
             v = ((sdword_t) rn > 0 && (sdword_t) rm > 0 && (sdword_t) result < 0) ||
                 ((sdword_t) rn < 0 && (sdword_t) rm < 0 && (sdword_t) result > 0);
-        } else { 
-
+        } else {
             v = ((sdword_t) rn > 0 && (sdword_t) rm < 0 && (sdword_t) result < 0) ||
                 ((sdword_t) rn < 0 && (sdword_t) rm > 0 && (sdword_t) result > 0);
         }
@@ -328,70 +295,56 @@ static dword_t execute_general_arithmetic_64(machine_state_t *state, byte_t opco
 }
 
 static dword_t apply_reg_shift(dword_t value, byte_t shift, byte_t shift_amount, bit_t sf, word_t address) {
-
     dword_t result;
 
-    // separate 32 bit and 64 bit execution completely
+    /* separate 32 bit and 64 bit execution completely */
     if (sf == 0) {
-
-        // casting value to 32 bits
+        /* casting value to 32 bits */
         word_t w_value = (word_t) value;
-        // getting the bit shift to stay within the range 0 - 31
+        /* getting the bit shift to stay within the range 0 - 31 */
         shift_amount %= 32;
 
         switch (shift) {
             case LSL:
-
                 result = (dword_t) (w_value << shift_amount);
                 break;
             case LSR:
-
                 result = (dword_t) (w_value >> shift_amount);
                 break;
             case ASR:
-
                 result = (dword_t) ((word_t) ((int32_t) w_value >> shift_amount));
                 break;
             case ROR:
-
-                // shift_amount = 0 would cause error since we cant shift by 32, so just return value
+                /* shift_amount = 0 would cause error since we cant shift by 32, so just return value */
                 if (shift_amount == 0) {
-
                     result = (dword_t) w_value;
                     break;
                 }
-                // return the rotated result
+                /* return the rotated result */
                 result = (dword_t) ((w_value >> shift_amount) |
                                   (w_value << (32 - shift_amount)));
                 break;
             default:
-
                 unsupported_shift_error(shift, address);
         }
 
     } else {
-
-        // similar code as above but for 64 bit execution
+        /* similar code as above but for 64 bit execution */
 
         shift_amount %= 64;
 
         switch (shift) {
             case LSL:
-
                 result = value << shift_amount;
                 break;
             case LSR:
-
                 result = value >> shift_amount;
                 break;
             case ASR:
-
                 result = (dword_t) ((int64_t) value >> shift_amount);
                 break;
             case ROR:
-
                 if (shift_amount == 0) {
-
                     result = value;
                     break;
                 }
@@ -406,31 +359,26 @@ static dword_t apply_reg_shift(dword_t value, byte_t shift, byte_t shift_amount,
 }
 
 /*
-
-5 execute functions below for the different type, each one ideally has a switch case and 
-
-uses the desired field to do real operations that would update the state
-
-*/
-
+ * 5 execute functions below for the different type, each one ideally has a switch case and
+ * uses the desired field to do real operations that would update the state
+ */
 static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fields) {
-
-    // sf = 0 -> 32 bit result to 32 bit register
-    // sf = 1 -> 64 bit result to 64 bit register
+    /*
+     * sf = 0 -> 32 bit result to 32 bit register
+     * sf = 1 -> 64 bit result to 64 bit register
+     */
     dword_t rn = read_reg_sf(&state->general_registers, fields.rn, fields.sf);
 
-    // Op2 is imm12, shifted left by 12 if sh is set, otherwise just keep the imm12 as it is
+    /* Op2 is imm12, shifted left by 12 if sh is set, otherwise just keep the imm12 as it is */
     dword_t op2 = fields.sh ? (dword_t) fields.imm12 << 12 : (dword_t) fields.imm12;
 
-    // execute arithmetic and update pstate if needed
+    /* execute arithmetic and update pstate if needed */
     dword_t result;
-    
-    if (fields.sf == 0) {
 
+    if (fields.sf == 0) {
         result = (dword_t) execute_general_arithmetic_32(state, fields.opc, (word_t) rn, (word_t) op2);
     } else {
-
-        // similar as in the other branch but 64 bit version
+        /* similar as in the other branch but 64 bit version */
         result = execute_general_arithmetic_64(state, fields.opc, rn, op2);
     }
 
@@ -438,40 +386,39 @@ static void execute_imm_arithmetic(machine_state_t *state, imm_instr_fields_t fi
 }
 
 static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fields) {
-
-    // Op = imm16 shifted left by hw * 16
+    /* Op = imm16 shifted left by hw * 16 */
     byte_t shift = fields.hw * 16;
 
-    // sf = 0 -> 32 bit result to 32 bit register
-    // sf = 1 -> 64 bit result to 64 bit register
+    /*
+     * sf = 0 -> 32 bit result to 32 bit register
+     * sf = 1 -> 64 bit result to 64 bit register
+     */
 
-    // operand has to be shifted by shift variables defined outside branch casted to 32 bit
+    /* operand has to be shifted by shift variables defined outside branch casted to 32 bit */
     dword_t op = (dword_t) fields.imm16 << shift;
     dword_t rd = read_reg_sf(&state->general_registers, fields.rd, fields.sf);
 
-    // create 16-bit mask at the position by hw
+    /* create 16-bit mask at the position by hw */
     dword_t mask = (dword_t) 0xFFFF << shift;
     dword_t result;
 
     switch (fields.opc) {
         case MOVN:
-
-            // bitwise negate Op, upper 32 bits zeroed by word_t cast
+            /* bitwise negate Op, upper 32 bits zeroed by word_t cast */
             result = ~op;
             break;
         case MOVZ:
-
-            // set Rd to Op
+            /* set Rd to Op */
             result = op;
             break;
         case MOVK:
-
-            // keep all bits of Rd except the 16 bits between shift and shift+15
-            // clear those 16 bits then insert imm16 into that position
+            /*
+             * keep all bits of Rd except the 16 bits between shift and shift+15
+             * clear those 16 bits then insert imm16 into that position
+             */
             result = (rd & ~mask) | op;
             break;
         default:
-
             unsupported_opcode_error(fields.opc, read_pc(&state->special_registers));
     }
 
@@ -479,113 +426,114 @@ static void execute_imm_wide_move(machine_state_t *state, imm_instr_fields_t fie
 }
 
 static void execute_reg_arithmetic(machine_state_t *state, reg_instr_fields_t fields) {
-
-    // store address once (optimised by reducing pc reads) for multiple error handles
+    /* store address once (optimised by reducing pc reads) for multiple error handles */
     word_t address = read_pc(&state->special_registers);
 
-    // for 32-bit, shift amount is only lower 5 bits
-    // for 64-bit, shift amount stays at 6 bits
+    /*
+     * for 32-bit, shift amount is only lower 5 bits
+     * for 64-bit, shift amount stays at 6 bits
+     */
     byte_t shift_amount = (fields.sf == 0) ? fields.operand & 0x1F : fields.operand & 0x3F;
 
-    // sf = 0 -> 32 bit result to 32 bit register
-    // sf = 1 -> 64 bit result to 64 bit register
+    /*
+     * sf = 0 -> 32 bit result to 32 bit register
+     * sf = 1 -> 64 bit result to 64 bit register
+     */
 
-    // reading from registers from the rn, rm fields of the instruction
+    /* reading from registers from the rn, rm fields of the instruction */
     dword_t rn = read_reg_sf(&state->general_registers, (unsigned) fields.rn, fields.sf);
     dword_t rm = read_reg_sf(&state->general_registers, (unsigned) fields.rm, fields.sf);
 
-    // can cast this to word_t when writing to register, so initialise it as dword_t
+    /* can cast this to word_t when writing to register, so initialise it as dword_t */
     dword_t shifted_rm;
     dword_t result;
 
-    // ror cannot be used for arithmetic and shift operation, since it is ONLY logical 
-    // hence if we do find it, we handle this case as an error, we do not provide this shift case
+    /*
+     * ror cannot be used for arithmetic and shift operation, since it is ONLY logical
+     * hence if we do find it, we handle this case as an error, we do not provide this shift case
+     */
     if (fields.shift == ROR) {
-
         unsupported_shift_error(fields.shift, address);
     }
 
-    // even though apply_reg_shift does consider the ROR case, it will be eliminated in the previous if statement
+    /* even though apply_reg_shift does consider the ROR case, it will be eliminated in the previous if statement */
     shifted_rm = apply_reg_shift(rm, fields.shift, shift_amount, fields.sf, address);
 
-    // obtain the result from checking the general arithmetic opcode case and producing the desired result
-    // pstate registers are updated within this function execution
+    /*
+     * obtain the result from checking the general arithmetic opcode case and producing the desired result
+     * pstate registers are updated within this function execution
+     */
     if (fields.sf == 0) {
-
-        // casting to dword_t to match type of result
+        /* casting to dword_t to match type of result */
         result = (dword_t) execute_general_arithmetic_32(state, fields.opc, (word_t) rn, (word_t) shifted_rm);
     } else {
-
         result = execute_general_arithmetic_64(state, fields.opc, rn, shifted_rm);
     }
 
-    // writing final result to the Rd register
+    /* writing final result to the Rd register */
     write_reg_sf(&state->general_registers, (unsigned) fields.rd, fields.sf, result);
 }
 
 static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
-
-    // combine opcode and N bit to create 3-bit case value
+    /* combine opcode and N bit to create 3-bit case value */
     byte_t logic_opcode = (fields.opc << 1) + fields.N;
 
-    // read first operand from Rn
+    /* read first operand from Rn */
     dword_t rn = read_reg_sf(&state->general_registers, (unsigned) fields.rn, fields.sf);
 
-    // read second operand from Rm, then apply the encoded shift to create op2
+    /* read second operand from Rm, then apply the encoded shift to create op2 */
     dword_t rm = read_reg_sf(&state->general_registers, (unsigned) fields.rm, fields.sf);
 
-    // first we need to apply the register shift before doing the actual logic operation
-    // using apply_reg_shift helper function, also passing in the current address of this instruction (via pc read) for error handling
+    /*
+     * first we need to apply the register shift before doing the actual logic operation
+     * using apply_reg_shift helper function, also passing in the current address of this instruction (via pc read) for error handling
+     */
     dword_t op = apply_reg_shift(rm, fields.shift, fields.operand, fields.sf, read_pc(&state->special_registers));
 
     dword_t result;
 
-    // case for logic opcode
-    // 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
+    /*
+     * case for logic opcode
+     * 000 - and, 001 - bic, 010 - orr, 011 - orn, 100 - eor, 101 - eon, 110 - ands, 111 - bics
+     */
     switch (logic_opcode) {
         case ANDS:
         case AND:
-
             result = rn & op;
             break;
         case BICS:
         case BIC:
-
             result = rn & ~op;
             break;
         case ORR:
-
             result = rn | op;
             break;
         case ORN:
-
             result = rn | ~op;
             break;
         case EOR:
-
             result = rn ^ op;
             break;
         case EON:
-
             result = rn ^ ~op;
             break;
         default:
-
             invalid_field_error("Opcode", logic_opcode, instr);
     }
 
-    // writing to register based on the sf bit using the wrapper function
+    /* writing to register based on the sf bit using the wrapper function */
     write_reg_sf(&state->general_registers, (unsigned) fields.rd, fields.sf, result);
 
-    // only for ANDS and BICS do we need to change the n and z bits
+    /* only for ANDS and BICS do we need to change the n and z bits */
     if (logic_opcode == ANDS || logic_opcode == BICS) {
-
-        // the n flag is the sign bit of result
-        // using the sign_bit helper functions to extract the bit from the correct sized result
+        /*
+         * the n flag is the sign bit of result
+         * using the sign_bit helper functions to extract the bit from the correct sized result
+         */
         bit_t n = fields.sf ? sign_bit_64(result)
                             : sign_bit_32((word_t) result);
 
-        // checking different sized results against 0 to set the z flag
+        /* checking different sized results against 0 to set the z flag */
         bit_t z = fields.sf ? result == 0
                             : (word_t) result == 0;
 
@@ -594,60 +542,54 @@ static void execute_reg_logic(machine_state_t *state, reg_instr_fields_t fields,
 }
 
 static void execute_reg_multiply(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
-      
-    // sf = 0 -> 32 bit result to 32 bit register
-    // sf = 1 -> 64 bit result to 64 bit register
+    /*
+     * sf = 0 -> 32 bit result to 32 bit register
+     * sf = 1 -> 64 bit result to 64 bit register
+     */
 
-    // separating register reads for clarity
+    /* separating register reads for clarity */
     dword_t ra = read_reg_sf(&state->general_registers, (unsigned) fields.ra, fields.sf);
     dword_t rn = read_reg_sf(&state->general_registers, (unsigned) fields.rn, fields.sf);
     dword_t rm = read_reg_sf(&state->general_registers, (unsigned) fields.rm, fields.sf);
 
-    // result will mask to 32 bits for 32 bit execution
+    /* result will mask to 32 bits for 32 bit execution */
     dword_t result;
 
-    // result is of the form ra + (rn * rm) for MADD
-    // result is of the form ra - (rn * rm) for MSUB
+    /*
+     * result is of the form ra + (rn * rm) for MADD
+     * result is of the form ra - (rn * rm) for MSUB
+     */
     if (fields.x == MADD)
-
         result = ra + (rn * rm);
     else if (fields.x == MSUB) {
-
         result = ra - (rn * rm);
     }
 
-    // writing to rd using write_w (32 bit)
+    /* writing to rd using write_w (32 bit) */
     write_reg_sf(&state->general_registers, (unsigned) fields.rd, fields.sf, result);
 }
 
 /*
-
-2 higher level execution functions that group the immediate/register class of instructions
-
-executing instructions decoded into immediate/register class
-
-*/
-
+ * 2 higher level execution functions that group the immediate/register class of instructions
+ * executing instructions decoded into immediate/register class
+ */
 static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields, instr_t instr) {
-    
-    // checking type of immediate to execute it more specifically 
-    // due to it having its own respective fields
+    /*
+     * checking type of immediate to execute it more specifically
+     * due to it having its own respective fields
+     */
     switch (fields.type) {
-
-        // specifically execute the arithmetic instruction with sh, imm12, rn for (add, sub, adds, subs)
+        /* specifically execute the arithmetic instruction with sh, imm12, rn for (add, sub, adds, subs) */
         case IMM_ARITHMETIC:
-
             execute_imm_arithmetic(state, fields);
             break;
-        // specifically execute the immediate with hw, imm16 for (movn, movz, movk)
+        /* specifically execute the immediate with hw, imm16 for (movn, movz, movk) */
         case IMM_WIDE_MOVE:
-
             execute_imm_wide_move(state, fields);
             break;
         default:
-
-            // provide address of invalid operation if IMM_NULL and actual instruction failed to execute
-            fprintf(stderr, "Invalid operation: unsupported immediate instruction (0x%08x) executed at address 0x%016lx\n", 
+            /* provide address of invalid operation if IMM_NULL and actual instruction failed to execute */
+            fprintf(stderr, "Invalid operation: unsupported immediate instruction (0x%08x) executed at address 0x%016lx\n",
                 instr,
                 read_pc(&state->special_registers)
             );
@@ -656,32 +598,34 @@ static void execute_imm_instr(machine_state_t *state, imm_instr_fields_t fields,
 }
 
 static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields, instr_t instr) {
-
-    // checking type of register to execute it more specifically 
-    // due to it having its own respective fields
+    /*
+     * checking type of register to execute it more specifically
+     * due to it having its own respective fields
+     */
     switch (fields.type) {
-
-        // execute arithmetic shift using the shift field for (lsl, lsr, asr, ror)
+        /* execute arithmetic shift using the shift field for (lsl, lsr, asr, ror) */
         case REG_ARITHMETIC:
-
             execute_reg_arithmetic(state, fields);
             break;
-        // using logical shift and N field for executing
-        // (and, bic, orr, orn, eor, eon, ands, bics)
+        /*
+         * using logical shift and N field for executing
+         * (and, bic, orr, orn, eor, eon, ands, bics)
+         */
         case REG_LOGIC:
-
             execute_reg_logic(state, fields, instr);
             break;
-        // using the x field for executing (madd, msub)
-        // then using the ra field as a third input register for multiply instructions
+        /*
+         * using the x field for executing (madd, msub)
+         * then using the ra field as a third input register for multiply instructions
+         */
         case REG_MULTIPLY:
-
             execute_reg_multiply(state, fields, instr);
             break;
         default:
-
-            // provide address of invalid operation if IMM_NULL or
-            // non immedate instruction is attempted to be executed
+            /*
+             * provide address of invalid operation if IMM_NULL or
+             * non immedate instruction is attempted to be executed
+             */
             fprintf(stderr, "Invalid operation: unsupported register instruction (0x%08x) at address 0x%016lx\n",
                 instr,
                 read_pc(&state->special_registers)
@@ -691,35 +635,31 @@ static void execute_reg_instr(machine_state_t *state, reg_instr_fields_t fields,
 }
 
 /*
-
-final execute_data_processing function puts all helpers (the static functions) 
-
-should be used in the execution of pipeline 
-
-*/
-
+ * Final execute_data_processing function puts all helpers (the static functions)
+ * should be used in the execution of pipeline
+ */
 exec_result_t execute_data_processing(machine_state_t *state, decoded_instr_t instr) {
-
-    // distinguish between immediate and register instruction so it can further decode
-    // the correct type
+    /*
+     * distinguish between immediate and register instruction so it can further decode
+     * the correct type
+     */
     if (instr.type == INSTR_DP_IMM) {
-
-        // pass further decoded result into execution straight away along with state pointer
+        /* pass further decoded result into execution straight away along with state pointer */
         execute_imm_instr(state, decode_imm_instr(instr), instr.instr);
     } else if (instr.type == INSTR_DP_REG) {
-
-        // similar as above but with reg version
+        /* similar as above but with reg version */
         execute_reg_instr(state, decode_reg_instr(instr), instr.instr);
     } else {
-
-        // error message for unsupported other forms of data_processing (or branching/load_store)
-        fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%08x", 
+        /* error message for unsupported other forms of data_processing (or branching/load_store) */
+        fprintf(stderr, "Invalid data processing instruction: unsupported instruction type (non-immedate and non-register) 0x%08x",
             instr.instr
         );
         exit(EXIT_FAILURE);
     }
 
-    // no branching, continue to next instruction in pipeline
-    // PC should be updated outside loop
+    /*
+     * no branching, continue to next instruction in pipeline
+     * PC should be updated outside loop
+     */
     return EXEC_NEXT;
 }

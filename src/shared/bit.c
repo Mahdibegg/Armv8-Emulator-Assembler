@@ -4,8 +4,7 @@
 #define BIT_MSB_POS_32 31
 
 dword_t extract_bits(dword_t dword, unsigned low, unsigned high) {
-
-    // validating bit input for internal error
+    /* validating bit input for internal error */
     if ( high >= 64 || low > high) {
         fprintf(stderr,"Invalid bit range for extract_bits (data_process): high = %u, low = %u\n",
             high,
@@ -14,35 +13,34 @@ dword_t extract_bits(dword_t dword, unsigned low, unsigned high) {
         exit(EXIT_FAILURE);
     }
 
-    // rare case: bits 0-31 extracted
+    /* rare case: bits 0-31 extracted */
     if (high - low == 63) {
         return dword;
     }
 
-    // width = number of bits to extract to create mask
+    /* width = number of bits to extract to create mask */
     unsigned width = high - low + 1;
     dword_t mask = ((dword_t) 1 << width) - 1;
 
-    // shift instruction to mask position and apply mask
+    /* shift instruction to mask position and apply mask */
     return (dword >> low) & mask;
 }
 
 sdword_t sign_extend(dword_t value, unsigned bits) {
-
-    // sign bit is the last bit which is bits -1 
+    /* sign bit is the last bit which is bits - 1 */
     unsigned sign_bit = bits-1;
 
-    // next we check if it is negative(1) or positive(0)
+    /* next we check if it is negative(1) or positive(0) */
     dword_t sign = ((dword_t)1) << sign_bit;
 
     if (value & sign) {
-        // we can make a mask by filling upper bits with 1 and the lower bits with 0 
+        /* we can make a mask by filling upper bits with 1 and the lower bits with 0 */
         dword_t extension = ~((dword_t)0) << bits;
 
-        // add the original value bits to the lower bits of the extension 
+        /* add the original value bits to the lower bits of the extension */
         value = value | extension;
     }
-    // return it as signed as final value can be negative
+    /* return it as signed as final value can be negative */
     return (int64_t)value;
 }
 
@@ -52,4 +50,19 @@ bit_t sign_bit_32(word_t word) {
 
 bit_t sign_bit_64(dword_t dword) {
     return (bit_t) extract_bits(dword, BIT_MSB_POS_64, BIT_MSB_POS_64);
+}
+
+void word_to_bytes_le(word_t word, byte_t bytes[4]) {
+    /* little endian extraction: least significant byte first */
+    for (int i = 0; i < 4; i++) {
+        bytes[i] = (byte_t) ((word >> (i * 8)) & 0xFF);
+    }
+}
+
+word_t bytes_to_word_le(const byte_t bytes[4]) {
+    /* little endian combine: least significant byte first */
+    return (word_t) bytes[0] |
+        (word_t) bytes[1] << 8 |
+        (word_t) bytes[2] << 16 |
+        (word_t) bytes[3] << 24;
 }
