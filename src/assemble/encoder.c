@@ -95,7 +95,7 @@
 
 /* Shift related bits */
 #define REG_SHIFT_ENCODING_SHIFT 1
-#define REG_SHIFT_MAX 31
+#define REG_SHIFT_MAX_32 31
 #define REG_SHIFT_MAX_64 63
 
 /* Prevent buffer overflows when concatenating for instruction reformatting in alias handler */
@@ -114,7 +114,10 @@
  * Helper functions declared at top after spotting redundant code
  */
 
-/* Remove redundant code that checks for arithmetic instruction */
+/* 
+ * Remove redundant code that checks for arithmetic instruction
+ * Return true if its an arithmetic instruction otherwise false
+ */
 static bool check_arith_instr(const char *opcode) {
     if (strcmp(opcode, "add") == 0 ||
         strcmp(opcode, "adds") == 0 ||
@@ -123,7 +126,7 @@ static bool check_arith_instr(const char *opcode) {
             return true;
     }
     return false;
-} 
+}
 
 /*
  * Opcode map + lookup section
@@ -166,18 +169,18 @@ static const opcode_entry_t opcode_map[] = {
     {"sub", INSTR_DP_REG, 0x2},
     {"subs", INSTR_DP_REG, 0x3},
 
-    {"and", INSTR_DP_REG, 0x0},
-    {"bic", INSTR_DP_REG, 0x1},
-    {"orr", INSTR_DP_REG, 0x2},
-    {"orn", INSTR_DP_REG, 0x3},
-    {"eor", INSTR_DP_REG, 0x4},
-    {"eon", INSTR_DP_REG, 0x5},
-    {"ands", INSTR_DP_REG, 0x6},
-    {"bics", INSTR_DP_REG, 0x7},
+    {"and",  INSTR_DP_REG, 0x0},
+    {"bic",  INSTR_DP_REG, 0x0},
+    {"orr",  INSTR_DP_REG, 0x1},
+    {"orn",  INSTR_DP_REG, 0x1},
+    {"eor",  INSTR_DP_REG, 0x2},
+    {"eon",  INSTR_DP_REG, 0x2},
+    {"ands", INSTR_DP_REG, 0x3},
+    {"bics", INSTR_DP_REG, 0x3},
 
     {"madd", INSTR_DP_REG, 0x0},
-    {"msub", INSTR_DP_REG, 0x1},
-
+    {"msub", INSTR_DP_REG, 0x0},
+    
     /* Load store */
     {"ldr", INSTR_LOAD_STORE, 0x1},
     {"str", INSTR_LOAD_STORE, 0x0},
@@ -458,6 +461,31 @@ static byte_t parse_reg_shift(token_t shift_operand, register_type_t type, size_
         );
         abort();
     }
+}
+
+/*
+ * Set register shift fields, which removed redundant shift field building within build_fields shift cases
+ * Will edit the reg_fields that is passed in as reference to the one in build_fields that is being initialised
+ */
+static void set_reg_shift_fields(reg_instr_fields_t *reg_fields,token_t shift_operand, token_t shift_amount_operand, register_type_t reg_type, size_t line_number) {
+    sdword_t shift_amount = parse_imm(shift_amount_operand, line_number);
+
+    unsigned max_shift = (reg_fields->sf == 1) ? REG_SHIFT_MAX_64 : REG_SHIFT_MAX_32;
+
+    if (shift_amount < 0 || shift_amount > max_shift) {
+        fprintf(stderr, "ERROR: Invalid register shift amount on line %zu\n",
+            line_number
+        );
+        abort();
+    }
+
+    reg_fields->opr |= parse_reg_shift(
+        shift_operand,
+        reg_type,
+        line_number
+    );
+
+    reg_fields->operand = shift_amount;
 }
 
 /*
@@ -881,41 +909,25 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                 /* Set default shift amount to prevent uninitialised field from encoding */
                 fields->fields.reg_instr.operand = 0;
 
-
+                /*
+                 * Handing arithmetic and logic type register instructions
+                 * Both will do the same shift handling except require different field buildings
+                 */ 
                 if (check_arith_instr(entry->opcode)) {
-                    register_type_t reg_type = REG_ARITHMETIC;
-
                     /* Register arithmetic uses arithmetic opr format */
                     fields->fields.reg_instr.opr = REG_ARITHMETIC_OPR;
 
                     if (operand_counts == 5) {
-                        /* <shift opc> and <shift imm> for 5 operands in arithmetic register instruction */
-                        token_t shift_operand = tokens->data.instruction_data.operands[3];
-                        token_t shift_amount_operand = tokens->data.instruction_data.operands[4];
-
-                        fields->fields.reg_instr.opr |= parse_reg_shift(
-                            shift_operand,
-                            reg_type,
+                        set_reg_shift_fields(
+                            &fields->fields.reg_instr,
+                            tokens->data.instruction_data.operands[3],
+                            tokens->data.instruction_data.operands[4],
+                            REG_ARITHMETIC,
                             tokens->line_number
                         );
-
-                        sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
-
-                        /* User has to know if shift is too large since they made error in code */
-                        if (shift_amount < 0 || shift_amount > REG_SHIFT_MAX) {
-                            fprintf(stderr, "ERROR: Invalid register arithmetic shift amount on line %zu\n",
-                                tokens->line_number
-                            );
-                            abort();
-                        }
-
-                        /* Set shift amount after size validation */
-                        fields->fields.reg_instr.operand = shift_amount;
                     }
 
                 } else {
-                    register_type_t reg_type = REG_LOGIC;
-
                     /* Register logical uses logical opr format */
                     fields->fields.reg_instr.opr = REG_LOGICAL_OPR;
 
@@ -928,27 +940,13 @@ static instruction_fields_t *build_fields(const symbol_table_t st, const tokeniz
                     }
 
                     if (operand_counts == 5) {
-                        /* <shift opc> and <shift imm> for 5 operands in logical register instructions */
-                        token_t shift_operand = tokens->data.instruction_data.operands[3];
-                        token_t shift_amount_operand = tokens->data.instruction_data.operands[4];
-
-                        /* Using |= we are able to keep the bits that we already added to opr */
-                        fields->fields.reg_instr.opr |= parse_reg_shift(
-                            shift_operand,
-                            reg_type,
+                        set_reg_shift_fields(
+                            &fields->fields.reg_instr,
+                            tokens->data.instruction_data.operands[3],
+                            tokens->data.instruction_data.operands[4],
+                            REG_LOGIC,
                             tokens->line_number
                         );
-
-                        sdword_t shift_amount = parse_imm(shift_amount_operand, tokens->line_number);
-
-                        if (shift_amount < 0 || shift_amount > REG_SHIFT_MAX) {
-                            fprintf(stderr, "ERROR: Invalid register logical shift amount on line %zu\n",
-                                tokens->line_number
-                            );
-                            abort();
-                        }
-
-                        fields->fields.reg_instr.operand = shift_amount;
                     }
                 }
             }
