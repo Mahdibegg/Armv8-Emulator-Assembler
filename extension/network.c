@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define PING_LIMIT 100.00
 #define MAX_LINE_LENGTH 256
@@ -20,7 +21,7 @@ static double get_ping(void) {
     * Then return the ping time that we found.
     * If the file does not open and we have not connection then we return -1.0
     */
-   
+
     /* 
      * Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output 
      * Initialise ping time with -1.0 which indicates no connection
@@ -63,4 +64,14 @@ static double get_ping(void) {
     pclose(ping_file);
 
     return ping_time;
+}
+
+/*
+ * Static helper function for checking if ther is no network connection
+ * Makes use of get_ping()
+ */
+
+static bool is_connection(void) {
+    /* True if ping is -1 otherwise false */
+    return (get_ping() == -1);
 }
