@@ -17,7 +17,7 @@ typedef struct symbol_table *symbol_table_t;
 /*
  * Create Empty symbol table.
  */
-symbol_table_t symbol_table_create(void);
+symbol_table_t init_symbol_table(void);
 
 /*
  * Add label address pair to Symbol Table.
@@ -43,6 +43,6 @@ void symbol_table_print(symbol_table_t st, FILE *out);
 /*
  * Frees all memory used by Symbol Table.
  */
-void symbol_table_free(symbol_table_t st);
+void free_symbol_table(symbol_table_t st);
 
 #endif

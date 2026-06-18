@@ -34,7 +34,7 @@ struct symbol_table {
  * Implementing public functions of Symbol Table
  */
 
-symbol_table_t symbol_table_create(void) {
+symbol_table_t init_symbol_table(void) {
     /* Allocate memory for the symbol table  */
     symbol_table_t st = malloc(sizeof(struct symbol_table));
 
@@ -138,7 +138,7 @@ bool symbol_table_contains(symbol_table_t st, const char *label) {
     return false;
 }
 
-addr_t symbol_table_get(symbol_table_t st, const char *label) {
+addr_t symbol_table_get(const symbol_table_t st, const char *label) {
     /* iterate through symbol table, find the pair and return the address */
     for (size_t i = 0; i < st->size; i++) {
         if (strcmp(st->data[i].label, label) == 0) {
@@ -164,7 +164,7 @@ void symbol_table_print(symbol_table_t st, FILE *out) {
     }
 }
 
-void symbol_table_free(symbol_table_t st) {
+void free_symbol_table(symbol_table_t st) {
     /*  Defensive programming check (Making sure that st exists) */
     if (st == NULL) {
         fprintf(stderr, "ERROR: symbol table does not exist (in an attempt to free symbol table)\n");

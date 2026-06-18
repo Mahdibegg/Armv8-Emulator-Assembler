@@ -4,8 +4,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define WORD_BITS 32
-#define DWORD_BITS 64
+/* Instruction length related constants */
+#define MAX_LINE_LENGTH 256
+#define MAX_TOKEN_LENGTH 128
+
+/* Data size related constants */ 
+#define WORD_BITS 32U
+#define DWORD_BITS 64U
+
+/* Register related constants */
+#define REG_NUM 31U
+#define ZERO_REGISTER 31U
 
 /*
  * Shared types between emulate and assemble 

@@ -47,13 +47,13 @@ typedef struct {
 
 /* Unconditional Branch: b */
 typedef struct {
-    int64_t offset;
+    dword_t offset;
 } uncond_branch_t;
 
 /* Conditional Branch: b.cond */
 typedef struct {
     unsigned cond;
-    int64_t offset;
+    dword_t offset;
 } cond_branch_t;
 
 /* Register Branch: br */

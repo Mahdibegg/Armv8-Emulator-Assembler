@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "binary_writer.h"
+#include "assemble/binary_writer.h"
 #include "shared/bit.h"
 
 /* Number of bytes in a 32-bit word */
