@@ -4,19 +4,12 @@
 #include <stdbool.h>
 
 /*
- * network_status -> this function is run in the main function and continuously checks the ping time and check for dos
- * Then flashes LEDs accordingly
+ * Network_status this function is run in the main function
+ * It will prioritise a dos check before giving the status check
+ * In a set time interval (since security is prioritised)
+ * 
+ * No return value, only LED output
  */
-
 void network_status(void);
-
-/*
- * Check DOS fucntion, Return status as bool
- * Open file using popen()  [This actually treats the output in the terminal as a text file, we also run the ping command on Google DNS] 
- * Then read the file line by line until we find number of connections
- * If the number of connections exceed threshold, return true
- * Else false
- */
-bool detect_dos(void);
 
 #endif
