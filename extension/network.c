@@ -24,12 +24,23 @@
  static void flash_green(void);
 
  double get_ping(void) {
-    /* Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output */
+    /* 
+     * Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output 
+     * Initialise ping time with -1.0 which indicates no connection
+     */
     char net_info[MAX_LINE_LENGTH];
+    double ping_time = -1.0;
 
     /*
      * get the file pointer for the file (terminal) that we want to read (the name is the command and the mode is r for reading)
      */
 
     FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
+    
+    /*Check if the file opened, if it didn't then there is no connectoin so we return -1 to indicate no connection*/
+
+    if (ping_file == NULL) {
+        return -1.0
+    }
+    
  }
