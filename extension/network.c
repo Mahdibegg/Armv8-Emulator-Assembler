@@ -32,17 +32,35 @@
     double ping_time = -1.0;
 
     /*
-     * get the file pointer for the file (terminal) that we want to read (the name is the command and the mode is r for reading)
+     * Get the file pointer for the file (terminal) that we want to read (the name is the command and the mode is r for reading)
      */
 
     FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
     
-    /*Check if the file opened, if it didn't then there is no connectoin so we return -1 to indicate no connection*/
+    /* Check if the file opened, if it didn't then there is no connectoin so we return -1 to indicate no connection */
 
     if (ping_file == NULL) {
         return -1.0;
     }
 
-    /* We need to read from the ping file until we find time= in the line somewhere, we can use strstr to return the pointer to this part of the line*/
+    /* 
+     * We need to read from the ping file until we find time= in the line somewhere, we can use strstr to return the pointer to this part of the line
+     * If a non null pointer is returned then we can read the floating point number after "time=" which gives us the ping time( then we can break )
+     */
+
+    while (fgets(net_info, sizeof(net_info), ping_file) != NULL) {
+        /* Now we get the pointer to "time=" and check if it is null */
+        char *ping_ptr = strstr(net_info, "time=");
+
+        if (ping_ptr != NULL) {
+            /*
+             * Want to read the part just after and store it into ping time
+             * so use sscanf
+             */
+            sscanf(ping_ptr, "time %lf", &ping_time);
+            break;
+
+        }
+    }
     
  }
