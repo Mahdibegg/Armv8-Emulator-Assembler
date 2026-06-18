@@ -26,4 +26,10 @@
  double get_ping(void) {
     /* Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output */
     char net_info[MAX_LINE_LENGTH];
+
+    /*
+     * get the file pointer for the file (terminal) that we want to read (the name is the command and the mode is r for reading)
+     */
+
+    FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
  }
