@@ -37,4 +37,14 @@ bool detect_dos(void){
       perror("popen failed");
       return false;
    }
+
+   while (fgets(line, sizeof(line), fp) != NULL) {
+      if (strstr(line, "ESTAB") != NULL) {
+         connection_count++;
+      }
+   }
+
+   pclose(fp);
+
+   return connection_count > MAX_CONNECTIONS;
 }
