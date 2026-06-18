@@ -13,6 +13,14 @@ static void flash_blue(void);
 static void flash_green(void);
 
 static double get_ping(void) {
+    /*
+    * Blueprint:
+    * Open the file using popen() [This actually treats the output in the terminal as a text file, we also run the ping command on Google DNS] 
+    * Then read the file line by line until we find "time=" we then read the floating point number in this line, giving us the ping time in ms
+    * Then return the ping time that we found.
+    * If the file does not open and we have not connection then we return -1.0
+    */
+   
     /* 
      * Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output 
      * Initialise ping time with -1.0 which indicates no connection
