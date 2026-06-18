@@ -62,5 +62,11 @@
 
         }
     }
+    /*
+     * Use pclose to close the file 
+     * Return the ping time
+     */
+    pclose(ping_file);
+    return ping_time;
     
  }
