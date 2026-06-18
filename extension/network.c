@@ -73,5 +73,5 @@ static double get_ping(void) {
 
 static bool is_connection(void) {
     /* True if ping is -1 otherwise false */
-    return (get_ping() == -1);
+    return (get_ping() != -1);
 }
