@@ -25,5 +25,5 @@
 
  double get_ping(void) {
     /* Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output */
-    char response[MAX_LINE_LENGTH];
+    char net_info[MAX_LINE_LENGTH];
  }
