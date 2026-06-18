@@ -40,7 +40,9 @@
     /*Check if the file opened, if it didn't then there is no connectoin so we return -1 to indicate no connection*/
 
     if (ping_file == NULL) {
-        return -1.0
+        return -1.0;
     }
+
+    /* We need to read from the ping file until we find time= in the line somewhere, we can use strstr to return the pointer to this part of the line*/
     
  }
