@@ -1,6 +1,7 @@
 #ifndef NETWORK_H   
 #define NETWORK_H
 
+#include <stdbool.h.
 
 /*
  * Get ping function, Return ping as double 
@@ -11,7 +12,8 @@
  * If the ping time is less than 100 we flash the green led 
  * We sleep for a set time and then repeat all of the checks 
  */
-
 double get_ping(void);
+
+bool get_ddos(void);
 
 #endif

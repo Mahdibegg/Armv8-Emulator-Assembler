@@ -13,13 +13,10 @@
  * If the ping time is less than 100 we flash the green led 
  * We sleep for a set time and then repeat all of the checks  
  */
-
  #define PING_LIMIT 100.00
  #define MAX_LINE_LENGTH 256
 
- /*
-  * Function prototype for flashing the RGBS
-  */
+ /*Function prototype for flashing the RGBS*/
  static void flash_yellow(void);
  static void flash_green(void);
 
