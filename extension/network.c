@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-
 /*
  * Blueprint:
  * Open the file using popen() [This actually treats the output in the terminal as a text file, we also run the ping command on Google DNS] 
@@ -12,18 +11,18 @@
  * If the ping time is larger than 100 then we flash the yellow led, also, if we cannot get an internet connection then we also flash yellow led 
  * If the ping time is less than 100 we flash the green led 
  * We sleep for a set time and then repeat all of the checks  
- */
+*/
 
- #define PING_LIMIT 100.00
- #define MAX_LINE_LENGTH 256
+#define PING_LIMIT 100.00
+#define MAX_LINE_LENGTH 256
 
- /*
-  * Function prototype for flashing the RGBS
-  */
- static void flash_yellow(void);
- static void flash_green(void);
+/*
+* Function prototype for flashing the RGBS
+*/
+static void flash_yellow(void);
+static void flash_green(void);
 
- double get_ping(void) {
+double get_ping(void) {
     /* 
      * Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output 
      * Initialise ping time with -1.0 which indicates no connection
@@ -31,10 +30,7 @@
     char net_info[MAX_LINE_LENGTH];
     double ping_time = -1.0;
 
-    /*
-     * Get the file pointer for the file (terminal) that we want to read (the name is the command and the mode is r for reading)
-     */
-
+    /* Get the file pointer for the file (terminal) that we want to read (the name is the command and the mode is r for reading) */
     FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
     
     /* Check if the file opened, if it didn't then there is no connectoin so we return -1 to indicate no connection */
@@ -59,14 +55,14 @@
              */
             sscanf(ping_ptr, "time %lf", &ping_time);
             break;
-
         }
     }
+
     /*
      * Use pclose to close the file 
      * Return the ping time
      */
     pclose(ping_file);
+
     return ping_time;
-    
- }
+}
