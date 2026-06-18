@@ -1,7 +1,7 @@
 #ifndef NETWORK_H   
 #define NETWORK_H
 
-#include <stdbool.h.>
+#include <stdbool.h>
 
 /*
  * Get ping function, Return ping as double 

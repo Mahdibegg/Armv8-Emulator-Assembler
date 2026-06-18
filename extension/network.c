@@ -28,5 +28,7 @@
  }
 
 bool detect_dos(void){
-   //TODO:
+   FILE *fp;
+   char line[MAX_LINE_LENGTH];
+   int connection_count = 0;
 }
