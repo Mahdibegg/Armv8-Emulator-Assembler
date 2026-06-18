@@ -6,7 +6,6 @@
 
 #define PING_LIMIT 100.00
 #define MAX_LINE_LENGTH 256
-
 /*
  * Function prototype for flashing the RGBS
  */
@@ -73,5 +72,4 @@ static double get_ping(void) {
 
 static bool is_connection(void) {
     /* True if ping is -1 otherwise false */
-    return (get_ping() != -1);
-}
+    return (get_ping() != -1);}
