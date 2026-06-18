@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include "network.h"
 
 /*
  * Blueprint:
@@ -15,6 +16,7 @@
  */
  #define PING_LIMIT 100.00
  #define MAX_LINE_LENGTH 256
+ #define MAX_CONNECTIONS 100
 
  /*Function prototype for flashing the RGBS*/
  static void flash_yellow(void);
@@ -24,3 +26,7 @@
     /* Initialise the ping time and the information buffer which is supposed to the store the lines from the terminal output */
     char response[MAX_LINE_LENGTH];
  }
+
+bool detect_dos(void){
+   //TODO:
+}
