@@ -1,23 +1,7 @@
 #include "emulate/io.h"
 #include "shared/types.h"
 #include "emulate/memory.h"
-
-/*
- * Helper function for checking file format
- * used to output error if suffix is not correct
- */
-static int ends_with(const char *str, const char *suffix) {
-    if (!str || !suffix) return 0;
-
-    /* string lengths and suffix lengths for comparison */
-    size_t lenstr = strlen(str);
-    size_t lensuffix = strlen(suffix);
-
-    if (lensuffix > lenstr) return 0;
-
-    /* move along string until reach where suffix should be, and compare */
-    return strcmp(str + (lenstr - lensuffix), suffix) == 0;
-}
+#include "shared/file_utils.h"
 
 /*
  * Validate arguments passed in
@@ -44,14 +28,14 @@ void validate_args(int argc, char **argv, char **input, char **output) {
         *output = NULL;
     }
 
-    /* validate input file extension using helper function ends_with */
-    if (!ends_with(*input, ".bin")) {
+    /* validate input file extension using shared helper */
+    if (!has_extension(*input, ".bin")) {
         fprintf(stderr, "File input error: input file must have .bin extension\nUse: ./emulate <filename>.bin\n");
         exit(EXIT_FAILURE);
     }
 
     /* validate output file extension (if not provided short circuit) */
-    if (*output && !ends_with(*output, ".out")) {
+    if (*output && !has_extension(*output, ".out")) {
         fprintf(stderr, "File output error: output file must have .out extension\nUse: ./emulate <filename>.bin <filename>.out\n");
         exit(EXIT_FAILURE);
     }
@@ -64,28 +48,16 @@ FILE *setup_output(char *outputfile) {
         return stdout;
     }
 
-    /* attempt to open the output file, in order to check whether it exists */
-    FILE *out = fopen(outputfile, "w");
-
-    /* fail if unsuccessful (if it doesn't exist then exit the program) */
-    if (out == NULL) {
-        perror("File error: file cannot be opened\n");
-        exit(EXIT_FAILURE);
-    }
+    /* attempt to open output file to check existence, if the file does not exit the program to prevent further crashes*/
+    FILE *out = open_file_or_exit(outputfile, "w");
 
     return out;
 }
 
 /* Load the binary input file into state (specifically the memory field, since instructions will be fetched) */
 void binary_loader(machine_state_t *state, char *inputfile) {
-    /* attempt to open file to check existence */
-    FILE *file = fopen(inputfile, "rb");
-
-    /* if the file does not exit the program to prevent further crashes */
-    if (file == NULL) {
-        perror("Error opening input file\n");
-        exit(EXIT_FAILURE);
-    }
+    /* attempt to open input file to check existence, if the file does not exit the program to prevent further crashes */
+    FILE *file = open_file_or_exit(inputfile, "rb");
 
     /* read bytes into the memory array, capped at memory size */
     size_t bytes_read = fread(state->memory.memory, sizeof(byte_t), MEMORY_SIZE, file);

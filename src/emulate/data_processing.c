@@ -4,6 +4,7 @@
 #include "emulate/data_processing.h"
 #include "shared/bit.h"
 #include "emulate/registers.h"
+#include "shared/shared_opcodes.h"
 
 /* Immediate instruction field cases (OPI) */
 #define ARITHMETIC_OPI 0x2
@@ -22,12 +23,6 @@
 #define MOVN 0x0
 #define MOVZ 0x2
 #define MOVK 0x3
-
-/* Register arithmetic shift instructions (shift field) */
-#define LSL 0x0
-#define LSR 0x1
-#define ASR 0x2
-#define ROR 0x3
 
 /* Register logical shift instructions (shift field) */
 #define AND 0x0
