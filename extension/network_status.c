@@ -7,6 +7,10 @@
 #define PING_LIMIT 100.0
 #define MAX_LINE_LENGTH 256
 
+#define RED_PIN 17
+#define GREEN_PIN 27
+#define BLUE_PIN 22
+
 /* Led functions to create static/flicker effect for selected RGB values */
 static void static_led_colour(void) // TODO - ADD PARAMETERS
 static void flicker_led_colour(void)
