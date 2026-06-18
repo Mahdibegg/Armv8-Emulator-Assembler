@@ -31,4 +31,10 @@ bool detect_dos(void){
    FILE *fp;
    char line[MAX_LINE_LENGTH];
    int connection_count = 0;
+
+   fp = popen("ss -tan state established", "r");
+   if (fp == NULL) {
+      perror("popen failed");
+      return false;
+   }
 }
