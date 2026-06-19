@@ -16,6 +16,29 @@
 
 #define FLICKER_DELAY 0.1
 
+/* 
+ * Represents a data sample to be pushed onto buffer + analysis
+ */
+typedef struct {
+    double ping_ms; /* Ping time of the packet sent */
+    double packet_loss; /* Packet loss returned by running the ping command */
+    unsigned long rx_bytes; /* number of bytes recieved by rpi */
+    unsigned long tx_bytes; /* number of bytes transmitted by rpi */
+} net_sample_t;
+
+/* 
+ * Represents reliable data to conclude a network status result
+ */
+typedef struct {
+    double avg_ping_ms; /* Average ping time over last 10 samples */
+    double avg_packet_loss; /* Average packet loss over last 10 samples */
+    double avg_rx_rate; /* Average number of bytes recieved by rpi in last 10 samples */
+    double avg_tx_rate; /* Average number of bytes transmitted by rpi in last 10 smaples */
+} net_analysis_t;
+
+/*
+ * Enums to classify network status for LED output
+ */
 typedef enum {
     NET_DOWN,
     NET_UNSTABLE,
@@ -24,7 +47,7 @@ typedef enum {
 } net_stat;
 
 /* 
- * LED section
+ * LED section - initialisation, reference freeing, led setter
  */
 
 /* 
@@ -74,6 +97,8 @@ void net_set_led(led_controller_t *leds, net_status_t net_stat) {
 }
 
 led_controller_t *init_led(void) {}
+
+void free_controller(led_controller_t *leds) {}
 
 /*
  * Open the file using popen() to treat terminal output as text

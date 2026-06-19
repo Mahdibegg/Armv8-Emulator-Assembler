@@ -6,7 +6,6 @@
 
 /* 
  * Represents full GPIO chip for access
- * Stores all references to GPIO pins using gpio module
  */
 typedef struct {
     struct gpiod_chip *chip; /* Open GPIO device */
@@ -16,19 +15,6 @@ typedef struct {
     struct gpiod_line *green; /* Reserved for STABLE */
 } led_controller_t;
 
-typedef struct {
-    double ping_ms; /* Ping time of the packet sent */
-    double packet_loss; /* Packet loss returned by running the ping command */
-    unsigned long rx_bytes; /* number of bytes recieved by rpi */
-    unsigned long tx_bytes; /* number of bytes transmitted by rpi */
-} net_sample_t;
-
-typedef struct {
-    double avg_ping_ms; /* Average ping time over last 10 samples */
-    double avg_packet_loss; /* Average packet loss over last 10 samples */
-    double avg_rx_rate; /* Average number of bytes recieved by rpi in last 10 samples */
-    double avg_tx_rate; /* Average number of bytes transmitted by rpi in last 10 smaples */
-} net_analysis_t;
 /*
  * Update LED colour after obtaining new status
  *
@@ -40,7 +26,15 @@ void net_set_led(led_controller_t *leds, net_status_t net_stat);
 /* 
  * Led functions to create static/flicker effect for selected RGB values
  */
-led_controller_t *init_led(void) {}
+led_controller_t *init_led(void);
+
+/*
+ * Controller references freed
+ *
+ * leds: Reference to LEDs that have to be freed before you exit program
+ * otherwise LEDs may still be on, giving false alert
+ */
+free_controller(led_controller_t *leds);
 
 /*
  * Returns struct net_sample_t, so this can be added to the net buffer which holds the last samples 
@@ -61,4 +55,5 @@ net_analysis_t net_stat_analyse(const net_sample_t buffer[]);
  * Takes in the analysis and returns enumerated type to indicate the network status, this will be used in a switch case block to chose what led to flash 
  */
 net_status_t net_stat_update(net_analysis_t analysis);
+
 #endif
