@@ -46,6 +46,14 @@ typedef enum {
     NET_DOS
 } net_stat;
 
+/*
+ * Enums to classify network interface type 
+ */
+typedef enum {
+    NET_IFACE_NONE,
+    NET_IFACE_WLAN0,
+    NET_IFACE_ETH0
+} net_interface_t;
 /* 
  * LED section - initialisation, reference freeing, led setter
  */
@@ -199,6 +207,9 @@ static unsigned long read_u_long_from_file(const char *file_path) {
     return value;
 }
 
+static int get_interface(void) {
+    
+}
 static unsigned long get_rx_bytes(void) {
     return read_u_long_from_file(
          "/sys/class/net/wlan0/statistics/rx_bytes"
