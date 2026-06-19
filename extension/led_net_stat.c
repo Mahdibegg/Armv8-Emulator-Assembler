@@ -42,6 +42,7 @@ int main(void) {
     }
 
     free_controller(leds);
+    free_stats(stats)
 
     return 0;
 }

@@ -503,10 +503,8 @@ void free_controller(led_controller_t *leds) {
 /*
  * Initialise history struct 
  * 
- * Allocate memory to the struct
+ * Allocate memory to the struct and initialise next_index to 0 and popped to NULL
  * Check for null pointer and handle appropriately
- * 
- * Initialise fields
  */
 net_sample_history_t *init_history(void) {
 
@@ -524,7 +522,6 @@ net_sample_history_t *init_history(void) {
  * Free history data structure
  * 
  * Takes pointer to history struct as a parameter
- * 
  * Only needs to free the struct, does not need to free any of the fields
  */
 void free_history(net_sample_history_t *history) {
@@ -539,9 +536,7 @@ void free_history(net_sample_history_t *history) {
  * Initialise analysis struct 
  * 
  * Allocate memory to the sturct 
- * Check for null pointer and hanlde appropriately
- * 
- * Initialise fields
+ * Initialise all fields to 0
  */
 net_analysis_t *init_net_analysis(void) {
 
@@ -560,18 +555,18 @@ net_analysis_t *init_net_analysis(void) {
 /*
  * Free the analysis struct 
  * 
- * Takes pointer to analysis struct that needs to be freed as a parameter
- * 
+ * Takes pointer to stats that needs to be freed as a parameter
  * Only needs to free the struct, does not need to free any of the fields
  */
-void free_analysis(net_analysis_t *analysis) {
+void free_stats(net_analysis_t *stats) {
 
-    if (analysis == NULL) {
+    if (stats == NULL) {
         return;
     }
 
-    free(analysis);
+    free(stats);
 }
+
 net_sample_t net_sample_get(net_interface_t iface) {
     /* Make the struct and initialise the fields with helper functions */
     net_sample_t sample = {

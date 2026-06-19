@@ -44,7 +44,7 @@ net_analysis_t *init_net_analysis(void);
 /*
  * Free the analysis data structure to avoid memory leaks
  */
-void free_analysis(net_analysis_t *analysis) 
+void free_stats(net_analysis_t *stats) 
 
 /*
  * Returns struct net_sample_t, so this can be added to the net buffer which holds the last samples 
