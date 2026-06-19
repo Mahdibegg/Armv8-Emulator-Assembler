@@ -576,7 +576,7 @@ void free_analysis(net_analysis_t *analysis) {
     if (analysis == NULL) {
         return;
     }
-    
+
     free(analysis);
 }
 net_sample_t net_sample_get(net_interface_t iface) {
