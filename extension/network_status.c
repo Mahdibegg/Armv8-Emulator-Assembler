@@ -207,8 +207,52 @@ static unsigned long read_u_long_from_file(const char *file_path) {
     return value;
 }
 
-static int get_interface(void) {
+static net_interface_t get_interface(void) {
     
+    /*
+     * Open file (terminal as txt file) with following command to get information in interface type
+     */
+    FILE *interface_info_file = popen("ip route get 8.8.8.8", "r");
+
+    /*
+     * initialise fixed size buffer to store information from file
+     */
+    char buffer[MAX_LINE_LENGTH];
+
+    /*
+     * Null pointer check, if null that means connection could not be established as file is not opened so return No network interface    
+     */
+    if (interface_info_file == NULL) {
+        perror("Error: File failed to open");
+        return NET_IFACE_NONE;
+    }
+
+    /*
+     * If fgets returns null then it was unsuccessful read so return no interface
+     */
+    if (fgets(buffer, sizeof(buffer), interface_info_file) == NULL) {
+        pclose(fp);
+        return NET_IFACE_NONE;
+    }
+
+    /*
+     *  Close file because read has happended
+     */
+    pclsoe(interface_info_file);
+
+    /*
+     * If statement checks to see which interface is read 
+     */
+    if (strstr(buffer, "dev wlan0") != NULL) {
+        return NET_IFACE_WLAN0;
+    }
+
+    if (strstr(buffer, "dev eth0") != NULL) {
+        return NET_IFACE_ETH0;
+    }
+
+    /* If neither of the two interfaces was found, return none */
+    return NET_IFACE_NONE;
 }
 static unsigned long get_rx_bytes(void) {
     return read_u_long_from_file(
