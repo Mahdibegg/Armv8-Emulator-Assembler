@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <gpiod.h>
 
+#define PROGRAM_WAIT 1
+
 /*
  * Update LED colour after obtaining new status
  *
