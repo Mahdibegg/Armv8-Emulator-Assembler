@@ -2,14 +2,26 @@
 #define NETWORK_H
 
 #include <stdbool.h>
+#include <gpiod.h>
+
+/* 
+ * Represents full GPIO chip for access
+ * Stores all references to GPIO pins using gpio module
+ */
+typedef struct {
+    struct gpiod_chip *chip; /* Open GPIO device */
+
+    struct gpiod_line *red; /* Reserved for DOS detection */
+    struct gpiod_line *yellow; /* Reserved for UNSTABLE  */
+    struct gpiod_line *green; /* Reserved for STABLE */
+} led_controller_t;
 
 /*
- * Network_status this function is run in the main function
- * It will prioritise a dos check before giving the status check
- * In a set time interval (since security is prioritised)
- * 
- * No return value, only LED output
+ * Update LED colour after obtaining new status
+ *
+ * leds: Reference to global controller, allow LED to update colour
+ * net_stat: Returned status of network, this will choose LED option
  */
-void network_status(void);
+void net_set_led(led_controller_t *leds, net_status_t net_stat);
 
 #endif
