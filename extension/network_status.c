@@ -249,6 +249,20 @@ static double get_packet_loss(void) {
 
 }
 
+/*
+ * Read unsigned long value from file
+ *
+ * read network statistic files:
+ * /sys/class/net/wlan0/statistics/rx_bytes
+ * /sys/class/net/wlan0/statistics/tx_bytes
+ *
+ * These files contain one unsigned long value.
+ *
+ * file_path: Path to the file that stores the unsigned long value
+ *
+ * Returns the unsigned long value read from the file.
+ * Returns 0 if the file cannot be opened or read.
+ */
 static unsigned long read_u_long_from_file(const char *file_path) {
     FILE *fp = fopen(file_path, "r");
 
