@@ -42,6 +42,11 @@ void free_history(net_sample_history_t *history);
 net_analysis_t *init_net_analysis(void);
 
 /*
+ * Free the analysis data structure to avoid memory leaks
+ */
+void free_analysis(net_analysis_t *analysis) 
+
+/*
  * Returns struct net_sample_t, so this can be added to the net buffer which holds the last samples 
  */
 net_sample_t net_sample_get(void);
