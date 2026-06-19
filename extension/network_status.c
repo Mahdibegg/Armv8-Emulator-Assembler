@@ -16,6 +16,8 @@
 
 #define FLICKER_DELAY 0.1
 
+#define ERROR_WAIT
+
 /* 
  * Represents a data sample to be pushed onto buffer + analysis
  */
@@ -71,13 +73,35 @@ static void static_led_colour(gpiod_line *colour){}
  */
 static void flicker_led(gpiod_line *colour) {}
 
+/*
+ * Get led lines for controller
+ * Return true if successful, false if not
+ *
+ * leds: Reference to controller in order to get
+ */
+static bool get_led_lines(led_controller_t *leds) {
+    /* References to the lines in which LED colours can be outputted */
+    leds->red = gpiod_chip_get_line(leds->chip, RED_PIN);
+    leds->blue = gpiod_chip_get_line(leds->chip, BLUE_PIN);
+    leds->green = gpiod_chip_get_line(leds->chip, GREEN_PIN);
+
+    /* Failed to retrieve line, return false for error handling loop to continue */
+    if (leds->red == NULL ||
+        leds->yellow == NULL ||
+        leds->green == NULL) {
+        return false;
+    }
+
+    return true;
+}
+
 void net_set_led(led_controller_t *leds, net_status_t net_stat) {
     /* 
      * NET_DOS case is handled first since its a priority check
      *
      * DOS attack: Flicker red
      * No network connection: No LED light
-     * Unstable network: Yellow LED
+     * Unstable network: Blue LED
      * Stable network: Green LED
      */
     switch (net_stat) {
@@ -96,9 +120,84 @@ void net_set_led(led_controller_t *leds, net_status_t net_stat) {
     }
 }
 
-led_controller_t *init_led(void) {}
+led_controller_t *init_led(void) {
+    /*
+     * Error handling here is done in a loop
+     * So as this runs from startup, it tries to allocate memory for itself 
+     * Rather than print an error and end the service
+     *
+     * For example if you plug in a rgb pin while the rpi is on 
+     * This program just retrieves the update in real time and continues running
+     */
+    led_controller_t *leds = malloc(sizeof(struct led_controller_t));
 
-void free_controller(led_controller_t *leds) {}
+    /* Instead of returning an error, continue attempts at allocating memory */
+    while (leds == NULL) {
+        leds = malloc(sizeof(struct led_controller_t));
+
+        if (leds != NULL) {
+            break;
+        }
+
+        sleep(ERROR_WAIT);
+    }
+
+    /* If you need to free the memory for whatever reason, have initial NULL values for safety */
+    leds->chip = NULL;
+    leds->red = NULL;
+    leds->green = NULL;
+    leds->blue = NULL;
+
+    /* Open chip access for chip field in controller */
+    leds->chip = gpiod_chip_open(GPIO_CHIP);
+
+    while (leds->chip == NULL) {
+        leds->chip = gpiod_chip_open(GPIO_CHIP);
+
+        if (leds->chip != NULL) {
+            break;
+        }
+
+        sleep(ERROR_WAIT);
+    }
+
+    /* 
+     * get_led_lines returns false if lines aren't retrieved
+     * so while you can't get led lines sleep the program
+     */
+    while (!get_led_lines(leds)) {
+        sleep(ERROR_WAIT;)
+    }
+
+    return leds;
+}
+
+void free_controller(led_controller_t *leds) {
+    /* If there was no controller to begin with, just return */
+    if (leds == NULL) {
+        return;
+    }
+
+    /* Turn off all LED colours */
+    clear_leds(leds);
+
+    /* Error free line release, otherwise invalid references are being freed */
+    if (leds->red != NULL) {
+        gpiod_line_release(leds->red);
+    }
+
+    if (leds->yellow != NULL) {
+        gpiod_line_release(leds->yellow);
+    }
+
+    if (leds->green != NULL) {
+        gpiod_line_release(leds->green);
+    }
+
+    if (leds->chip != NULL) {
+        gpiod_chip_close(leds->chip);
+    }
+}
 
 /*
  * Open the file using popen() to treat terminal output as text

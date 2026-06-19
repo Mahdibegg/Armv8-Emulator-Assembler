@@ -11,7 +11,7 @@ typedef struct {
     struct gpiod_chip *chip; /* Open GPIO device */
 
     struct gpiod_line *red; /* Reserved for DOS detection */
-    struct gpiod_line *yellow; /* Reserved for UNSTABLE  */
+    struct gpiod_line *blue; /* Reserved for UNSTABLE  */
     struct gpiod_line *green; /* Reserved for STABLE */
 } led_controller_t;
 
