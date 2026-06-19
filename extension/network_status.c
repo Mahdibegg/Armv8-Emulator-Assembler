@@ -180,6 +180,25 @@ static double get_packet_loss(void) {
     return packet_loss;
 
 }
+
+static unsigned long read_u_long_from_file(const char *file_path) {
+    FILE *fp = fopen(file_path, "r");
+
+    unsigned long value = 0;
+
+    if (fp == NULL) {
+        perror("File did not open");
+        return 0;
+    }
+
+    if (fscanf(fp, "%lu", &value) != 1) {
+        value = 0;
+    }
+
+    fclose(fp)
+    return value;
+}
+
 net_sample_t net_sample_get(void) {
     /* Make the struct and initialise the fields with helper functions */
     net_sample_t sample;
