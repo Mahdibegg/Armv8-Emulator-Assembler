@@ -281,6 +281,20 @@ static unsigned long read_u_long_from_file(const char *file_path) {
     return value;
 }
 
+/*
+ * Get active network interface
+ *
+ * Checks which network interface the Raspberry Pi is currently using to reach the DNS address.
+ *
+ * Use the command:
+ * ip route get 8.8.8.8
+ *
+ * Command normally contains "dev wlan0" if WiFi is being used or "dev eth0" if Ethernet is being used.
+ *
+ * Returns NET_IFACE_WLAN0 if WiFi is being used.
+ * Returns NET_IFACE_ETH0 if Ethernet is being used.
+ * Returns NET_IFACE_NONE if no supported interface is found.
+ */
 static net_interface_t get_interface(void) {
     char command[MAX_LINE_LENGTH];
 
