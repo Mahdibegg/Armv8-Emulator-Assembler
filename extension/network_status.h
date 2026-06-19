@@ -8,9 +8,14 @@ typedef struct {
     double packet_loss;
     unsigned long rx_bytes;
     unsigned long tx_bytes;
-    int active_connections;
 } net_sample_t;
 
+typedef struct {
+    double avg_ping_ms;
+    double avg_packet_loss;
+    double avg_rx_rate;
+    double avg_tx_rate;
+} net_analysis_t;
 /*
  * Network_status this function is run in the main function
  * It will prioritise a dos check before giving the status check
