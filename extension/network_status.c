@@ -15,6 +15,7 @@
 #define BLUE_PIN 22
 
 #define FLICKER_DELAY 0.1
+#define DNS "8.8.8.8"
 
 /* 
  * Represents a data sample to be pushed onto buffer + analysis
