@@ -346,6 +346,17 @@ static net_interface_t get_interface(void) {
     return NET_IFACE_NONE;
 }
 
+/*
+ * Get received bytes for active interface
+ *
+ * RX means received data.
+ * Reads the total number of bytes received by the selected network interface.
+ *
+ * iface: Enum value representing the network interface being used
+ *
+ * Returns RX bytes for wlan0 or eth0.
+ * Returns 0 if the interface is unsupported or not available.
+ */
 static unsigned long get_rx_bytes(net_interface_t iface) {
     switch (iface) {
         case NET_IFACE_WLAN0:
@@ -362,6 +373,17 @@ static unsigned long get_rx_bytes(net_interface_t iface) {
     }
 }
 
+/*
+ * Get transmitted bytes for active interface
+ *
+ * TX means transmitted data.
+ * Reads the total number of bytes transmitted by the selected network interface.
+ *
+ * iface: Enum value representing the network interface being used
+ *
+ * Returns TX bytes for wlan0 or eth0.
+ * Returns 0 if the interface is unsupported or not available.
+ */
 static unsigned long get_tx_bytes(net_interface_t iface) {
     switch (iface) {
         case NET_IFACE_WLAN0:
