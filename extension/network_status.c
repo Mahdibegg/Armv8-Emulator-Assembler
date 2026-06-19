@@ -16,7 +16,18 @@
 
 #define FLICKER_DELAY 0.1
 
-#define ERROR_WAIT
+#define ERROR_WAIT 3
+
+/* 
+ * Represents full GPIO chip for access
+ */
+typedef struct {
+    struct gpiod_chip *chip; /* Open GPIO device */
+
+    struct gpiod_line *red; /* Reserved for DOS detection */
+    struct gpiod_line *blue; /* Reserved for UNSTABLE  */
+    struct gpiod_line *green; /* Reserved for STABLE */
+} led_controller_t;
 
 /* 
  * Represents a data sample to be pushed onto buffer + analysis
