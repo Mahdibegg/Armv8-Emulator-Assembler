@@ -144,3 +144,50 @@ static double get_ping(void) {
 
     return ping_time;
 }
+
+/*
+ * Open the file usig popen() to treat terminal output as text
+ * Ping Google Dns with a single packet count (safe option)
+ * Ignore text until "% packet loss" and return packetloss
+ * No connection returns 100.0 (Full packet loss)
+ */
+static double get_packet_loss(void) {
+    char net_info[MAX_LINE_LENGTH];
+
+    double packet_loss = 100.0;
+
+    FILE *net_stats_file = popen("ping -c 1 -W 8.8.8.8 2>&1", "r");
+
+    if (net_stats_file == NULL) {
+        return packet_loss;
+    }
+
+    while (fgets(net_info, sizeof(net_info), net_stats_file) != NULL) {
+
+        char *packet_ptr = strstr(net_info, "% packet loss");
+        int transmitted;
+        int received;
+        double loss;
+
+        if ( sscanf(net_info, "%d packets transmitted, %d received, %lf%% packet loss", &transmitted, &received, &loss ) == 3) {
+            packet_loss = loss;
+        }
+
+        break;
+    }
+
+    pclose(net_stats_file);
+    return packet_loss;
+
+}
+net_sample_t net_sample_get(void) {
+    /* Make the struct and initialise the fields with helper functions */
+    net_sample_t sample;
+
+    sample.ping_ms = get_ping();
+    sample.packet_loss = get_packet_loss();
+    sample.rx_bytes = get_rx_bytes();
+    sample.tx_bytes = get_tx_bytes();
+
+    return sample;
+}
