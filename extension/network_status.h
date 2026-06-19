@@ -44,10 +44,4 @@ net_analysis_t net_stat_analyse(const net_sample_t buffer[]);
  * Takes in the analysis and returns enumerated type to indicate the network status, this will be used in a switch case block to chose what led to flash 
  */
 net_status_t net_stat_update(net_analysis_t analysis);
-
-/*
- * This function choses which led to set, using the result of net_stat_update
- */
-void net_set_led(net_status_t status);
-
 #endif
