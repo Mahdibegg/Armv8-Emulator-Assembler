@@ -2,18 +2,78 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <stdbool.h>
+
+#include "network_status.h"
 
 #define PING_LIMIT 100.0
 #define MAX_LINE_LENGTH 256
+
+#define GPIO_CHIP "/dev/gpiochip0"
 
 #define RED_PIN 17
 #define GREEN_PIN 27
 #define BLUE_PIN 22
 
-/* Led functions to create static/flicker effect for selected RGB values */
-static void static_led_colour(void) // TODO - ADD PARAMETERS
-static void flicker_led_colour(void)
+#define FLICKER_DELAY 0.1
+
+typedef enum {
+    NET_DOWN,
+    NET_UNSTABLE,
+    NET_STABLE,
+    NET_DOS
+} net_stat;
+
+/* 
+ * LED section
+ */
+
+/* 
+ * Turn off all LEDs
+ * 
+ * leds: Reference to controller to clear all LEDs
+ */
+static void clear_leds(led_controller_t *leds) {}
+
+/* 
+ * Hold and LED light
+ * 
+ * colour: The colour of LED that is being switched on
+ */
+static void static_led_colour(gpiod_line *colour){}
+
+/* 
+ * Flicker an LED light 
+ * 
+ * colour: The colour of LED that is being switched on
+ */
+static void flicker_led(gpiod_line *colour) {}
+
+void net_set_led(led_controller_t *leds, net_status_t net_stat) {
+    /* 
+     * NET_DOS case is handled first since its a priority check
+     *
+     * DOS attack: Flicker red
+     * No network connection: No LED light
+     * Unstable network: Yellow LED
+     * Stable network: Green LED
+     */
+    switch (net_stat) {
+        case NET_DOS:
+            flicker_led(leds->red);
+            break;
+        case NET_DOWN:
+            clear_leds(leds);
+            break;
+        case NET_UNSTABLE:
+            static_led_colour(leds->yellow);
+            break;
+        case NET_STABLE:
+            static_led_colour(leds->green);
+            break;
+    }
+}
+
+led_controller_t *init_led(void) {}
 
 /*
  * Open the file using popen() to treat terminal output as text

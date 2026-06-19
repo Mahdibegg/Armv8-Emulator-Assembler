@@ -24,4 +24,9 @@ typedef struct {
  */
 void net_set_led(led_controller_t *leds, net_status_t net_stat);
 
+/* 
+ * Led functions to create static/flicker effect for selected RGB values
+ */
+led_controller_t *init_led(void) {}
+
 #endif
