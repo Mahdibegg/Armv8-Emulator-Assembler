@@ -516,19 +516,40 @@ void net_stat_analyse(net_analysis_t *stats, const net_sample_history_t *history
 
     net_sample_t popped = history->popped;
 
+    /* 
+     * If there is no popped value (so at the start of the program) 
+     * Then initialise the popped value to 
+     */
     if (popped == NULL) {
         popped = {
-            .ping_ms = 0;
-            .packet_loss = 0;
-            .rx_bytes = 0;
-            .tx_bytes = 0;
+            .ping_ms = 0,
+            .packet_loss = 0,
+            .rx_bytes = 0,
+            .tx_bytes = 0
         }
     }
-    net_sample_t new = history->array[history->next_index - 1];
 
-    /* Recalculating the mean by updating a fraction of the mean from the stats reference */
-    double ping_update = (new.ping_ms - popped.ping_ms)/SAMPLE_HISTORY_SIZE;
-    stats->avg_ping_ms = stats->avg_ping_ms + ping_update;
+    /* Obtain index of the sample that was pushed */
+    size_t new_index = (history->next_index == 0)
+        ? SAMPLE_HISTORY_SIZE - 1 : history->next_index - 1
+    net_sample_t new = history->array[new_index];
+
+    /*
+     * Update average by removing the popped sample fraction
+     * And then adding new sample fractions
+     * This preserves complexity as you dont have to loop over entire history
+     */
+    stats->avg_ping_ms +=
+        (new.ping_ms - popped.ping_ms) / SAMPLE_HISTORY_SIZE;
+
+    stats->avg_packet_loss +=
+        (new.packet_loss - popped.packet_loss) / SAMPLE_HISTORY_SIZE;
+
+    stats->avg_rx_rate +=
+        ((double) new.rx_bytes - (double) popped.rx_bytes) / SAMPLE_HISTORY_SIZE;
+
+    stats->avg_tx_rate +=
+        ((double) new.tx_bytes - (double) popped.tx_bytes) / SAMPLE_HISTORY_SIZE;
 }
 
 net_status_t net_stat_update(net_analysis_t *stats) {}
