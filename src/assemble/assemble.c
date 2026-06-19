@@ -21,7 +21,8 @@ int main(int argc, char **argv) {
    }
 
    /* Check if the first input is a .s file and the second input is a .bin file*/
-   if (!has_extension(argv[1], ".s") || !has_extension(argv[2], ".bin")) {
+   if (!has_extension(argv[1], ".s") ||
+      (!has_extension(argv[2], ".bin") && !has_extension(argv[2], ".img"))) {
     fprintf(stderr, "ERROR: Invalid file types for input/output\n");
     return EXIT_FAILURE;
    }

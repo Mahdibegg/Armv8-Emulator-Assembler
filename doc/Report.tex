@@ -1,21 +1,111 @@
 \documentclass[11pt]{article}
-
 \usepackage{fullpage}
 
+% monospace helper for code identifiers, instructions, registers, etc.
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{ARM Final Report}
+\author{Mahdi Begg \and Arafath Hamid \and Umar Tauqir \and Zakariyah Bello}
+\date{June 19, 2026}
+
 \begin{document}
-
-\title{Our Extension...}
-\author{TODO}
-
 \maketitle
 
-\section{Introduction}
+\section{The Assembler}
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+For the assembler section of the project, we decided upon, and split, our assembler into a list of small, single-responsibility modules which interface with each other. Each module has a \code{.h} header file and a \code{.c} source file, and source text flows through them as a pipeline from the \code{.s} file to the \code{.bin} output. There was a module each for the following core functions of the assembler:
+
+\begin{itemize}
+\item Reading the source file line by line (\code{reader.c})
+\item Parsing each line into a tagged internal representation (\code{tokenizer.c})
+\item Managing the symbol table and labels (\code{symbol\_table.c})
+\item Encoding each instruction or directive into binary (\code{encoder.c})
+\item Writing the encoded words to a binary file (\code{binary\_writer.c})
+\end{itemize}
+
+We started off by deciding how each module would interface with the others. The reader wraps \code{fgets} in a \code{read\_line} routine that strips the trailing newline, trims surrounding whitespace, and normalises blank lines to the empty string, giving the caller a clean line-at-a-time loop. Each line is passed to the tokeniser, which turns it into an internal representation, and a two-pass driver (\code{two\_pass.c}) orchestrates the whole process by feeding lines first to the symbol table and then to the encoder, whose output is handed to the binary writer to emit as four little-endian bytes. The modules share a common vocabulary of scalar types, \code{word\_t}, \code{addr\_t} and the token aliases defined in \code{types.h}.
+
+We chose a two-pass design because of forward label references, where a branch can target a label defined later in the file. The first pass walks every line maintaining a location counter, advancing it by four bytes per instruction or directive and recording a label to address entry whenever it meets a label, but emitting no code. The second pass re-reads the source and encodes each instruction, substituting labels for their addresses and writing the resulting word. Because every label is known before any encoding happens, the second pass resolves lookups uniformly whether the label appears before or after the branch that refers to it, so forward and backward references need no special handling.
+
+The tokeniser produces a \code{tokenized\_line\_t}: a \code{token\_type} tag (\code{INSTRUCTION}, \code{DIRECTIVE}, \code{LABEL} or \code{EMPTY}) and a union of per-type payloads holding a label string, a directive value, or an instruction's opcode and operands. Classification is purely lexical, so a leading \code{.} marks a directive, a line containing \code{:} is a label, an empty string is the empty type, and anything else is an instruction whose first token is the opcode and whose remainder is split on \code{,} into operands. The symbol table is an opaque abstract data type backed by a dynamic array that doubles when full, with linear \code{strcmp} lookups that are adequate for the small programs we target and duplicate labels rejected during the first pass.
+
+Finally, the assembler shares the \code{src/shared} layer with the emulator rather than duplicating it. It reuses the scalar types from \code{types.h}, the bit helpers and little-endian conversions from \code{bit.h}, and most importantly the field-layout structs in \code{instruction\_fields.h}. The emulator's decoder produces these structs from a raw word, and the assembler consumes the same structs as its encoder's intermediate representation and packs them back into a word, so the encoder is effectively the inverse of the decoder over one shared description of the ARMv8 instruction formats.
+
+\section{Implementation of Part 3: Flashing the LED}
+
+To implement Part 3, we first began by deciding on the structure of the assembly program in terms of the different parts and stages it would go through, using the GPIO information given in the spec. We worked out which pin to use, how to set that pin to output, how to drive it high and low through the correct registers, and how to time the gaps in between. Our implementation was therefore organised into labelled sections for:
+
+\begin{itemize}
+\item Setting the pin to be an output
+\item Setting the pin to output a high signal (LED on)
+\item Setting the pin to output a low signal (LED off)
+\item A delay loop run before each toggle to act as a timer
+\end{itemize}
+
+The program drives GPIO pin 16. It begins by forming the peripheral base address in \code{x0}, using a \code{movz} of zero followed by \code{movk x0, \#0x3f20, lsl \#16} to give \code{0x3F200000}, the GPIO controller base on the Pi 3 (the peripheral base \code{0x3F000000} plus the GPIO offset \code{0x200000}). Every later register access is then expressed as an offset from this base. To set the pin to output, we perform a read, modify, write of \code{GPFSEL1}, the function select register at offset \code{0x04} holding the 3-bit fields for pins 10 to 19. We read the current value with \code{ldr w1, [x0, \#0x04]}, form \code{0x00040000} in \code{w2} with \code{movz w2, \#0x4, lsl \#16}, and OR it into \code{w1}. Pin 16 occupies bits 18 to 20 of \code{GPFSEL1}, where the value \code{001} selects output mode, so setting bit 18 configures pin 16 as an output. Writing the word back with \code{str w1, [x0, \#0x04]} preserves the function selection of every other pin.
+
+Driving the pin then requires only a single bit mask, set up once with \code{movz w1, \#0x1, lsl \#16} to give \code{0x00010000}, which is bit 16. Writing this mask to \code{GPSET0} at offset \code{0x1C} drives pin 16 high and turns the LED on, and writing the same mask to \code{GPCLR0} at offset \code{0x28} drives it low and turns it off. Because the set and clear registers are write-1-to-act, where a set bit performs the action and zero bits are ignored, no read, modify, write is needed and the one mask serves both operations.
+
+Between switching the LED on and off, the program waits to create a delay. A \code{movz x3, \#0x120, lsl \#16} loads a count of \code{0x01200000} (18,874,368), and a loop of \code{subs x3, x3, \#1} followed by \code{b.ne} counts this value down to zero. This does nothing other than pass time, so that the on and off states each last long enough to be seen, and since both delays use the same count the LED stays on and off for equal lengths of time.
+
+Overall, the program sets up the base address, configures pin 16 as an output, prepares the pin mask, and then enters an infinite loop that writes the mask to \code{GPSET0}, delays, writes the mask to \code{GPCLR0}, and delays again, with a final \code{b loop} repeating this indefinitely, which suits a bare-metal \code{kernel8.img} with no operating system to return control to.
+
+\section{Extension}
+
+\subsection{Description and Example of Use}
+
+Our extension is a Raspberry Pi network status indicator written in C. It uses a simple LED output to show the current network condition based on ping results. The program checks the connection by repeatedly sending a ping request to Google’s DNS server, \code{8.8.8.8}, and reading the round-trip time from the \code{time=} field in the command output. The most recent ping readings are stored in a fixed-size history buffer, and the program calculates an average ping so that the status is not based on only one reading. 
+
+The LED behaviour is based on the result of this analysis. If the average ping is below the chosen threshold, the connection is treated as stable and the green LED is turned on. If the ping fails, the program treats the network as down and turns the LEDs off. The red LED is used for a basic ping flood warning. This is not a full denial-of-service detector, but it gives a simple indication that the Raspberry Pi may be receiving or experiencing unusually high ping activity. In that case, the red LED turns on to show a possible ping flood condition. 
+
+\subsection{Design and Challenges}
+
+The extension was designed around a simple loop: collect a network reading, store it in a fixed-size history buffer, analyse the recent readings, and update the LED output. The main metric used is ping time. We chose to use a history buffer rather than a single reading because one ping result can sometimes be unreliable, and averaging recent ping values gives a more realistic network status.
+
+One of the main challenges was deciding how complex the extension should be. At first, we planned to include several metrics, such as packet loss, received bytes, transmitted bytes, and RX/TX rates rather than raw values. However, this made the design more complicated and less reliable within the time available. The RX and TX byte values constantly increase, so to make them useful we needed to calculate the difference between samples over time, and packet loss added extra parsing and testing complexity. After reviewing this, we simplified the design and focused only on ping time, which was simpler to measure, explain and demonstrate clearly.
+
+Another challenge was making sure the LED output matched the network state in a simple way. We solved this by using clear status rules: if the average ping is below the threshold, the green LED turns on to show a stable connection; if the ping fails, the LEDs turn off to show the network is down; and if the program detects signs of a ping flood, the red LED turns on. This final design is simpler than our original idea, but it is more realistic for the project because it is easier to test, easier to explain, and less likely to break the existing emulator and assembler work.
+
+A further challenge was parsing command-line output in C. The \code{ping} command returns text output, so the program had to read this using \code{popen}, process the output line by line, find the \code{time=} field, and convert the value into a usable number. We solved this by breaking the task into small helper functions, so the code stayed easier to understand and debug. We also had to handle cases where \code{ping} failed and no time value was returned. Instead of letting this break the program, we used a failed ping result to classify the network as down, allowing the code to be used as an API rather than a simple program that constantly aborts at every error.
+
+Another challenge was thinking about how we can demonstrate the extension. This is because, we initially decided to use active connections as one of the metrics for detecting DOS, however we realised this would be practically impossible to demonstrate during the presentation, which would make it futile to code and implement, as this would also waste our time. 
+
+\section{Testing}
+
+We tested the assembler primarily against the provided test suite, which assembles each \code{.s} file and compares our output against the expected binary, producing a difference whenever the two disagree. This gave us a quick way to see both how many cases passed and exactly where an encoding diverged, and we worked through the failures iteratively, fixing one class of bug at a time and re-running the suite to confirm the pass count increased. Alongside this we wrote our own smaller unit tests using hand-encoded 32-bit instruction words, which let us check a single instruction's encoding in isolation and confirm that a fix had not broken a case the suite did not cover. Because the assembler is split into separate stages, a failing error could usually be traced to one stage, which made it possible to tell whether a bug came from parsing, alias translation, instruction-type resolution, or the encoder itself.
+
+The first major problem was alias translation. Our assembler supports aliases such as \code{cmp}, \code{tst}, \code{mov}, \code{mul} and \code{mneg}, which are translated into real ARM instructions before encoding, and a lot of failures came from this stage transforming instructions incorrectly. We redesigned the alias handling so that each alias maps to its underlying instruction correctly, the zero registers \code{xzr} and \code{wzr} are encoded properly, and any optional shift operands are preserved during translation. Because so many instructions passed through this stage, fixing it resolved a large group of failures at once.
+
+The second problem was instruction-type resolution. Some mnemonics belong to more than one instruction class, so \code{add x0, x1, \#5} and \code{add x0, x1, x2} share the same opcode text but use different encoding formats. Our original opcode lookup did not distinguish between them, so we improved it to inspect the operand types and decide whether an instruction should be encoded as Data Processing Immediate or Data Processing Register. This prevented instructions from being encoded in the wrong format. The third problem was closely related: several Data Processing Register instructions parsed correctly but produced incorrect binary. We corrected the logical instruction opcode mappings, the multiply encoding, and the validation and field placement for register shifts, and refactored the duplicated shift handling into a shared helper, which fixed the majority of the remaining incorrect encodings and made that part of the code easier to maintain.
+
+The final problem was operand validation, where some valid ARM instructions were being rejected during assembly, such as \code{lsl \#0} and \code{asr \#47} on 64-bit registers. We updated the validation logic to account for the architecture-specific shift limits and the legal edge cases defined by the specification, which removed the last encoding failures and ensured every valid instruction was accepted.
+
+We tested the Part 3 LED program directly on the hardware by assembling \code{led\_blink.s} with our own assembler, copying the resulting \code{kernel8.img} onto the SD card alongside the boot files, and running it on the physical Raspberry Pi to confirm the LED blinked. The first version worked, but the blink was far too slow to be useful, since the delay count we had chosen held each on and off state for several seconds at a time. We tuned this by reducing the value loaded into the countdown register and re-flashing the Pi until the blink ran at a sensible, clearly visible rate. Testing on real hardware in this way was a reliable check, because the timing depends on the actual clock speed of the Pi rather than anything we could verify in the emulator alone.
+
+The extension was tested manually, since its behaviour depends on live network conditions and physical LED output. We tested by observing the LED on the Pi under a normal connection and then a deliberately degraded one to confirm the colours changed as expected, though this remains manual observation rather than the kind of automated checking we used for the assembler.
+
+\section{Group Reflection}
+
+The group worked well overall, and our main lesson from the emulator carried directly into the assembler: planning together before writing any code. At the checkpoint we had anticipated that the assembler would need more shared planning than the emulator, since parsing, label handling, and encoding all depend on a consistent structure, and that uncoordinated designs could make merging harder. This proved to be the case, and planning together up front was what prevented it. We began by discussing the assembler as a whole and agreeing on its overall design and the pipeline, and the main data and file structures before committing to a particular implementation. After the design was settled we split the work into clear, mainly independent tasks, which meant everyone could work at the same time without disrupting one another or causing conflicts on the repository. Where one part was depended on by others, such as the encoder relying on the tokeniser's output or the symbol table's interface, we agreed on those interfaces up front so the pieces would fit together when merged.
+
+To keep the codebase coherent despite different people contributing, we also agreed on a shared commit and comment style. Commit messages follow a consistent format. Each one opens with a scope tag naming the file or module affected, then a short imperative summary of the change, with a bulleted list of the specific sub-changes beneath it if needed. This made the history easy to scan, and it meant that moving a definition between files left a clear, self-contained record of every place affected. Comments likewise follow a common house style, with lowercase block comments, terse action-oriented inline notes, and a consistent decode-then-execute structure, so that the merged result reads as if it were written by one person. Together these conventions made merging far smoother than it might otherwise have been and kept the project easy to navigate as it grew.
+
+\section{Individual Reflections}
+
+\subsection*{Mahdi Begg}
+
+As the group leader, I tried to take responsibility for keeping the project organised and making sure the group was moving in the right direction. I was involved in planning the work, communicating with the team, and helping to manage the Git side of the project so that everyone's code could be combined properly. I think my main strengths were communication, planning and organisation, as I tried to keep everyone updated and make sure tasks were clear. I also contributed technically, especially when debugging and helping with implementation issues. However, one weakness I noticed was that there were times where I did not fully understand parts of the problem straight away, or I overlooked some details in the specification. This meant that some parts needed to be revisited or corrected later. In a future group, I would maintain my communication, organisation and leadership, but I would spend more time carefully checking the specification before making decisions or starting implementation, to make sure the group is fully aligned with the requirements.
+
+\subsection*{Arafath Hamid}
+
+I contributed to the project by working on my assigned components while also taking part in the overall planning and design discussions at the beginning. The early planning as a group helped ensure that everyone understood the structure of the assembler, so when the work was divided it was easier to complete tasks independently without causing conflicts. One strength I showed was being consistent with my work and following the agreed structure, which helped keep the project organised. However, one difficulty I faced was coordinating some parts with others, especially where components depended on shared interfaces, so communication was important to avoid mistakes. Overall, the structured planning and clear division of tasks worked well, and this is something I would keep the same in future group projects, while improving how I communicate when tasks are connected.
+
+\subsection*{Umar Tauqir}
+
+Going into the project, I thought my main strengths would be consistency and communication. I expected that I would be able to stay involved, keep up with the work, and communicate well with the rest of the group. However, as the project went on, I realised that I was also able to understand the codebase quicker than I expected. Once I had a good idea of how the different parts connected, I was able to help my teammates understand what needed to be implemented and how we could approach problems. This also allowed me to use my communication skills more effectively, because I was not just giving updates, but also explaining ideas, discussing solutions, and helping the group move forward. One weakness was that I sometimes needed to build confidence before starting a difficult task, especially when the code was unfamiliar. In a future group, I would maintain the same consistency and communication, but I would try to trust my understanding earlier and take ownership of technical tasks sooner.
+
+\subsection*{Zakariyah Bello}
+
+I contributed to the project by working on my assigned components and completing the tasks I was responsible for. When the work was divided, having a clear structure in place meant I could complete my part independently without causing conflicts with others. One strength I showed was keeping the group updated on my progress, which helped the rest of the group know what was done and what was still outstanding. One weakness was my availability, as I was not always able to stay for extended calls when the group was working together for long stretches. In future I would work on communicating more consistently and on understanding the codebase beyond just my own components, so that I can contribute more easily where different parts depend on one another. Overall, the clear division of tasks worked well, and this is something I would keep the same in future group projects.
 
 \end{document}
