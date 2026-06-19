@@ -541,7 +541,28 @@ void free_history(net_sample_history_t *history) {
 
     free(history);
 }
-net_analysis_t *init_net_analysis(void) {}
+
+/*
+ * Initialise analysis struct 
+ * 
+ * Allocate memory to the sturct 
+ * Check for null pointer and hanlde appropriately
+ * 
+ * Initialise fields
+ */
+net_analysis_t *init_net_analysis(void) {
+
+    net_analysis_t *analysis = malloc(sizeof(net_analysis_t));
+
+    if (analysis == NULL) {
+        return NULL;
+    }
+
+    analysis->avg_ping_ms = 0.0;
+    analysis->avg_packet_loss = 0.0;
+    analysis->avg_rx_rate = 0.0;
+    analysis->avg_tx_rate = 0.0;
+}
 
 net_sample_t net_sample_get(net_interface_t iface) {
     /* Make the struct and initialise the fields with helper functions */
