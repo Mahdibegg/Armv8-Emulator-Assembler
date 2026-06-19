@@ -5,7 +5,6 @@
 
 #include "network_status.h"
 
-#define PING_LIMIT 100.0
 #define MAX_LINE_LENGTH 256
 #define SAMPLE_HISTORY_SIZE 10
 
@@ -390,14 +389,8 @@ led_controller_t *init_led(void) {
     led_controller_t *leds = malloc(sizeof(struct led_controller_t));
 
     /* Instead of returning an error, continue attempts at allocating memory */
-    while (leds == NULL) {
-        leds = malloc(sizeof(struct led_controller_t));
-
-        if (leds != NULL) {
-            break;
-        }
-
-        sleep(ERROR_WAIT);
+    if (leds = NULL) {
+        return NULL;
     }
 
     /* If you need to free the memory for whatever reason, have initial NULL values for safety */
