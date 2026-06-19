@@ -116,6 +116,13 @@ void free_controller(led_controller_t *leds) {}
  * No connection returns -1.0
  */
 static double get_ping(void) {
+    char command[MAX_LINE_LENGTH];
+
+    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+
+    /* Get the file pointer for the terminal output to read */
+    FILE *ping_file  = popen(command, "r");
+
 
     /* Reading line buffer */
     char net_info[MAX_LINE_LENGTH];
@@ -125,9 +132,6 @@ static double get_ping(void) {
      * Since ping cannot be negative
      */
     double ping_time = -1.0;
-
-    /* Get the file pointer for the terminal output to read */
-    FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
     
     /* No open file means no connection so no updated ping_time hence return */
     if (ping_file == NULL) {
@@ -161,11 +165,15 @@ static double get_ping(void) {
  * No connection returns 100.0 (Full packet loss)
  */
 static double get_packet_loss(void) {
+    char command[MAX_LINE_LENGTH];
+
+    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+
+    FILE *net_stats_file = popen(command, "r");
+
     char net_info[MAX_LINE_LENGTH];
 
     double packet_loss = 100.0;
-
-    FILE *net_stats_file = popen("ping -c 1 -W 8.8.8.8 2>&1", "r");
 
     if (net_stats_file == NULL) {
         return packet_loss;
@@ -210,10 +218,15 @@ static unsigned long read_u_long_from_file(const char *file_path) {
 
 static net_interface_t get_interface(void) {
     
+
+    char command[MAX_LINE_LENGTH];
+
+    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+
     /*
      * Open file (terminal as txt file) with following command to get information in interface type
      */
-    FILE *interface_info_file = popen("ip route get 8.8.8.8", "r");
+    FILE *interface_info_file = popen(command, "r");
 
     /*
      * initialise fixed size buffer to store information from file
