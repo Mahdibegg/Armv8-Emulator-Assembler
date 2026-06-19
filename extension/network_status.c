@@ -507,7 +507,25 @@ void free_controller(led_controller_t *leds) {
     }
 }
 
-net_sample_history_t *init_history(void) {}
+/*
+ * Initialise history struct 
+ * 
+ * Allocate memory to the struct
+ * Check for null pointer and handle appropriately
+ * 
+ * Initialise fields
+ */
+net_sample_history_t *init_history(void) {
+
+    net_sample_history_t *history = malloc(sizeof(net_sample_history_t));
+
+    if (history == NULL) {
+        return NULL;
+    }
+
+    history->next_index = 0;
+    history->popped = NULL;
+}
 
 net_analysis_t *init_net_analysis(void) {}
 
