@@ -5,14 +5,6 @@
 #include <gpiod.h>
 
 #define PROGRAM_WAIT 1
-#define SAMPLE_HISTORY_SIZE 10
-
-typedef struct {
-    net_sample_t array[SAMPLE_HISTORY_SIZE];
-    size_t next_index;
-
-    net_sample_t popped;
-} net_sample_history_t;
 
 /*
  * Update LED colour after obtaining new status
@@ -55,11 +47,11 @@ void net_history_add(net_sample_history_t *history, const net_sample_t sample);
  * stats: Reference to analysed stats that would be updated
  * history: History contains the items to be analysed, such as popped and pushed values
  */
-void net_stat_analyse(net_analysis_t *stats, net_sample_history_t *history);
+void net_stat_analyse(net_analysis_t *stats, const net_sample_history_t *history);
 
 /*
  * Takes in the analysis and returns enumerated type to indicate the network status, this will be used in a switch case block to chose what led to flash 
  */
-net_status_t net_stat_update(net_analysis_t analysis);
+net_status_t net_stat_update(const net_analysis_t *stats);
 
 #endif

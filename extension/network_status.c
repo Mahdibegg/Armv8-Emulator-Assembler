@@ -7,6 +7,7 @@
 
 #define PING_LIMIT 100.0
 #define MAX_LINE_LENGTH 256
+#define SAMPLE_HISTORY_SIZE 10
 
 #define GPIO_CHIP "/dev/gpiochip0"
 
@@ -58,6 +59,16 @@ typedef enum {
     NET_STABLE,
     NET_DOS
 } net_stat;
+
+/*
+ * Represent the sampling history (like a partial data structure)
+ */
+typedef struct {
+    net_sample_t array[SAMPLE_HISTORY_SIZE]; /* Array to store all samples in the last N frames */
+    size_t next_index; /* Next position to push the sample onto */
+
+    net_sample_t popped; /* Previously removed sample (where the last one was pushed) */
+} net_sample_history_t;
 
 /* 
  * LED section - initialisation, reference freeing, led setter
@@ -130,6 +141,59 @@ static bool get_led_lines(led_controller_t *leds) {
 
     return true;
 }
+
+/*
+ * Helper functions for parsing sample data
+ */
+
+ /*
+ * Open the file using popen() to treat terminal output as text
+ * Ping Google DNS with a single packet count (safe option)
+ * Ignore text until "time=<ping_time>" and return ping_time
+ * No connection returns -1.0
+ */
+static double get_ping(void) {
+
+    /* Reading line buffer */
+    char net_info[MAX_LINE_LENGTH];
+
+    /* 
+     * Result to be returned, a default value of -1.0 indicates no connection 
+     * Since ping cannot be negative
+     */
+    double ping_time = -1.0;
+
+    /* Get the file pointer for the terminal output to read */
+    FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
+    
+    /* No open file means no connection so no updated ping_time hence return */
+    if (ping_file == NULL) {
+        return ping_time;
+    }
+
+    /* 
+     * Use strstr to return pointer to the ping_time
+     * Non-null pointer results in an available float for ping_time
+     */
+    while (fgets(net_info, sizeof(net_info), ping_file) != NULL) {
+        /* Pointer to "time=" */
+        char *ping_ptr = strstr(net_info, "time=");
+
+        if (ping_ptr != NULL) {
+            /* Use sscanf to retrieve ping time in given format */
+            sscanf(ping_ptr, "time=%lf", &ping_time);
+            break;
+        }
+    }
+
+    pclose(ping_file);
+
+    return ping_time;
+}
+
+/*
+ * Implementation section
+ */
 
 void net_set_led(led_controller_t *leds, net_status_t net_stat) {
     /* 
@@ -235,51 +299,6 @@ void free_controller(led_controller_t *leds) {
     }
 }
 
-/*
- * Open the file using popen() to treat terminal output as text
- * Ping Google DNS with a single packet count (safe option)
- * Ignore text until "time=<ping_time>" and return ping_time
- * No connection returns -1.0
- */
-static double get_ping(void) {
-
-    /* Reading line buffer */
-    char net_info[MAX_LINE_LENGTH];
-
-    /* 
-     * Result to be returned, a default value of -1.0 indicates no connection 
-     * Since ping cannot be negative
-     */
-    double ping_time = -1.0;
-
-    /* Get the file pointer for the terminal output to read */
-    FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
-    
-    /* No open file means no connection so no updated ping_time hence return */
-    if (ping_file == NULL) {
-        return ping_time;
-    }
-
-    /* 
-     * Use strstr to return pointer to the ping_time
-     * Non-null pointer results in an available float for ping_time
-     */
-    while (fgets(net_info, sizeof(net_info), ping_file) != NULL) {
-        /* Pointer to "time=" */
-        char *ping_ptr = strstr(net_info, "time=");
-
-        if (ping_ptr != NULL) {
-            /* Use sscanf to retrieve ping time in given format */
-            sscanf(ping_ptr, "time=%lf", &ping_time);
-            break;
-        }
-    }
-
-    pclose(ping_file);
-
-    return ping_time;
-}
-
 void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
     /* No buffer to add the new sample to, so quit */
     if (history == NULL || history->array == NULL) {
@@ -298,7 +317,7 @@ void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
     /*
      * Next_index is a circular pointer on the array
      * When it reaches the end, reset the index to the beginning
-     * Otherwise increment it 
+     * Continue to increment it 
      */
     if (*next_index >= SAMPLE_HISTORY_SIZE - 1) {
         /* 
@@ -309,13 +328,33 @@ void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
          */
         history->next_index = 0;
         history->popped = history->array[history->next_index];
-        history->array[*next_index] = sample;
     } else {
-        history->next_index++;
         history->popped = NULL;
     }
+    history->array[history->next_index] = sample;
+    history->next_index++;
 }
 
-void net_stat_update(net_analysis_t *stats, net_sample_t *buffer) {
+void net_stat_analyse(net_analysis_t *stats, const net_sample_history_t *history) {
+    if (stats == NULL || history == NULL) {
+        return;
+    }
 
+    net_sample_t popped = history->popped;
+
+    if (popped == NULL) {
+        popped = {
+            .ping_ms = 0;
+            .packet_loss = 0;
+            .rx_bytes = 0;
+            .tx_bytes = 0;
+        }
+    }
+    net_sample_t new = history->array[history->next_index - 1];
+
+    /* Recalculating the mean by updating a fraction of the mean from the stats reference */
+    double ping_update = (new.ping_ms - popped.ping_ms)/SAMPLE_HISTORY_SIZE;
+    stats->avg_ping_ms = stats->avg_ping_ms + ping_update;
 }
+
+net_status_t net_stat_update(net_analysis_t *stats) {}
