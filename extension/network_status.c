@@ -199,6 +199,11 @@ static unsigned long read_u_long_from_file(const char *file_path) {
     return value;
 }
 
+static unsigned long get_rx_bytes(void) {
+    return read_u_long_from_file(
+         "/sys/class/net/wlan0/statistics/rx_bytes"
+    );
+}
 net_sample_t net_sample_get(void) {
     /* Make the struct and initialise the fields with helper functions */
     net_sample_t sample;
