@@ -29,10 +29,9 @@ void net_set_led(led_controller_t *leds, net_status_t net_stat);
 led_controller_t *init_led(void);
 
 /*
- * Controller references freed
+ * Controller references freed from memory
  *
  * leds: Reference to LEDs that have to be freed before you exit program
- * otherwise LEDs may still be on, giving false alert
  */
 free_controller(led_controller_t *leds);
 

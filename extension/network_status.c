@@ -57,21 +57,46 @@ typedef enum {
  * 
  * leds: Reference to controller to clear all LEDs
  */
-static void clear_leds(led_controller_t *leds) {}
+static void clear_leds(led_controller_t *leds) {
+    /*
+     * All NULL checks otherwise program error would occur, ending the service
+     * Since possibly one colour would be cleared
+     * If the leds controller reference is gone, do not abort the program, a return is enough
+     */
+    if (leds == NULL) {
+        return;
+    }
+
+    if (leds->red != NULL) {
+        gpiod_line_set_value(leds->red, 0);
+    }
+
+    if (leds->yellow != NULL) {
+        gpiod_line_set_value(leds->yellow, 0);
+    }
+
+    if (leds->green != NULL) {
+        gpiod_line_set_value(leds->green, 0);
+    }
+}
 
 /* 
- * Hold and LED light
+ * Hold an LED light
  * 
  * colour: The colour of LED that is being switched on
  */
-static void static_led_colour(gpiod_line *colour){}
+static void static_led_colour(struct gpiod_line *colour) {
+    /*
+     * NULL reference check to the colour argument
+     * Nothing returned just to keep the service running
+     * It just means no LED will be displayed
+     */
+    if (colour == NULL) {
+        return;
+    }
 
-/* 
- * Flicker an LED light 
- * 
- * colour: The colour of LED that is being switched on
- */
-static void flicker_led(gpiod_line *colour) {}
+    gpiod_line_set_value(colour, 1);
+}
 
 /*
  * Get led lines for controller
@@ -106,7 +131,7 @@ void net_set_led(led_controller_t *leds, net_status_t net_stat) {
      */
     switch (net_stat) {
         case NET_DOS:
-            flicker_led(leds->red);
+            static_led_colour(leds->red);
             break;
         case NET_DOWN:
             clear_leds(leds);
