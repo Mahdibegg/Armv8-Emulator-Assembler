@@ -7,6 +7,13 @@
 #define PROGRAM_WAIT 1
 #define SAMPLE_HISTORY_SIZE 10
 
+typedef struct {
+    net_sample_t array[SAMPLE_HISTORY_SIZE];
+    size_t next_index;
+
+    net_sample_t popped;
+} net_sample_history_t;
+
 /*
  * Update LED colour after obtaining new status
  *
@@ -34,13 +41,21 @@ net_sample_t net_sample_get(void);
 
 /*
  * Add sample to the net_buffer which is an array of samples
+ * 
+ * history: A struct that contains the history, represented by an array
+ * the next index to be added is within history and the previously popped
+ * sample is stored
+ * sample: New sample to be placed at next_index (the field in history)
  */
-void net_buffer_add(net_sample_t *net_buffer, const net_sample_t sample, size_t *next_index);
+void net_history_add(net_sample_history_t *history, const net_sample_t sample);
 
 /*
- * Analyses last 10 samples and builds struct that holds the average ping, packet loss and other information
+ * Analyse recently popped and pushed sample onto history
+ * 
+ * stats: Reference to analysed stats that would be updated
+ * history: History contains the items to be analysed, such as popped and pushed values
  */
-net_analysis_t net_stat_analyse(const net_sample_t *buffer);
+void net_stat_analyse(net_analysis_t *stats, net_sample_history_t *history);
 
 /*
  * Takes in the analysis and returns enumerated type to indicate the network status, this will be used in a switch case block to chose what led to flash 

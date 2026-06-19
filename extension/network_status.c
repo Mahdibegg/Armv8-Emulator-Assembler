@@ -280,9 +280,9 @@ static double get_ping(void) {
     return ping_time;
 }
 
-void net_buffer_add(net_sample_t *net_buffer, net_sample_t sample, size_t *next_index) {
+void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
     /* No buffer to add the new sample to, so quit */
-    if (net_buffer == NULL) {
+    if (history == NULL || history->array == NULL) {
         return;
     }
 
@@ -293,7 +293,7 @@ void net_buffer_add(net_sample_t *net_buffer, net_sample_t sample, size_t *next_
      */
 
     /* Comparing size against max buffer size which is sample history size*/
-    size_t net_buffer_size = sizeof(net_buffer) / sizeof(net_buffer[0]);
+    size_t history_size = sizeof(history->array) / sizeof(sample);
 
     /*
      * Next_index is a circular pointer on the array
@@ -301,9 +301,21 @@ void net_buffer_add(net_sample_t *net_buffer, net_sample_t sample, size_t *next_
      * Otherwise increment it 
      */
     if (*next_index >= SAMPLE_HISTORY_SIZE - 1) {
-        *next_index = 0;
-        net_buffer[*next_index] = sample;
+        /* 
+         * Update history values
+         * next_index reset to front of array
+         * popped is updated to value to be removed
+         * array at new index contains new sample
+         */
+        history->next_index = 0;
+        history->popped = history->array[history->next_index];
+        history->array[*next_index] = sample;
     } else {
-        *next_index++;
+        history->next_index++;
+        history->popped = NULL;
     }
+}
+
+void net_stat_update(net_analysis_t *stats, net_sample_t *buffer) {
+
 }
