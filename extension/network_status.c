@@ -457,14 +457,18 @@ void free_controller(led_controller_t *leds) {
     }
 }
 
-net_sample_t net_sample_get(void) {
-    /* Make the struct and initialise the fields with helper functions */
-    net_sample_t sample;
+net_sample_history_t *init_history(void) {}
 
-    sample.ping_ms = get_ping();
-    sample.packet_loss = get_packet_loss();
-    sample.rx_bytes = get_rx_bytes();
-    sample.tx_bytes = get_tx_bytes();
+net_analysis_t *init_net_analysis(void) {}
+
+net_sample_t net_sample_get(net_interface_t iface) {
+    /* Make the struct and initialise the fields with helper functions */
+    net_sample_t sample = {
+        .ping_ms = get_ping();
+        .packet_loss = get_packet_loss();
+        .rx_bytes = get_rx_bytes(iface);
+        .tx_bytes = get_tx_bytes(iface);
+    }
 
     return sample;
 }

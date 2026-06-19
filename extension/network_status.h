@@ -27,6 +27,16 @@ led_controller_t *init_led(void);
 free_controller(led_controller_t *leds);
 
 /*
+ * Initialise the history data structure to store sample history
+ */
+net_sample_history_t *init_history(void);
+
+/*
+ * Initialise the analysis history of previous N samples
+ */
+net_analysis_t *init_net_analysis(void);
+
+/*
  * Returns struct net_sample_t, so this can be added to the net buffer which holds the last samples 
  */
 net_sample_t net_sample_get(void);
