@@ -564,6 +564,21 @@ net_analysis_t *init_net_analysis(void) {
     analysis->avg_tx_rate = 0.0;
 }
 
+/*
+ * Free the analysis struct 
+ * 
+ * Takes pointer to analysis struct that needs to be freed as a parameter
+ * 
+ * Only needs to free the struct, does not need to free any of the fields
+ */
+void free_analysis(net_analysis_t *analysis) {
+
+    if (analysis == NULL) {
+        return;
+    }
+    
+    free(analysis);
+}
 net_sample_t net_sample_get(net_interface_t iface) {
     /* Make the struct and initialise the fields with helper functions */
     net_sample_t sample = {
