@@ -527,6 +527,20 @@ net_sample_history_t *init_history(void) {
     history->popped = NULL;
 }
 
+/*
+ * Free history data structure
+ * 
+ * Takes pointer to history struct as a parameter
+ * 
+ * Only needs to free the struct, does not need to free any of the fields
+ */
+void free_history(net_sample_history_t *history) {
+    if (history == NULL) {
+        return 
+    }
+
+    free(history);
+}
 net_analysis_t *init_net_analysis(void) {}
 
 net_sample_t net_sample_get(net_interface_t iface) {
