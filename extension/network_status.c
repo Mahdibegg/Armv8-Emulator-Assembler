@@ -279,3 +279,31 @@ static double get_ping(void) {
 
     return ping_time;
 }
+
+void net_buffer_add(net_sample_t *net_buffer, net_sample_t sample, size_t *next_index) {
+    /* No buffer to add the new sample to, so quit */
+    if (net_buffer == NULL) {
+        return;
+    }
+
+    /*
+     * No need to assert size to end program
+     * Next_index is the only indexing variable to modify the buffer
+     * And it is being checked against the max capacity 
+     */
+
+    /* Comparing size against max buffer size which is sample history size*/
+    size_t net_buffer_size = sizeof(net_buffer) / sizeof(net_buffer[0]);
+
+    /*
+     * Next_index is a circular pointer on the array
+     * When it reaches the end, reset the index to the beginning
+     * Otherwise increment it 
+     */
+    if (*next_index >= SAMPLE_HISTORY_SIZE - 1) {
+        *next_index = 0;
+        net_buffer[*next_index] = sample;
+    } else {
+        *next_index++;
+    }
+}

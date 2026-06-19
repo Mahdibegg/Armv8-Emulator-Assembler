@@ -5,6 +5,7 @@
 #include <gpiod.h>
 
 #define PROGRAM_WAIT 1
+#define SAMPLE_HISTORY_SIZE 10
 
 /*
  * Update LED colour after obtaining new status
@@ -34,12 +35,12 @@ net_sample_t net_sample_get(void);
 /*
  * Add sample to the net_buffer which is an array of samples
  */
-void net_buffer_add(net_sample_t net_buffer[], net_sample_t sample);
+void net_buffer_add(net_sample_t *net_buffer, const net_sample_t sample, size_t *next_index);
 
 /*
  * Analyses last 10 samples and builds struct that holds the average ping, packet loss and other information
  */
-net_analysis_t net_stat_analyse(const net_sample_t buffer[]);
+net_analysis_t net_stat_analyse(const net_sample_t *buffer);
 
 /*
  * Takes in the analysis and returns enumerated type to indicate the network status, this will be used in a switch case block to chose what led to flash 
