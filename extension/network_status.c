@@ -248,6 +248,20 @@ static double get_packet_loss(void) {
 
 }
 
+/*
+ * Read unsigned long value from file
+ *
+ * read network statistic files:
+ * /sys/class/net/wlan0/statistics/rx_bytes
+ * /sys/class/net/wlan0/statistics/tx_bytes
+ *
+ * These files contain one unsigned long value.
+ *
+ * file_path: Path to the file that stores the unsigned long value
+ *
+ * Returns the unsigned long value read from the file.
+ * Returns 0 if the file cannot be opened or read.
+ */
 static unsigned long read_u_long_from_file(const char *file_path) {
     FILE *fp = fopen(file_path, "r");
 
@@ -266,6 +280,20 @@ static unsigned long read_u_long_from_file(const char *file_path) {
     return value;
 }
 
+/*
+ * Get active network interface
+ *
+ * Checks which network interface the Raspberry Pi is currently using to reach the DNS address.
+ *
+ * Use the command:
+ * ip route get 8.8.8.8
+ *
+ * Command normally contains "dev wlan0" if WiFi is being used or "dev eth0" if Ethernet is being used.
+ *
+ * Returns NET_IFACE_WLAN0 if WiFi is being used.
+ * Returns NET_IFACE_ETH0 if Ethernet is being used.
+ * Returns NET_IFACE_NONE if no supported interface is found.
+ */
 static net_interface_t get_interface(void) {
     char command[MAX_LINE_LENGTH];
 
@@ -317,6 +345,17 @@ static net_interface_t get_interface(void) {
     return NET_IFACE_NONE;
 }
 
+/*
+ * Get received bytes for active interface
+ *
+ * RX means received data.
+ * Reads the total number of bytes received by the selected network interface.
+ *
+ * iface: Enum value representing the network interface being used
+ *
+ * Returns RX bytes for wlan0 or eth0.
+ * Returns 0 if the interface is unsupported or not available.
+ */
 static unsigned long get_rx_bytes(net_interface_t iface) {
     switch (iface) {
         case NET_IFACE_WLAN0:
@@ -333,6 +372,17 @@ static unsigned long get_rx_bytes(net_interface_t iface) {
     }
 }
 
+/*
+ * Get transmitted bytes for active interface
+ *
+ * TX means transmitted data.
+ * Reads the total number of bytes transmitted by the selected network interface.
+ *
+ * iface: Enum value representing the network interface being used
+ *
+ * Returns TX bytes for wlan0 or eth0.
+ * Returns 0 if the interface is unsupported or not available.
+ */
 static unsigned long get_tx_bytes(net_interface_t iface) {
     switch (iface) {
         case NET_IFACE_WLAN0:
@@ -450,10 +500,78 @@ void free_controller(led_controller_t *leds) {
     }
 }
 
-net_sample_history_t *init_history(void) {}
+/*
+ * Initialise history struct 
+ * 
+ * Allocate memory to the struct
+ * Check for null pointer and handle appropriately
+ * 
+ * Initialise fields
+ */
+net_sample_history_t *init_history(void) {
 
-net_analysis_t *init_net_analysis(void) {}
+    net_sample_history_t *history = malloc(sizeof(net_sample_history_t));
 
+    if (history == NULL) {
+        return NULL;
+    }
+
+    history->next_index = 0;
+    history->popped = NULL;
+}
+
+/*
+ * Free history data structure
+ * 
+ * Takes pointer to history struct as a parameter
+ * 
+ * Only needs to free the struct, does not need to free any of the fields
+ */
+void free_history(net_sample_history_t *history) {
+    if (history == NULL) {
+        return 
+    }
+
+    free(history);
+}
+
+/*
+ * Initialise analysis struct 
+ * 
+ * Allocate memory to the sturct 
+ * Check for null pointer and hanlde appropriately
+ * 
+ * Initialise fields
+ */
+net_analysis_t *init_net_analysis(void) {
+
+    net_analysis_t *analysis = malloc(sizeof(net_analysis_t));
+
+    if (analysis == NULL) {
+        return NULL;
+    }
+
+    analysis->avg_ping_ms = 0.0;
+    analysis->avg_packet_loss = 0.0;
+    analysis->avg_rx_rate = 0.0;
+    analysis->avg_tx_rate = 0.0;
+}
+
+/*
+ * Free the analysis struct 
+ * 
+ * Takes pointer to analysis struct that needs to be freed as a parameter
+ * 
+ * Only needs to free the struct, does not need to free any of the fields
+ */
+void free_analysis(net_analysis_t *analysis) {
+
+    if (analysis == NULL) {
+        return;
+    }
+
+    free(analysis);
+}
 net_sample_t net_sample_get(net_interface_t iface) {
     /* Make the struct and initialise the fields with helper functions */
     net_sample_t sample = {

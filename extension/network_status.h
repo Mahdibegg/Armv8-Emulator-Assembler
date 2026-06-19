@@ -32,9 +32,19 @@ free_controller(led_controller_t *leds);
 net_sample_history_t *init_history(void);
 
 /*
+ * Free the history data structure to avoid memory leaks
+ */
+void free_history(net_sample_history_t *history);
+
+/*
  * Initialise the analysis history of previous N samples
  */
 net_analysis_t *init_net_analysis(void);
+
+/*
+ * Free the analysis data structure to avoid memory leaks
+ */
+void free_analysis(net_analysis_t *analysis) 
 
 /*
  * Returns struct net_sample_t, so this can be added to the net buffer which holds the last samples 
