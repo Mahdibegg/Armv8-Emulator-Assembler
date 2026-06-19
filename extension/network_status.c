@@ -13,10 +13,11 @@
 #define GREEN_PIN 27
 #define BLUE_PIN 22
 
-#define FLICKER_DELAY 0.1
 #define DNS "8.8.8.8"
 
 #define ERROR_WAIT 3
+
+#define PING_STABLE_MAX 80.0
 
 /* 
  * LED section - initialisation, reference freeing, led setter
@@ -33,21 +34,19 @@ static void clear_leds(led_controller_t *leds) {
      * Since possibly one colour would be cleared
      * If the leds controller reference is gone, do not abort the program, a return is enough
      */
-    if (leds == NULL) {
+    if (leds == NULL || leds->request == NULL) {
         return;
     }
 
-    if (leds->red != NULL) {
-        gpiod_line_set_value(leds->red, 0);
-    }
-
-    if (leds->blue != NULL) {
-        gpiod_line_set_value(leds->blue, 0);
-    }
-
-    if (leds->green != NULL) {
-        gpiod_line_set_value(leds->green, 0);
-    }
+    gpiod_line_request_set_value(
+        leds->request, leds->red, GPIOD_LINE_VALUE_INACTIVE
+    );
+    gpiod_line_request_set_value(
+        leds->request, leds->blue, GPIOD_LINE_VALUE_INACTIVE
+    );
+    gpiod_line_request_set_value(
+        leds->request, leds->green, GPIOD_LINE_VALUE_INACTIVE
+    );
 }
 
 /* 
@@ -55,17 +54,20 @@ static void clear_leds(led_controller_t *leds) {
  * 
  * colour: The colour of LED that is being switched on
  */
-static void static_led_colour(struct gpiod_line *colour) {
+static void static_led_colour(led_controller_t *leds, unsigned int colour) {
     /*
      * NULL reference check to the colour argument
      * Nothing returned just to keep the service running
      * It just means no LED will be displayed
      */
-    if (colour == NULL) {
+    if (leds == NULL || leds->request == NULL) {
         return;
     }
 
-    gpiod_line_set_value(colour, 1);
+    clear_leds(leds);
+    gpiod_line_request_set_value(
+        leds->request, colour, GPIOD_LINE_VALUE_ACTIVE
+    );
 }
 
 /*
@@ -75,19 +77,84 @@ static void static_led_colour(struct gpiod_line *colour) {
  * leds: Reference to controller in order to get
  */
 static bool get_led_lines(led_controller_t *leds) {
-    /* References to the lines in which LED colours can be outputted */
-    leds->red = gpiod_chip_get_line(leds->chip, RED_PIN);
-    leds->blue = gpiod_chip_get_line(leds->chip, BLUE_PIN);
-    leds->green = gpiod_chip_get_line(leds->chip, GREEN_PIN);
+    /*
+     * Build an array of the three GPIO pin offsets to configure them together
+     * Order matches red, blue, green as stored in the controller
+     */
+    const unsigned int offsets[] = {
+        leds->red,
+        leds->blue,
+        leds->green
+    };
 
-    /* Failed to retrieve line, return false for error handling loop to continue */
-    if (leds->red == NULL ||
-        leds->blue == NULL ||
-        leds->green == NULL) {
+    /*
+     * Allocate a settings object to define shared behaviour for all three lines
+     * NULL means allocation failed so bail out early
+     */
+    struct gpiod_line_settings *settings = gpiod_line_settings_new();
+
+    if (settings == NULL) {
         return false;
     }
 
-    return true;
+    /*
+     * Set all three lines as outputs, starting in the inactive (off) state
+     */
+    gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_OUTPUT);
+    gpiod_line_settings_set_output_value(settings, GPIOD_LINE_VALUE_INACTIVE);
+
+    /*
+     * Allocate the line config and free settings on failure to avoid a leak
+     */
+    struct gpiod_line_config *line_config = gpiod_line_config_new();
+
+    if (line_config == NULL) {
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    /*
+     * Apply the shared settings to all three pin offsets at once
+     * Free both config objects on failure before returning
+     */
+    if (gpiod_line_config_add_line_settings(
+            line_config, offsets, 3, settings) < 0) {
+        gpiod_line_config_free(line_config);
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    /*
+     * Allocate a request config to label this consumer in the kernel
+     * Free line config and settings on failure to avoid leaks
+     */
+    struct gpiod_request_config *request_config = gpiod_request_config_new();
+
+    if (request_config == NULL) {
+        gpiod_line_config_free(line_config);
+        gpiod_line_settings_free(settings);
+        return false;
+    }
+
+    gpiod_request_config_set_consumer(request_config, "network_led");
+
+    /*
+     * Submit the request to the chip, storing the handle in leds->request
+     * This reserves all three lines for exclusive use by this program
+     */
+    leds->request = gpiod_chip_request_lines(
+        leds->chip, request_config, line_config
+    );
+
+    /*
+     * All config objects are no longer needed regardless of success or failure
+     */
+    gpiod_request_config_free(request_config);
+    gpiod_line_config_free(line_config);
+    gpiod_line_settings_free(settings);
+
+    /* Non-null request means all three lines were successfully reserved */
+    return leds->request != NULL;
 }
 
 /*
@@ -97,10 +164,6 @@ static bool get_led_lines(led_controller_t *leds) {
  * 
  * Open the file using popen() to treat terminal output as text
  * Ping Google DNS with a single packet count (safe option)
- * 
- * For getting rx, tx bytes
- * 
- * Accessing the stat files and returning rx and tx bytes respectively
  */
 
 /*
@@ -115,7 +178,6 @@ static double get_ping(void) {
     /* Get the file pointer for the terminal output to read */
     FILE *ping_file  = popen(command, "r");
 
-
     /* Reading line buffer */
     char net_info[MAX_LINE_LENGTH];
 
@@ -124,7 +186,7 @@ static double get_ping(void) {
      * Since ping cannot be negative
      */
     double ping_time = -1.0;
-    
+
     /* No open file means no connection so no updated ping_time hence return */
     if (ping_file == NULL) {
         return ping_time;
@@ -135,7 +197,6 @@ static double get_ping(void) {
      * Non-null pointer results in an available float for ping_time
      */
     while (fgets(net_info, sizeof(net_info), ping_file) != NULL) {
-        /* Pointer to "time=" */
         char *ping_ptr = strstr(net_info, "time=");
 
         if (ping_ptr != NULL) {
@@ -148,75 +209,6 @@ static double get_ping(void) {
     pclose(ping_file);
 
     return ping_time;
-}
-
-/* 
- * Ignore text until "% packet loss" and return packetloss
- * No connection returns 100.0 (Full packet loss)
- */
-static double get_packet_loss(void) {
-    char command[MAX_LINE_LENGTH];
-
-    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
-
-    FILE *net_stats_file = popen(command, "r");
-
-    char net_info[MAX_LINE_LENGTH];
-
-    double packet_loss = 100.0;
-
-    if (net_stats_file == NULL) {
-        return packet_loss;
-    }
-
-    while (fgets(net_info, sizeof(net_info), net_stats_file) != NULL) {
-        char *packet_ptr = strstr(net_info, "% packet loss");
-        int transmitted;
-        int received;
-        double loss;
-
-        if (sscanf(net_info, "%d packets transmitted, %d received, %lf%% packet loss", &transmitted, &received, &loss ) == 3) {
-            packet_loss = loss;
-        }
-
-        break;
-    }
-
-    pclose(net_stats_file);
-    return packet_loss;
-
-}
-
-/*
- * Read unsigned long value from file
- *
- * read network statistic files:
- * /sys/class/net/wlan0/statistics/rx_bytes
- * /sys/class/net/wlan0/statistics/tx_bytes
- *
- * These files contain one unsigned long value.
- *
- * file_path: Path to the file that stores the unsigned long value
- *
- * Returns the unsigned long value read from the file.
- * Returns 0 if the file cannot be opened or read.
- */
-static unsigned long read_u_long_from_file(const char *file_path) {
-    FILE *fp = fopen(file_path, "r");
-
-    unsigned long value = 0;
-
-    if (fp == NULL) {
-        perror("File did not open");
-        return 0;
-    }
-
-    if (fscanf(fp, "%lu", &value) != 1) {
-        value = 0;
-    }
-
-    fclose(fp)
-    return value;
 }
 
 /*
@@ -236,7 +228,7 @@ static unsigned long read_u_long_from_file(const char *file_path) {
 static net_interface_t get_interface(void) {
     char command[MAX_LINE_LENGTH];
 
-    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+    snprintf(command, sizeof(command), "ip route get %s", DNS);
 
     /*
      * Open file (terminal as txt file) with following command to get information in interface type
@@ -260,14 +252,14 @@ static net_interface_t get_interface(void) {
      * If fgets returns null then it was unsuccessful read so return no interface
      */
     if (fgets(buffer, sizeof(buffer), interface_info_file) == NULL) {
-        pclose(fp);
+        pclose(interface_info_file);
         return NET_IFACE_NONE;
     }
 
     /*
      *  Close file because read has happended
      */
-    pclsoe(interface_info_file);
+    pclose(interface_info_file);
 
     /*
      * If statement checks to see which interface is read 
@@ -285,83 +277,24 @@ static net_interface_t get_interface(void) {
 }
 
 /*
- * Get received bytes for active interface
- *
- * RX means received data.
- * Reads the total number of bytes received by the selected network interface.
- *
- * iface: Enum value representing the network interface being used
- *
- * Returns RX bytes for wlan0 or eth0.
- * Returns 0 if the interface is unsupported or not available.
- */
-static unsigned long get_rx_bytes(net_interface_t iface) {
-    switch (iface) {
-        case NET_IFACE_WLAN0:
-            return read_u_long_from_file(
-                "/sys/class/net/wlan0/statistics/rx_bytes"
-            );
-        
-        case NET_IFACE_ETH0:
-            return read_u_long_from_file(
-                "/sys/class/net/eth0/statistics/rx_bytes"
-            );
-        default:
-            return 0;
-    }
-}
-
-/*
- * Get transmitted bytes for active interface
- *
- * TX means transmitted data.
- * Reads the total number of bytes transmitted by the selected network interface.
- *
- * iface: Enum value representing the network interface being used
- *
- * Returns TX bytes for wlan0 or eth0.
- * Returns 0 if the interface is unsupported or not available.
- */
-static unsigned long get_tx_bytes(net_interface_t iface) {
-    switch (iface) {
-        case NET_IFACE_WLAN0:
-            return read_u_long_from_file(
-                "/sys/class/net/wlan0/statistics/tx_bytes"
-            );
-        case NET_IFACE_ETH0:
-            return read_u_long_from_file(
-                "/sys/class/net/eth0/statistics/tx_bytes"
-            );
-        default:
-            return 0;
-    }
-}
-
-/*
  * Implementation section
  */
 
 void net_set_led(led_controller_t *leds, net_status_t net_stat) {
     /* 
-     * NET_DOS case is handled first since its a priority check
-     *
-     * DOS attack: Flicker red
      * No network connection: No LED light
-     * Unstable network: Blue LED
+     * Unstable network: Red LED
      * Stable network: Green LED
      */
     switch (net_stat) {
-        case NET_DOS:
-            static_led_colour(leds->red);
-            break;
         case NET_DOWN:
             clear_leds(leds);
             break;
         case NET_UNSTABLE:
-            static_led_colour(leds->yellow);
+            static_led_colour(leds, leds->blue);
             break;
         case NET_STABLE:
-            static_led_colour(leds->green);
+            static_led_colour(leds, leds->green);
             break;
     }
 }
@@ -375,18 +308,19 @@ led_controller_t *init_led(void) {
      * For example if you plug in a rgb pin while the rpi is on 
      * This program just retrieves the update in real time and continues running
      */
-    led_controller_t *leds = malloc(sizeof(struct led_controller_t));
+    led_controller_t *leds = malloc(sizeof(*leds));
 
     /* Instead of returning an error, continue attempts at allocating memory */
-    if (leds = NULL) {
+    if (leds == NULL) {
         return NULL;
     }
 
     /* If you need to free the memory for whatever reason, have initial NULL values for safety */
     leds->chip = NULL;
-    leds->red = NULL;
-    leds->green = NULL;
-    leds->blue = NULL;
+    leds->request = NULL;
+    leds->red = RED_PIN;
+    leds->green = GREEN_PIN;
+    leds->blue = BLUE_PIN;
 
     /* Open chip access for chip field in controller */
     leds->chip = gpiod_chip_open(GPIO_CHIP);
@@ -406,7 +340,7 @@ led_controller_t *init_led(void) {
      * so while you can't get led lines sleep the program
      */
     while (!get_led_lines(leds)) {
-        sleep(ERROR_WAIT;)
+        sleep(ERROR_WAIT);
     }
 
     return leds;
@@ -422,21 +356,15 @@ void free_controller(led_controller_t *leds) {
     clear_leds(leds);
 
     /* Error free line release, otherwise invalid references are being freed */
-    if (leds->red != NULL) {
-        gpiod_line_release(leds->red);
-    }
-
-    if (leds->yellow != NULL) {
-        gpiod_line_release(leds->yellow);
-    }
-
-    if (leds->green != NULL) {
-        gpiod_line_release(leds->green);
+    if (leds->request != NULL) {
+        gpiod_line_request_release(leds->request);
     }
 
     if (leds->chip != NULL) {
         gpiod_chip_close(leds->chip);
     }
+
+    free(leds);
 }
 
 /*
@@ -453,8 +381,20 @@ net_sample_history_t *init_history(void) {
         return NULL;
     }
 
+    for (size_t i = 0; i < SAMPLE_HISTORY_SIZE; i++) {
+        history->array[i] = (net_sample_t) {
+            .ping_ms = 0.0,
+            .iface = NET_IFACE_NONE
+        };
+    }
+
     history->next_index = 0;
-    history->popped = NULL;
+    history->popped = (net_sample_t) {
+        .ping_ms = 0.0,
+        .iface = NET_IFACE_NONE
+    };
+
+    return history;
 }
 
 /*
@@ -465,7 +405,7 @@ net_sample_history_t *init_history(void) {
  */
 void free_history(net_sample_history_t *history) {
     if (history == NULL) {
-        return 
+        return;
     }
 
     free(history);
@@ -479,16 +419,16 @@ void free_history(net_sample_history_t *history) {
  */
 net_analysis_t *init_net_analysis(void) {
 
-    net_analysis_t *analysis = malloc(sizeof(net_analysis_t));
+    net_analysis_t *stats = malloc(sizeof(net_analysis_t));
 
-    if (analysis == NULL) {
+    if (stats == NULL) {
         return NULL;
     }
 
-    analysis->avg_ping_ms = 0.0;
-    analysis->avg_packet_loss = 0.0;
-    analysis->avg_rx_rate = 0.0;
-    analysis->avg_tx_rate = 0.0;
+    stats->avg_ping_ms = 0.0;
+    stats->iface = NET_IFACE_NONE;
+
+    return stats;
 }
 
 /*
@@ -506,13 +446,16 @@ void free_stats(net_analysis_t *stats) {
     free(stats);
 }
 
-net_sample_t net_sample_get(net_interface_t iface) {
-    /* Make the struct and initialise the fields with helper functions */
+net_sample_t net_sample_get(void) {
+    net_interface_t iface = get_interface();
+
     net_sample_t sample = {
-        .ping_ms = get_ping();
-        .packet_loss = get_packet_loss();
-        .rx_bytes = get_rx_bytes(iface);
-        .tx_bytes = get_tx_bytes(iface);
+        .ping_ms = -1.0,
+        .iface = iface
+    };
+
+    if (iface != NET_IFACE_NONE) {
+        sample.ping_ms = get_ping();
     }
 
     return sample;
@@ -520,7 +463,7 @@ net_sample_t net_sample_get(net_interface_t iface) {
 
 void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
     /* No buffer to add the new sample to, so quit */
-    if (history == NULL || history->array == NULL) {
+    if (history == NULL) {
         return;
     }
 
@@ -530,28 +473,14 @@ void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
      * And it is being checked against the max capacity 
      */
 
-    /* Comparing size against max buffer size which is sample history size*/
-    size_t history_size = sizeof(history->array) / sizeof(sample);
-
     /*
      * Next_index is a circular pointer on the array
      * When it reaches the end, reset the index to the beginning
      * Continue to increment it 
      */
-    if (*next_index >= SAMPLE_HISTORY_SIZE - 1) {
-        /* 
-         * Update history values
-         * next_index reset to front of array
-         * popped is updated to value to be removed
-         * array at new index contains new sample
-         */
-        history->next_index = 0;
-        history->popped = history->array[history->next_index];
-    } else {
-        history->popped = NULL;
-    }
+    history->popped = history->array[history->next_index];
     history->array[history->next_index] = sample;
-    history->next_index++;
+    history->next_index = (history->next_index + 1) % SAMPLE_HISTORY_SIZE;
 }
 
 void net_stat_analyse(net_analysis_t *stats, const net_sample_history_t *history) {
@@ -559,24 +488,16 @@ void net_stat_analyse(net_analysis_t *stats, const net_sample_history_t *history
         return;
     }
 
-    net_sample_t popped = history->popped;
-
-    /* 
-     * If there is no popped value (so at the start of the program) 
-     * Then initialise the popped value to 
+    /*
+     * This relies on net_stat_analyse being called straight after
+     * net_history_add, same as it is in the main loop, since popped and
+     * next_index are only valid for the sample that was just pushed
      */
-    if (popped == NULL) {
-        popped = {
-            .ping_ms = 0,
-            .packet_loss = 0,
-            .rx_bytes = 0,
-            .tx_bytes = 0
-        }
-    }
+    net_sample_t popped = history->popped;
 
     /* Obtain index of the sample that was pushed */
     size_t new_index = (history->next_index == 0)
-        ? SAMPLE_HISTORY_SIZE - 1 : history->next_index - 1
+        ? SAMPLE_HISTORY_SIZE - 1 : history->next_index - 1;
     net_sample_t new = history->array[new_index];
 
     /*
@@ -587,14 +508,26 @@ void net_stat_analyse(net_analysis_t *stats, const net_sample_history_t *history
     stats->avg_ping_ms +=
         (new.ping_ms - popped.ping_ms) / SAMPLE_HISTORY_SIZE;
 
-    stats->avg_packet_loss +=
-        (new.packet_loss - popped.packet_loss) / SAMPLE_HISTORY_SIZE;
-
-    stats->avg_rx_rate +=
-        ((double) new.rx_bytes - (double) popped.rx_bytes) / SAMPLE_HISTORY_SIZE;
-
-    stats->avg_tx_rate +=
-        ((double) new.tx_bytes - (double) popped.tx_bytes) / SAMPLE_HISTORY_SIZE;
+    stats->iface = new.iface;
 }
 
-net_status_t net_stat_update(net_analysis_t *stats) {}
+net_status_t net_stat_update(const net_analysis_t *stats) {
+    if (stats == NULL) {
+        return NET_DOWN;
+    }
+
+    /* Get rid of no iface connection as soon as possible */
+    if (stats->iface == NET_IFACE_NONE) {
+        return NET_DOWN;
+    }
+
+    if (stats->avg_ping_ms < 0.0) {
+        return NET_DOWN;
+    }
+
+    if (stats->avg_ping_ms <= PING_STABLE_MAX) {
+        return NET_STABLE;
+    }
+
+    return NET_UNSTABLE;
+}

@@ -2,31 +2,40 @@
 #define NETWORK_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <gpiod.h>
 
 #define SAMPLE_HISTORY_SIZE 10
 
-#define PROGRAM_WAIT 1
+#define PROGRAM_WAIT 0.5
 
 /* 
  * Represents full GPIO chip for access
  */
 typedef struct {
     struct gpiod_chip *chip; /* Open GPIO device */
+    struct gpiod_line_request *request; /* Active line request handle */
 
-    struct gpiod_line *red; /* Reserved for DOS detection */
-    struct gpiod_line *blue; /* Reserved for UNSTABLE  */
-    struct gpiod_line *green; /* Reserved for STABLE */
+    unsigned int red; /* Reserved for DOS detection */
+    unsigned int blue; /* Reserved for UNSTABLE  */
+    unsigned int green; /* Reserved for STABLE */
 } led_controller_t;
+
+/*
+ * Enums to classify network interface type 
+ */
+typedef enum {
+    NET_IFACE_NONE,
+    NET_IFACE_WLAN0,
+    NET_IFACE_ETH0
+} net_interface_t;
 
 /* 
  * Represents a data sample to be pushed onto buffer + analysis
  */
 typedef struct {
     double ping_ms; /* Ping time of the packet sent */
-    double packet_loss; /* Packet loss returned by running the ping command */
-    unsigned long rx_bytes; /* number of bytes recieved by rpi */
-    unsigned long tx_bytes; /* number of bytes transmitted by rpi */
+    net_interface_t iface; /* Active network interface */
 } net_sample_t;
 
 /* 
@@ -34,9 +43,7 @@ typedef struct {
  */
 typedef struct {
     double avg_ping_ms; /* Average ping time over last 10 samples */
-    double avg_packet_loss; /* Average packet loss over last 10 samples */
-    double avg_rx_rate; /* Average number of bytes recieved by rpi in last 10 samples */
-    double avg_tx_rate; /* Average number of bytes transmitted by rpi in last 10 smaples */
+    net_interface_t iface; /* Active network interface */
 } net_analysis_t;
 
 /*
@@ -45,8 +52,7 @@ typedef struct {
 typedef enum {
     NET_DOWN,
     NET_UNSTABLE,
-    NET_STABLE,
-    NET_DOS
+    NET_STABLE
 } net_status_t;
 
 /*
@@ -58,15 +64,6 @@ typedef struct {
 
     net_sample_t popped; /* Previously removed sample (where the last one was pushed) */
 } net_sample_history_t;
-
-/*
- * Enums to classify network interface type 
- */
-typedef enum {
-    NET_IFACE_NONE,
-    NET_IFACE_WLAN0,
-    NET_IFACE_ETH0
-} net_interface_t;
 
 /*
  * Update LED colour after obtaining new status
