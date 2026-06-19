@@ -4,17 +4,17 @@
 #include <stdbool.h>
 
 typedef struct {
-    double ping_ms;
-    double packet_loss;
-    unsigned long rx_bytes;
-    unsigned long tx_bytes;
+    double ping_ms; /* Ping time of the packet sent */
+    double packet_loss; /* Packet loss returned by running the ping command */
+    unsigned long rx_bytes; /* number of bytes recieved by rpi */
+    unsigned long tx_bytes; /* number of bytes transmitted by rpi */
 } net_sample_t;
 
 typedef struct {
-    double avg_ping_ms;
-    double avg_packet_loss;
-    double avg_rx_rate;
-    double avg_tx_rate;
+    double avg_ping_ms; /* Average ping time over last 10 samples */
+    double avg_packet_loss; /* Average packet loss over last 10 samples */
+    double avg_rx_rate; /* Average number of bytes recieved by rpi in last 10 samples */
+    double avg_tx_rate; /* Average number of bytes transmitted by rpi in last 10 smaples */
 } net_analysis_t;
 /*
  * Network_status this function is run in the main function
