@@ -16,6 +16,7 @@
 #define BLUE_PIN 22
 
 #define FLICKER_DELAY 0.1
+#define DNS "8.8.8.8"
 
 #define ERROR_WAIT 3
 
@@ -70,6 +71,15 @@ typedef struct {
     net_sample_t popped; /* Previously removed sample (where the last one was pushed) */
 } net_sample_history_t;
 
+/*
+ * Enums to classify network interface type 
+ */
+typedef enum {
+    NET_IFACE_NONE,
+    NET_IFACE_WLAN0,
+    NET_IFACE_ETH0
+} net_interface_t;
+
 /* 
  * LED section - initialisation, reference freeing, led setter
  */
@@ -93,8 +103,8 @@ static void clear_leds(led_controller_t *leds) {
         gpiod_line_set_value(leds->red, 0);
     }
 
-    if (leds->yellow != NULL) {
-        gpiod_line_set_value(leds->yellow, 0);
+    if (leds->blue != NULL) {
+        gpiod_line_set_value(leds->blue, 0);
     }
 
     if (leds->green != NULL) {
@@ -134,7 +144,7 @@ static bool get_led_lines(led_controller_t *leds) {
 
     /* Failed to retrieve line, return false for error handling loop to continue */
     if (leds->red == NULL ||
-        leds->yellow == NULL ||
+        leds->blue == NULL ||
         leds->green == NULL) {
         return false;
     }
@@ -144,15 +154,29 @@ static bool get_led_lines(led_controller_t *leds) {
 
 /*
  * Helper functions for parsing sample data
- */
 
- /*
+ * For getting ping and packet loss data
+ * 
  * Open the file using popen() to treat terminal output as text
  * Ping Google DNS with a single packet count (safe option)
+ * 
+ * For getting rx, tx bytes
+ * 
+ * Accessing the stat files and returning rx and tx bytes respectively
+ */
+
+/*
  * Ignore text until "time=<ping_time>" and return ping_time
  * No connection returns -1.0
  */
 static double get_ping(void) {
+    char command[MAX_LINE_LENGTH];
+
+    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+
+    /* Get the file pointer for the terminal output to read */
+    FILE *ping_file  = popen(command, "r");
+
 
     /* Reading line buffer */
     char net_info[MAX_LINE_LENGTH];
@@ -162,9 +186,6 @@ static double get_ping(void) {
      * Since ping cannot be negative
      */
     double ping_time = -1.0;
-
-    /* Get the file pointer for the terminal output to read */
-    FILE *ping_file = popen("ping -c 1 -W 1 8.8.8.8 2>&1", "r");
     
     /* No open file means no connection so no updated ping_time hence return */
     if (ping_file == NULL) {
@@ -189,6 +210,143 @@ static double get_ping(void) {
     pclose(ping_file);
 
     return ping_time;
+}
+
+/* 
+ * Ignore text until "% packet loss" and return packetloss
+ * No connection returns 100.0 (Full packet loss)
+ */
+static double get_packet_loss(void) {
+    char command[MAX_LINE_LENGTH];
+
+    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+
+    FILE *net_stats_file = popen(command, "r");
+
+    char net_info[MAX_LINE_LENGTH];
+
+    double packet_loss = 100.0;
+
+    if (net_stats_file == NULL) {
+        return packet_loss;
+    }
+
+    while (fgets(net_info, sizeof(net_info), net_stats_file) != NULL) {
+        char *packet_ptr = strstr(net_info, "% packet loss");
+        int transmitted;
+        int received;
+        double loss;
+
+        if (sscanf(net_info, "%d packets transmitted, %d received, %lf%% packet loss", &transmitted, &received, &loss ) == 3) {
+            packet_loss = loss;
+        }
+
+        break;
+    }
+
+    pclose(net_stats_file);
+    return packet_loss;
+
+}
+
+static unsigned long read_u_long_from_file(const char *file_path) {
+    FILE *fp = fopen(file_path, "r");
+
+    unsigned long value = 0;
+
+    if (fp == NULL) {
+        perror("File did not open");
+        return 0;
+    }
+
+    if (fscanf(fp, "%lu", &value) != 1) {
+        value = 0;
+    }
+
+    fclose(fp)
+    return value;
+}
+
+static net_interface_t get_interface(void) {
+    char command[MAX_LINE_LENGTH];
+
+    snprintf(command, sizeof(command), "ping -c 1 %s", DNS);
+
+    /*
+     * Open file (terminal as txt file) with following command to get information in interface type
+     */
+    FILE *interface_info_file = popen(command, "r");
+
+    /*
+     * initialise fixed size buffer to store information from file
+     */
+    char buffer[MAX_LINE_LENGTH];
+
+    /*
+     * Null pointer check, if null that means connection could not be established as file is not opened so return No network interface    
+     */
+    if (interface_info_file == NULL) {
+        perror("Error: File failed to open");
+        return NET_IFACE_NONE;
+    }
+
+    /*
+     * If fgets returns null then it was unsuccessful read so return no interface
+     */
+    if (fgets(buffer, sizeof(buffer), interface_info_file) == NULL) {
+        pclose(fp);
+        return NET_IFACE_NONE;
+    }
+
+    /*
+     *  Close file because read has happended
+     */
+    pclsoe(interface_info_file);
+
+    /*
+     * If statement checks to see which interface is read 
+     */
+    if (strstr(buffer, "dev wlan0") != NULL) {
+        return NET_IFACE_WLAN0;
+    }
+
+    if (strstr(buffer, "dev eth0") != NULL) {
+        return NET_IFACE_ETH0;
+    }
+
+    /* If neither of the two interfaces was found, return none */
+    return NET_IFACE_NONE;
+}
+
+static unsigned long get_rx_bytes(net_interface_t iface) {
+    switch (iface) {
+        case NET_IFACE_WLAN0:
+            return read_u_long_from_file(
+                "/sys/class/net/wlan0/statistics/rx_bytes"
+            );
+        
+        case NET_IFACE_ETH0:
+            return read_u_long_from_file(
+                "/sys/class/net/eth0/statistics/rx_bytes"
+            );
+        default:
+            return 0;
+    }
+}
+
+static unsigned long get_tx_bytes(net_interface_t iface) {
+    switch (iface) {
+        case NET_IFACE_WLAN0:
+            return read_u_long_from_file(
+                "/sys/class/net/wlan0/statistics/tx_bytes"
+            );
+        case NET_IFACE_ETH0:
+            return read_u_long_from_file(
+                "/sys/class/net/eth0/statistics/tx_bytes"
+            );
+        default:
+            return 0;
+    }
 }
 
 /*
@@ -297,6 +455,18 @@ void free_controller(led_controller_t *leds) {
     if (leds->chip != NULL) {
         gpiod_chip_close(leds->chip);
     }
+}
+
+net_sample_t net_sample_get(void) {
+    /* Make the struct and initialise the fields with helper functions */
+    net_sample_t sample;
+
+    sample.ping_ms = get_ping();
+    sample.packet_loss = get_packet_loss();
+    sample.rx_bytes = get_rx_bytes();
+    sample.tx_bytes = get_tx_bytes();
+
+    return sample;
 }
 
 void net_history_add(net_sample_history_t *history, const net_sample_t sample) {
