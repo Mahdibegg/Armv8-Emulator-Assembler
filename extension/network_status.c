@@ -254,16 +254,39 @@ static net_interface_t get_interface(void) {
     /* If neither of the two interfaces was found, return none */
     return NET_IFACE_NONE;
 }
-static unsigned long get_rx_bytes(void) {
-    return read_u_long_from_file(
+
+static unsigned long get_rx_bytes(net_interface_t iface) {
+    switch (iface) {
+        case NET_IFACE_WLAN0:
+            return read_u_long_from_file(
          "/sys/class/net/wlan0/statistics/rx_bytes"
-    );
+            );
+        
+        case NET_IFACE_ETH0:
+            return read_u_long_from_file(
+                 "/sys/class/net/eth0/statistics/rx_bytes"
+            );
+        
+        default:
+            return 0;
+    }
 }
 
-static unsigned long get_tx_bytes(void) {
-    return read_u_long_from_file(
+static unsigned long get_tx_bytes(net_interface_t iface) {
+     switch (iface) {
+        case NET_IFACE_WLAN0:
+            return read_u_long_from_file(
          "/sys/class/net/wlan0/statistics/tx_bytes"
-    );
+            );
+        
+        case NET_IFACE_ETH0:
+            return read_u_long_from_file(
+                 "/sys/class/net/eth0/statistics/tx_bytes"
+            );
+        
+        default:
+            return 0;
+    }
 }
 
 net_sample_t net_sample_get(void) {
