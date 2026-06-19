@@ -4,7 +4,69 @@
 #include <stdbool.h>
 #include <gpiod.h>
 
+#define SAMPLE_HISTORY_SIZE 10
+
 #define PROGRAM_WAIT 1
+
+/* 
+ * Represents full GPIO chip for access
+ */
+typedef struct {
+    struct gpiod_chip *chip; /* Open GPIO device */
+
+    struct gpiod_line *red; /* Reserved for DOS detection */
+    struct gpiod_line *blue; /* Reserved for UNSTABLE  */
+    struct gpiod_line *green; /* Reserved for STABLE */
+} led_controller_t;
+
+/* 
+ * Represents a data sample to be pushed onto buffer + analysis
+ */
+typedef struct {
+    double ping_ms; /* Ping time of the packet sent */
+    double packet_loss; /* Packet loss returned by running the ping command */
+    unsigned long rx_bytes; /* number of bytes recieved by rpi */
+    unsigned long tx_bytes; /* number of bytes transmitted by rpi */
+} net_sample_t;
+
+/* 
+ * Represents reliable data to conclude a network status result
+ */
+typedef struct {
+    double avg_ping_ms; /* Average ping time over last 10 samples */
+    double avg_packet_loss; /* Average packet loss over last 10 samples */
+    double avg_rx_rate; /* Average number of bytes recieved by rpi in last 10 samples */
+    double avg_tx_rate; /* Average number of bytes transmitted by rpi in last 10 smaples */
+} net_analysis_t;
+
+/*
+ * Enums to classify network status for LED output
+ */
+typedef enum {
+    NET_DOWN,
+    NET_UNSTABLE,
+    NET_STABLE,
+    NET_DOS
+} net_status_t;
+
+/*
+ * Represent the sampling history (like a partial data structure)
+ */
+typedef struct {
+    net_sample_t array[SAMPLE_HISTORY_SIZE]; /* Array to store all samples in the last N frames */
+    size_t next_index; /* Next position to push the sample onto */
+
+    net_sample_t popped; /* Previously removed sample (where the last one was pushed) */
+} net_sample_history_t;
+
+/*
+ * Enums to classify network interface type 
+ */
+typedef enum {
+    NET_IFACE_NONE,
+    NET_IFACE_WLAN0,
+    NET_IFACE_ETH0
+} net_interface_t;
 
 /*
  * Update LED colour after obtaining new status
@@ -24,7 +86,7 @@ led_controller_t *init_led(void);
  *
  * leds: Reference to LEDs that have to be freed before you exit program
  */
-free_controller(led_controller_t *leds);
+void free_controller(led_controller_t *leds);
 
 /*
  * Initialise the history data structure to store sample history
@@ -44,7 +106,7 @@ net_analysis_t *init_net_analysis(void);
 /*
  * Free the analysis data structure to avoid memory leaks
  */
-void free_stats(net_analysis_t *stats) 
+void free_stats(net_analysis_t *stats);
 
 /*
  * Returns struct net_sample_t, so this can be added to the net buffer which holds the last samples 

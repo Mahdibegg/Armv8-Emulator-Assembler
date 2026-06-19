@@ -4,27 +4,16 @@ CFLAGS  ?= -std=c17 -g \
 	-Wall -Werror -pedantic \
 	-I .
 
-LDLIBS  ?= -lgpiod
+.PHONY: all clean
 
-.SUFFIXES: .c .o
-.PHONY: all clean run
+all: led_net_stat
 
-TARGET = led_net_stat
-
-OBJS = \
+LED_NET_STAT_OBJS = \
 	led_net_stat.o \
 	network_status.o
 
-all: $(TARGET)
-
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
-
-%.o: %.c network_status.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-run: $(TARGET)
-	sudo ./$(TARGET)
+led_net_stat: $(LED_NET_STAT_OBJS)
+	$(CC) $(CFLAGS) -o led_net_stat $(LED_NET_STAT_OBJS) -lgpiod
 
 clean:
-	$(RM) $(TARGET) $(OBJS)
+	$(RM) led_net_stat *.o

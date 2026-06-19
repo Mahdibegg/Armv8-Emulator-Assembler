@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "network_status.h"
 
 #define DEVICE_ON 1
@@ -8,7 +12,7 @@ int main(void) {
      * 
      * leds: LEDs controller, which will be updated with a new net_stat
      * history: A history data structure which contains an array of samples
-     * stats: Represents the averages of the last N samples
+     * stats: Represents thesaverages of the last N samples
      */
     led_controller_t *leds = init_led();
     net_sample_history_t *history = init_history();
@@ -18,8 +22,8 @@ int main(void) {
     if (leds == NULL ||
         history == NULL ||
         stats == NULL) {
-        fprintf("ERROR: Initialisation failed for program start");
-        abort()
+        fprintf(stderr, "ERROR: Initialisation failed for program start");
+        abort();
     }
 
     /* Program loop when device starts up */
@@ -42,7 +46,8 @@ int main(void) {
     }
 
     free_controller(leds);
-    free_stats(stats)
+    free_stats(stats);
+    free_history(history);
 
     return 0;
 }
