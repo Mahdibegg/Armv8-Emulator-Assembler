@@ -1,5 +1,25 @@
-ARMV8 C PROJECT 
-   ~ By group 6
+# AArch64 Emulator, Assembler & Raspberry Pi Network Monitor
 
-Part 1 - Emulator for AArch64 instructions
-Part 2 - Assembler for AArch64 assembly
+A collection of low-level systems programming projects developed in C, covering an AArch64 emulator, an AArch64 assembler, and a Raspberry Pi-based network stability monitor.
+
+## Projects
+
+### AArch64 Emulator
+
+A C-based emulator for the AArch64 architecture, developed from a given specification.
+
+The emulator models the execution of AArch64 instructions by maintaining the processor state and implementing the required instruction behaviour. Development involved designing the program architecture and pseudocode before implementation, breaking the specification into manageable components, and thoroughly testing the implementation.
+
+### AArch64 Assembler
+
+A C-based assembler for the AArch64 architecture.
+
+### Raspberry Pi Network Stability Monitor
+
+A headless network stability monitor developed in C for a Raspberry Pi. The system measures network stability using repeated ping requests and stores latency measurements in a history-sample data structure. The collected samples are averaged and compared against a threshold to determine whether the network is considered stable.
+
+The result is displayed through two GPIO-controlled LEDs:
+- **Green:** Network stable
+- **Red:** Network unstable
+
+The program is designed to operate without a monitor or user interaction. A Linux startup script launches the program automatically in the background when the Raspberry Pi boots.
