@@ -34,3 +34,5 @@
 *.toc
 test.bin
 test.out
+
+.vscode/
